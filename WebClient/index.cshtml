@@ -1,0 +1,264 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>WebSocket Test</title>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="Scripts/jquery-1.8.2.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
+    <script src="Scripts/knockout-2.1.0.js"></script>
+    <script type="text/javascript">
+
+        var ws;
+
+        var apiKey = "@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]";
+        function connect() {
+            $("#btn_Connect").attr("disabled", true);
+            $("#btn_Disconnect").attr("disabled", false);
+
+            ws = new WebSocket("ws://localhost:81");
+            ws.onopen = function () {
+                setStatus("Connected");
+            };
+            ws.onmessage = function (msg) {
+                var data = jQuery.parseJSON(msg.data);
+                console.debug(data);
+                setStatus("Received " + data.length + " messages at " + new Date(Date.now()).toLocaleString());
+                for (var i = 0; i < data.length; i++) {
+                    var message = data[i].body;
+
+                    var existing = $("#" + message.train_id).length == 1;
+                    if (existing) {
+                        id = message.train_id + "-" + $("." + message.train_id).length;
+                        cls = "sub";
+                        prefix = "&nbsp;&nbsp;";
+                        parent = message.train_id;
+                        code = "";
+                    } else {
+                        id = message.train_id;
+                        cls = "first";
+                        prefix = message.train_id;
+                        parent = null;
+                        code = message.train_service_code;
+                    }
+
+                    var date = new Date(new Number(message.actual_timestamp));
+
+                    var html = "<tr class=\"" + cls + " " + id + "\" id=\"" + id + "\" class=\"\">";
+
+                    html += "<td>" + prefix + "</td>";
+                    html += "<td>" + code + "</td>";
+                    html += "<td>" + message.event_type + "</td>";
+                    html += "<td>" + padTime(date.getUTCHours()) + ":" + padTime(date.getUTCMinutes()) + ":" + padTime(date.getUTCSeconds()) + "</td>";
+                    html += "<td>" + message.direction_ind + "</td>";
+                    html += "<td>" + message.platform + "</td>";
+                    html += "<td><a href=\"#\" class=\"stanox-" + message.loc_stanox + "\" onclick=\"loadLocation('" + message.loc_stanox + "')\">" + message.loc_stanox + "</a></td>";
+
+                    html += "</tr>";
+
+                    if (message.train_terminated && message.train_terminated == "true") {
+                        html += "<tr class=\"terminated\"><td colspan=\"7\">Terminated</td></tr>";
+                    }
+
+                    addMessage(html, parent);
+
+
+                    fetchStanox(message.loc_stanox);
+                }
+            };
+            ws.onclose = function () {
+                setStatus("Disconnected");
+                $("#btn_Connect").attr("disabled", false);
+                $("#btn_Disconnect").attr("disabled", true);
+            };
+        }
+
+        function padTime(time) {
+            if (time < 10)
+                return "0" + time;
+            return time;
+        }
+
+        function disconnect() {
+            $("#btn_Connect").attr("disabled", false);
+            $("#btn_Disconnect").attr("disabled", true);
+
+            ws.close();
+            setStatus("Closed");
+        }
+
+        function setStatus(status) {
+            $("#status").html(status);
+        }
+
+        function addMessage(message, parent) {
+            if (parent) {
+                $("#" + parent).after(message);
+            } else {
+                $("#data").append(message);
+            }
+        }
+
+        function LocationViewModel() {
+            this.locationStanox = ko.observable();
+            this.locationTiploc = ko.observable();
+            this.locationDescription = ko.observable();
+            this.locationCRS = ko.observable();
+            this.stationName = ko.observable();
+            this.stationLocation = ko.observable();
+        }
+
+        var currentLocation = new LocationViewModel();
+
+        function fetchStanox(stanox) {
+            $.getJSON("http://localhost:82/Stanox/", { id: stanox }, function (data) {
+                if (data.CRS) {
+                    tooltip = data.StationName + '(' + data.CRS + ')';
+                } else {
+                    tooltip = data.Tiploc;
+                }
+                $(".stanox-" + stanox).html(tooltip);
+                $(".stanox-" + stanox).tooltip({
+                    title: stanox
+                });
+            });
+        }
+
+        function loadLocation(stanox) {
+            currentLocation.locationStanox(stanox);
+            $.getJSON("http://localhost:82/Stanox/", { id: stanox }, function (data) {
+                currentLocation.locationTiploc(data.Tiploc);
+                currentLocation.locationDescription(data.Description);
+                currentLocation.locationCRS(data.CRS);
+                currentLocation.stationName(data.StationName);
+                currentLocation.stationLocation(data.Lat + ", " + data.Lon);
+                if (data.Lat && data.Lon) {
+                    $("#station-loc").attr("src",
+                        "http://maps.googleapis.com/maps/api/staticmap?center=" + data.Lat + "," + data.Lon +
+                        "5&zoom=14&size=310x310&sensor=false&style=feature:transit.station.rail" +
+                        "&key=" + apiKey);
+                    $("#station-loc").show();
+                } else {
+                    $("#station-loc").hide();
+                }
+            });
+        }
+
+        $(function () {
+            ko.applyBindings(currentLocation, $("#locationDetails").get(0));
+            $('#table-trains').dataTable({
+                "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>"
+            });
+        });
+
+        $.extend($.fn.dataTableExt.oStdClasses, {
+            "sWrapper": "dataTables_wrapper form-inline"
+        });
+
+    </script>
+    <style type="text/css">
+        /*table {
+            border-collapse: collapse;
+        }
+
+        .first{
+            background-color: grey;
+        }
+
+        .sub {
+            background-color: lightgrey;
+        }
+
+        .terminated {
+            background-color: lightblue;
+        }*/
+        table.table thead .sorting,
+        table.table thead .sorting_asc,
+        table.table thead .sorting_desc,
+        table.table thead .sorting_asc_disabled,
+        table.table thead .sorting_desc_disabled {
+            cursor: pointer;
+            *cursor: hand;
+        }
+
+        table.table thead .sorting {
+            background: url('Content/DataTables-1.9.4/images/sort_both.png') no-repeat center right;
+        }
+
+        table.table thead .sorting_asc {
+            background: url('Content/DataTables-1.9.4/images/sort_asc.png') no-repeat center right;
+        }
+
+        table.table thead .sorting_desc {
+            background: url('Content/DataTables-1.9.4/images/sort_desc.png') no-repeat center right;
+        }
+
+        table.table thead .sorting_asc_disabled {
+            background: url('Content/DataTables-1.9.4/images/sort_asc_disabled.png') no-repeat center right;
+        }
+
+        table.table thead .sorting_desc_disabled {
+            background: url('Content/DataTables-1.9.4/images/sort_desc_disabled.png') no-repeat center right;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="#">WebSocket Example</a>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span3">
+                <div class="well sidebar-nav" id="locationDetails">
+                    <ul class="nav nav-list clearfix">
+                        <br />
+                        <li class="nav-header">Location</li>
+                        <li><strong>Stanox:</strong> <span data-bind="text: locationStanox"></span></li>
+                        <li><strong>Tiploc:</strong> <span data-bind="text: locationTiploc"></span></li>
+                        <li><strong>Description:</strong> <span data-bind="text: locationDescription"></span></li>
+                        <li><strong>CRS:</strong> <span data-bind="text: locationCRS"></span></li>
+                        <li class="nav-header">Station</li>
+                        <li><strong>Name:</strong> <span data-bind="text: stationName"></span></li>
+                        <li><strong>Location:</strong> <span data-bind="text: stationLocation"></span></li>
+                        <li>
+                            <img id="station-loc" style="width:310px; height:310px; display:none;" />
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="span9">
+                <div class="hero-unit">
+                    <div class="btn-group clearfix">
+                        <button class="btn" id="btn_Connect" onclick="connect()">Connect</button>
+                        <button class="btn" id="btn_Disconnect" onclick="disconnect()" disabled="disabled">Disconnect</button>
+                    </div>
+                    <div class="clearfix">
+                        <br />
+                    </div>
+                    <div class="alert alert-info" id="status">
+                    </div>
+                    <div style="height: 500px; overflow: auto;">
+                        <table class="table table-striped table-bordered" id="table-trains">
+                            <thead>
+                                <th>Train ID</th>
+                                <th>Service Code</th>
+                                <th>Action</th>
+                                <th>Time</th>
+                                <th>Direction</th>
+                                <th>Platform</th>
+                                <th>Location</th>
+                            </thead>
+                            <tbody id="data">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

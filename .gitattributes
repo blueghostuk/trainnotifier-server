@@ -1,0 +1,20 @@
+﻿*.cs -text diff=csharp 
+*.html -text
+*.htm -text
+*.css -text
+*.scss -text
+*.sass -text
+*.less -text
+*.js -text
+*.sql -text
+
+*.csproj -text merge=union 
+*.vbproj -text merge=union 
+*.fsproj -text merge=union 
+*.dbproj -text merge=union 
+*.sln -text merge=union 
+
+*.config -text
+*.ps1 -text
+*.config.transform -text
+*.manifest -text
