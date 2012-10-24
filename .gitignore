@@ -99,10 +99,9 @@ UpgradeLog*.XML
 packages
 
 # Local App.config transformation
-App.Debug-Local.config
-App.Release-Local.config
-Web.Debug-Local.config
-Web.Release-Local.config
+*.Debug-Local.config
+*.Debug-Staging.config
+*.Release-Local.config
 
 #web deploy files
 *.pubxml
