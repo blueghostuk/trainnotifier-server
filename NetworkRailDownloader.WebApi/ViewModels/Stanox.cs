@@ -8,6 +8,7 @@ namespace NetworkRailDownloader.WebApi.ViewModels
 {
     public class Stanox
     {
+        public string Name { get; set; }
         public string Tiploc { get; set; }
         public string Nalco { get; set; }
         public string Description { get; set; }

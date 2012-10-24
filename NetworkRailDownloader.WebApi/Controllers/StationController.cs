@@ -9,20 +9,22 @@ using System.Web.Http;
 
 namespace NetworkRailDownloader.WebApi.Controllers
 {
-    public class StanoxController : ApiController
+    public class StationController : ApiController
     {
-        public IEnumerable<Stanox> Get()
+        public IEnumerable<string> Get()
         {
             IEnumerable<dynamic> results = new TiplocRepository().Get();
 
-            return results.Select(r => MapStanox(r))
-                .Cast<Stanox>();
+            return results
+                .Where(r => !string.IsNullOrEmpty(r.StationName))
+                .Select(r => r.StationName + " (" + r.CRS + ")")
+                .Cast<string>();
         }
 
         // GET <controller>/5
         public Stanox Get(string id)
         {
-            dynamic result = new TiplocRepository().GetByStanox(id);
+            dynamic result = new TiplocRepository().GetByStationName(id);
 
             if (result != null)
             {
