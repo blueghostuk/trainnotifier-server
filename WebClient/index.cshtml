@@ -42,9 +42,16 @@
                         code = message.train_service_code;
                     }
 
+                    var style = "";
+                    if (currentFilter &&
+                        currentFilter.length > 0 &&
+                        message.loc_stanox != currentFilter) {
+                        style = "display:none;";
+                    }
+
                     var date = new Date(new Number(message.actual_timestamp));
 
-                    var html = "<tr class=\"" + cls + " " + id + "\" id=\"" + id + "\" class=\"\">";
+                    var html = "<tr class=\"" + cls + " " + id + " " + message.loc_stanox + "\" style=\"" + style + "\" id=\"" + id + "\" class=\"\">";
 
                     html += "<td>" + prefix + "</td>";
                     html += "<td>" + code + "</td>";
@@ -57,7 +64,7 @@
                     html += "</tr>";
 
                     if (message.train_terminated && message.train_terminated == "true") {
-                        html += "<tr class=\"terminated\"><td colspan=\"7\">Terminated</td></tr>";
+                        html += "<tr class=\"" + cls + " " + id + " " + message.loc_stanox + " terminated\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
                     }
 
                     addMessage(html, parent);
@@ -111,6 +118,9 @@
         var currentLocation = new LocationViewModel();
 
         function fetchStanox(stanox) {
+            if (!stanox || stanox.length == 0)
+                return;
+
             $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
                 if (data.CRS) {
                     tooltip = data.StationName + '(' + data.CRS + ')';
@@ -125,6 +135,9 @@
         }
 
         function loadLocation(stanox) {
+            if (!stanox || stanox.length == 0)
+                return;
+
             currentLocation.locationStanox(stanox);
             $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
                 currentLocation.locationTiploc(data.Tiploc);
@@ -143,6 +156,54 @@
                 }
             });
         }
+
+        var currentFilter = '';
+
+        function filter(location) {
+            if (!location || location.length == 0) {
+                currentFilter = '';
+                $("#table-trains tbody tr").show();
+                return;
+            }
+
+            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Station/", { id: location }, function (data) {
+                currentFilter = data.Name;
+                $("#table-trains tbody tr").hide();
+                $("#table-trains tbody tr." + data.Name).show();
+            });
+        }
+
+        var _locations;
+
+        $(function () {
+            ko.applyBindings(currentLocation, $("#locationDetails").get(0));
+
+            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Station/", null, function (results) {
+                if (!results || results.length == 0)
+                    return;
+                
+                _locations = Array();
+
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i] && results[i].length > 0)
+                        _locations.push(results[i]);
+                }
+
+                $("#filter-location").typeahead({
+                    source: _locations,
+                    updater: function (item) {
+                        filter(item.substring(0, (item.indexOf('(') - 1)));
+                        return item;
+                    }
+                });
+            });
+
+            $('#filter-location').on('change', function (evt) {
+                if ($(evt.target).val() == '') {
+                    filter(null);
+                }
+            });
+        });
 
     </script>
 </head>
@@ -169,7 +230,7 @@
                         <li><strong>Name:</strong> <span data-bind="text: stationName"></span></li>
                         <li><strong>Location:</strong> <span data-bind="text: stationLocation"></span></li>
                         <li>
-                            <img id="station-loc" style="width:310px; height:310px; display:none;" />
+                            <img id="station-loc" style="width: 310px; height: 310px; display: none;" />
                         </li>
                     </ul>
                 </div>
@@ -184,6 +245,12 @@
                         <br />
                     </div>
                     <div class="alert alert-info" id="status">
+                    </div>
+                    <div class="navbar-inner">
+                        <form class="navbar-search pull-right" onsubmit="return false;">
+                            <input type="text" id="filter-location" class="search-query" placeholder="Filter (press ENTER to reset)" />
+                            <br />
+                        </form>
                     </div>
                     <div style="height: 500px; overflow: auto;">
                         <table class="table table-striped table-bordered" id="table-trains">
