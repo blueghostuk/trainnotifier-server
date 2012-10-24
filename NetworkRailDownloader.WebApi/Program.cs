@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -13,7 +14,7 @@ namespace NetworkRailDownloader.WebApi
     {
         static void Main(string[] args)
         {
-            Uri baseAddress = new Uri("http://localhost:82");
+            Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + ":82");
             HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress);
 
             config.MessageHandlers.Add(new CorsHeader());
