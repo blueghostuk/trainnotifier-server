@@ -6,6 +6,8 @@ To gain access to data you need to sign up at https://datafeeds.networkrail.co.u
 
 Uses Apache ActiveMQ - http://activemq.apache.org/nms/index.html
 
+You may be able to access a demo site @ http://blueghostuk.homeip.net/NR/
+
 Copyright (C) 2012 Michael Pritchard
 
 This program is free software: you can redistribute it and/or modify
