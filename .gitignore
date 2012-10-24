@@ -103,3 +103,7 @@ App.Debug-Local.config
 App.Release-Local.config
 Web.Debug-Local.config
 Web.Release-Local.config
+
+#web deploy files
+*.pubxml
+PublishProfiles/*
