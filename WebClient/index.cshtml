@@ -16,7 +16,7 @@
             $("#btn_Connect").attr("disabled", true);
             $("#btn_Disconnect").attr("disabled", false);
 
-            ws = new WebSocket("ws://localhost:81");
+            ws = new WebSocket("ws://@System.Configuration.ConfigurationManager.AppSettings["server"]:81");
             ws.onopen = function () {
                 setStatus("Connected");
             };
@@ -111,7 +111,7 @@
         var currentLocation = new LocationViewModel();
 
         function fetchStanox(stanox) {
-            $.getJSON("http://localhost:82/Stanox/", { id: stanox }, function (data) {
+            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
                 if (data.CRS) {
                     tooltip = data.StationName + '(' + data.CRS + ')';
                 } else {
@@ -143,17 +143,6 @@
                 }
             });
         }
-
-        $(function () {
-            ko.applyBindings(currentLocation, $("#locationDetails").get(0));
-            $('#table-trains').dataTable({
-                "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>"
-            });
-        });
-
-        $.extend($.fn.dataTableExt.oStdClasses, {
-            "sWrapper": "dataTables_wrapper form-inline"
-        });
 
     </script>
     <style type="text/css">
