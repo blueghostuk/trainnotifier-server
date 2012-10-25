@@ -1,8 +1,4 @@
-﻿// Type: NetworkRailDownloader.Downloader.NMSConnector
-// Assembly: NetworkRailDownloader.Downloader, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-// Assembly location: E:\Documents\GitHub\networkrail-downloader - Copy\NetworkRailDownloader\bin\Debug-Local\NetworkRailDownloader.Downloader.dll
-
-using Apache.NMS;
+﻿using Apache.NMS;
 using Apache.NMS.Stomp;
 using Apache.NMS.Stomp.Commands;
 using NetworkRailDownloader.Common;
@@ -18,12 +14,13 @@ namespace NetworkRailDownloader.Downloader
 {
     public sealed class NMSConnector : IDownloader
     {
-        protected AutoResetEvent _quitSemaphore = new AutoResetEvent(false);
+        private readonly AutoResetEvent _quitSemaphore = new AutoResetEvent(false);
 
         public event EventHandler<FeedEvent> FeedDataRecieved;
 
         private IConnection GetConnection()
         {
+            Trace.TraceInformation("Connecting to: {0}", ConfigurationManager.AppSettings["ActiveMQConnectionString"]);
             return new ConnectionFactory(ConfigurationManager.AppSettings["ActiveMQConnectionString"]).CreateConnection(ConfigurationManager.AppSettings["Username"], 
                 ConfigurationManager.AppSettings["Password"]);
         }
@@ -64,6 +61,7 @@ namespace NetworkRailDownloader.Downloader
             }
             catch (Apache.NMS.NMSException nmsE)
             {
+                Trace.TraceError("Exception:{0}", nmsE);
                 Subscribe();
             }
         }
@@ -72,16 +70,23 @@ namespace NetworkRailDownloader.Downloader
         {
             using (IConnection connection = this.GetConnection())
             {
+                Trace.TraceInformation("Connected to: {0}", connection);
                 using (ISession session = connection.CreateSession())
                 {
+                    Trace.TraceInformation("Created session: {0}", session);
                     ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
                     using (IMessageConsumer consumer = session.CreateConsumer((IDestination)topic))
                     {
+                        Trace.TraceInformation("Created consumer: {0} to {1}", consumer, topic);
+                        Trace.TraceInformation("Starting connection to consumer");
                         connection.Start();
                         consumer.Listener += new MessageListener(this.consumer_Listener);
+                        Trace.TraceInformation("Waiting for quit");
                         this._quitSemaphore.WaitOne();
+                        Trace.TraceInformation("Received Quit signal");
                     }
                 }
+                Trace.TraceInformation("Closing connection to: {0}", connection);
             }
         }
 
