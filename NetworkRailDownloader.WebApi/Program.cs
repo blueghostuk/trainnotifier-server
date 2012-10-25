@@ -42,7 +42,6 @@ namespace NetworkRailDownloader.WebApi
 
         private sealed class CorsHeader : MessageProcessingHandler
         {
-
             protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
             {
                 request.Headers.Add("Access-Control-Allow-Origin", "*");
