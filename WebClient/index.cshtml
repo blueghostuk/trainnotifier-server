@@ -34,19 +34,21 @@
                     var message = data[i]; //.body;
 
                     var existing = $("#" + message.train_id).length == 1;
+                    var cls = "";
                     if (existing) {
-                        cls = "sub";
+                        $("." + message.train_id).addClass(message.loc_stanox);
+                        cls = $("#" + message.train_id).attr('class');
+                        cls = cls.replace(" info", "");
                         parent = message.train_id;
                     } else {
-                        cls = "first";
                         parent = null;
+                        cls = message.loc_stanox + " " + message.train_id;
                     }
 
                     var style = "";
                     if (currentFilter &&
                         currentFilter.length > 0 &&
-                        message.loc_stanox != currentFilter &&
-                        message.train_id != currentFilter) {
+                        cls.indexOf(currentFilter) == -1) {
                         style = "display:none;";
                     }
 
@@ -54,14 +56,14 @@
                     var html = "";
 
                     if (!existing) {
-                        html += "<tr class=\"" + cls + " " + message.train_id + " " + message.loc_stanox + " info\" style=\"" + style + "\" id=\"" + message.train_id + "\">";
+                        html += "<tr class=\"" + cls + " info\" style=\"" + style + "\" id=\"" + message.train_id + "\">";
                         html += "<td><a href=\"#\" onclick=\"filterTrain('" + message.train_id + "');\">" + message.train_id + "</a></td>";
                         html += "<td>" + message.train_service_code + "</td>";
                         html += "<td colspan=\"5\">&nbsp;&nbsp;</td>";
                         html += "</tr>";
                     }
 
-                    html += "<tr class=\"" + cls + " " + message.train_id + " " + message.loc_stanox + "\" style=\"" + style + "\" data-timestamp=\"" + message.actual_timestamp + "\">";
+                    html += "<tr class=\"" + cls + "\" style=\"" + style + "\" data-timestamp=\"" + message.actual_timestamp + "\">";
                     html += "<td colspan=\"2\">&nbsp;&nbsp;</td>";
                     html += "<td>" + message.event_type + "</td>";
                     html += "<td>" + padTime(date.getUTCHours()) + ":" + padTime(date.getUTCMinutes()) + ":" + padTime(date.getUTCSeconds()) + "</td>";
@@ -72,7 +74,7 @@
                     html += "</tr>";
 
                     if (message.train_terminated && message.train_terminated == "true") {
-                        html += "<tr class=\"" + cls + " " + message.train_id  + " " + message.loc_stanox + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
+                        html += "<tr class=\"" + cls + " " + message.train_id  + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
                     }
 
                     addMessage(html, parent);
@@ -152,12 +154,16 @@
                 return;
 
             $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
-                if (data.CRS) {
-                    tooltip = data.StationName + '(' + data.CRS + ')';
-                } else {
-                    tooltip = data.Tiploc;
+                var html = "";
+                if (data.StationName){
+                    html = data.StationName;
+                }else{
+                    html = data.Tiploc;
                 }
-                $(".stanox-" + stanox).html(tooltip);
+                if (data.CRS) {
+                    html += "(" + data.CRS + ")";
+                }
+                $(".stanox-" + stanox).html(html);
                 $(".stanox-" + stanox).tooltip({
                     title: stanox
                 });
