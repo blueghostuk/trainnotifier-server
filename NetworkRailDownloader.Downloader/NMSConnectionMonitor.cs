@@ -17,7 +17,12 @@ namespace NetworkRailDownloader.Downloader
             get { return _lastMsgRecd; }
         }
 
-        private NMSConnectionMonitor() { }
+        public bool QuitOk { get; set; }
+
+        private NMSConnectionMonitor()
+        {
+            QuitOk = true;
+        }
 
         public static NMSConnectionMonitor MonitorConnection(IConnection connection, IMessageConsumer consumer,
             AutoResetEvent resetEvent, TimeSpan? timeout = null)
@@ -37,8 +42,7 @@ namespace NetworkRailDownloader.Downloader
             connection.ExceptionListener += (e) =>
             {
                 Trace.TraceError("Connection error: {0}", e);
-                consumer.Close();
-                connection.Close();
+                QuitOk = false;
                 resetEvent.Set();
             };
 
@@ -48,8 +52,8 @@ namespace NetworkRailDownloader.Downloader
                     !_lastMsgRecd.HasValue ||
                     _lastMsgRecd.Value >= (DateTime.UtcNow.Add(timeout)))
                 {
-                    consumer.Close();
-                    connection.Close();
+                    Trace.TraceInformation("Connection Monitor: Connection Stopped or No data recd for {0}, closing connection", timeout);
+                    QuitOk = false;
                     resetEvent.Set();
                 }
             }, null, timeout, timeout);
