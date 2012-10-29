@@ -70,6 +70,8 @@ namespace NetworkRailDownloader.Downloader
         {
             using (IConnection connection = this.GetConnection())
             {
+                connection.AcknowledgementMode = AcknowledgementMode.AutoAcknowledge;
+                connection.ClientId = "train_mvt_all_toc_feed";
                 Trace.TraceInformation("Connected to: {0}", connection);
                 using (ISession session = connection.CreateSession())
                 {
@@ -79,10 +81,13 @@ namespace NetworkRailDownloader.Downloader
                     {
                         Trace.TraceInformation("Created consumer: {0} to {1}", consumer, topic);
                         Trace.TraceInformation("Starting connection to consumer");
-                        connection.Start();
                         consumer.Listener += new MessageListener(this.consumer_Listener);
-                        Trace.TraceInformation("Waiting for quit");
-                        this._quitSemaphore.WaitOne();
+                        using (NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore, TimeSpan.FromSeconds(30)))
+                        {
+                            connection.Start();
+                            Trace.TraceInformation("Waiting for quit");
+                            this._quitSemaphore.WaitOne();
+                        }
                         Trace.TraceInformation("Received Quit signal");
                     }
                 }
@@ -92,7 +97,7 @@ namespace NetworkRailDownloader.Downloader
 
         private void consumer_Listener(IMessage message)
         {
-            message.Acknowledge();
+            //message.Acknowledge();
             TextMessage textMessage = message as TextMessage;
 
             if (textMessage == null || null == this.FeedDataRecieved)
