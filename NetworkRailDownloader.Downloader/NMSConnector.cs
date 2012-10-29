@@ -61,7 +61,13 @@ namespace NetworkRailDownloader.Downloader
             }
             catch (Apache.NMS.NMSException nmsE)
             {
-                Trace.TraceError("Exception:{0}", nmsE);
+                Trace.TraceError("Exception: {0}", nmsE);
+                Thread.Sleep(TimeSpan.FromSeconds(5));
+                Subscribe();
+            }
+            catch (RetryException)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(5));
                 Subscribe();
             }
         }
@@ -71,28 +77,48 @@ namespace NetworkRailDownloader.Downloader
             using (IConnection connection = this.GetConnection())
             {
                 connection.AcknowledgementMode = AcknowledgementMode.AutoAcknowledge;
-                connection.ClientId = "train_mvt_all_toc_feed";
+                string clientId = ConfigurationManager.AppSettings["ActiveMQDurableClientId"];
+                if (!string.IsNullOrEmpty(clientId))
+                {
+                    connection.ClientId = clientId;
+                }
                 Trace.TraceInformation("Connected to: {0}", connection);
                 using (ISession session = connection.CreateSession())
                 {
                     Trace.TraceInformation("Created session: {0}", session);
                     ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
-                    using (IMessageConsumer consumer = session.CreateConsumer((IDestination)topic))
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic))
                     {
                         Trace.TraceInformation("Created consumer: {0} to {1}", consumer, topic);
                         Trace.TraceInformation("Starting connection to consumer");
                         consumer.Listener += new MessageListener(this.consumer_Listener);
-                        using (NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore, TimeSpan.FromSeconds(30)))
+                        connection.Start();
+                        using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore, TimeSpan.FromSeconds(10)))
                         {
-                            connection.Start();
                             Trace.TraceInformation("Waiting for quit");
                             this._quitSemaphore.WaitOne();
+                            if (!cm.QuitOk)
+                            {
+                                Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                                throw new RetryException();
+                            }
                         }
                         Trace.TraceInformation("Received Quit signal");
                     }
                 }
                 Trace.TraceInformation("Closing connection to: {0}", connection);
             }
+        }
+
+        private class RetryException : Exception { }
+
+        private IMessageConsumer CreateConsumer(ISession session, ITopic destination)
+        {
+            string subscriberId = ConfigurationManager.AppSettings["ActiveMQDurableSubscriberId"];
+            if (!string.IsNullOrEmpty(subscriberId))
+                return session.CreateDurableConsumer(destination, subscriberId, null, false);
+            else
+                return session.CreateConsumer(destination);
         }
 
         private void consumer_Listener(IMessage message)
