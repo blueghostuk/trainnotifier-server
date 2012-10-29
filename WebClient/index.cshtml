@@ -6,7 +6,7 @@
     <link href="Content/bootstrap.min.css" rel="stylesheet" />
     <script src="Scripts/jquery-1.8.2.min.js"></script>
     <script src="Scripts/bootstrap.min.js"></script>
-    <script src="Scripts/knockout-2.1.0.js"></script>
+    <script src="Scripts/knockout-2.2.0.js"></script>
     <script type="text/javascript">
 
         var ws;
@@ -74,7 +74,7 @@
                     html += "</tr>";
 
                     if (message.train_terminated && message.train_terminated == "true") {
-                        html += "<tr class=\"" + cls + " " + message.train_id  + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
+                        html += "<tr class=\"" + cls + " " + message.train_id + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
                     }
 
                     addMessage(html, parent);
@@ -155,9 +155,9 @@
 
             $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
                 var html = "";
-                if (data.StationName){
+                if (data.StationName) {
                     html = data.StationName;
-                }else{
+                } else {
                     html = data.Tiploc;
                 }
                 if (data.CRS) {
@@ -400,8 +400,9 @@
         <div class="container">
             <p>
                 Copyright &copy; Michael Pritchard 2012. <a href="https://twitter.com/blueghostuk" class="twitter-follow-button" data-show-count="false">Follow @@blueghostuk</a>
-<script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "//platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "twitter-wjs");</script>
-                <br />Contains information of Network Rail Infrastructure Limited licensed under the following licence:<br />
+                <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "//platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "twitter-wjs");</script>
+                <br />
+                Contains information of Network Rail Infrastructure Limited licensed under the following licence:<br />
                 <a href="http://www.networkrail.co.uk/data-feeds/terms-and-conditions" target="_blank" title="Opens in new window"><i class="icon-share-alt" title="Opens in new window"></i>www.networkrail.co.uk/data-feeds/terms-and-conditions</a>
                 <br />
                 Uses: <a href="http://twitter.github.com/bootstrap/" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>Twitter Bootstrap</a>, 
