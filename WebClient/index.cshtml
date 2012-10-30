@@ -9,6 +9,10 @@
     <script src="~/Scripts/knockout-2.2.0.js"></script>
     <script src="~/Scripts/websockets.js"></script>
     <script src="~/Scripts/ajax-lookups.js"></script>
+    <script src="~/Scripts/mapping.js"></script>
+    <script type="text/javascript" 
+        src="http://maps.googleapis.com/maps/api/js?key=@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]&sensor=false">
+    </script>
     <script type="text/javascript">
 
         var apiKey = "@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]";
@@ -58,17 +62,6 @@
             }
         }
 
-        function LocationViewModel() {
-            this.locationStanox = ko.observable();
-            this.locationTiploc = ko.observable();
-            this.locationDescription = ko.observable();
-            this.locationCRS = ko.observable();
-            this.stationName = ko.observable();
-            this.stationLocation = ko.observable();
-        }
-
-        var currentLocation = new LocationViewModel();
-
         var currentFilter = '';
 
         function filterTrain(trainid) {
@@ -92,11 +85,24 @@
         }
 
         var _locations;
+        
+        function LocationViewModel() {
+            this.locationStanox = ko.observable();
+            this.locationTiploc = ko.observable();
+            this.locationDescription = ko.observable();
+            this.locationCRS = ko.observable();
+            this.stationName = ko.observable();
+            this.stationLocation = ko.observable();
+        }
+
+        var currentLocation = new LocationViewModel();
 
         $(function () {
             ko.applyBindings(currentLocation, $("#locationDetails").get(0));
 
             preLoadStations();
+
+            preLoadMap();
 
             $('#filter-location').on('change', function (evt) {
                 if ($(evt.target).val() == '') {
@@ -223,6 +229,15 @@
                 <a href="http://alchemywebsockets.net/" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>Alchemy Websockets</a> (server-side).
                 Source: <a href="https://github.com/blueghostuk/networkrail-downloader" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>on github</a>
             </p>
+        </div>
+    </div>
+    <div id="mapModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="mapModalLabel">Train Map</h3>
+        </div>
+        <div class="modal-body" style="width: 94%; height: 400px;">
+            <div id="map_canvas" style="width: 100%; height: 100%;"></div>
         </div>
     </div>
 </body>

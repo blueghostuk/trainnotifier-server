@@ -103,6 +103,7 @@
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <Content Include="Scripts\knockout-2.2.0.debug.js" />
     <Content Include="Scripts\knockout-2.2.0.js" />
+    <Content Include="Scripts\mapping.js" />
     <Content Include="Scripts\websockets.js" />
     <Content Include="Web.config" />
   </ItemGroup>
