@@ -15,6 +15,12 @@ namespace NetworkRailDownloader.Downloader
     public sealed class NMSConnector : IDownloader
     {
         private readonly AutoResetEvent _quitSemaphore = new AutoResetEvent(false);
+        private readonly bool _quitOnError = false;
+
+        public NMSConnector(bool quitOnError = false)
+        {
+            _quitOnError = quitOnError;
+        }
 
         public event EventHandler<FeedEvent> FeedDataRecieved;
 
@@ -62,13 +68,19 @@ namespace NetworkRailDownloader.Downloader
             catch (Apache.NMS.NMSException nmsE)
             {
                 Trace.TraceError("Exception: {0}", nmsE);
-                Thread.Sleep(TimeSpan.FromSeconds(5));
-                Subscribe();
+                if (!_quitOnError)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    Subscribe();
+                }
             }
             catch (RetryException)
             {
-                Thread.Sleep(TimeSpan.FromSeconds(5));
-                Subscribe();
+                if (!_quitOnError)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                    Subscribe();
+                }
             }
         }
 

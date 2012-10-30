@@ -13,10 +13,10 @@ namespace NetworkRailDownloader.Console
         private readonly UserManager _userManager;
         private readonly IDownloader _nmsDownloader;
 
-        public NMSWrapper(UserManager userManager)
+        public NMSWrapper(UserManager userManager, bool quitOnError = false)
         {
             _userManager = userManager;
-            _nmsDownloader = new NMSConnector();
+            _nmsDownloader = new NMSConnector(quitOnError);
         }
 
         public void Start()
