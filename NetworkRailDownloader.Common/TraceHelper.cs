@@ -3,11 +3,11 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace NetworkRailDownloader.Console
+namespace NetworkRailDownloader.Common
 {
-    internal static class TraceHelper
+    public static class TraceHelper
     {
-        internal static void SetupTrace()
+        public static void SetupTrace()
         {
             string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
             if (!Directory.Exists(logPath))
