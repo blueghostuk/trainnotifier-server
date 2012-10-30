@@ -55,7 +55,7 @@ function connect() {
                 html += "<tr class=\"" + cls + " info\" style=\"" + style + "\" id=\"" + message.train_id + "\">";
                 html += "<td><a href=\"#\" onclick=\"filterTrain('" + message.train_id + "');\">" + message.train_id + "</a></td>";
                 html += "<td>" + message.train_service_code + "</td>";
-                html += "<td colspan=\"5\">&nbsp;&nbsp;</td>";
+                html += "<td colspan=\"5\"><a href=\"#\" data-toggle=\"modal\" data-target=\"#mapModal\" onclick=\"showMap('" + message.train_id + "');\">View Map</button></td>";
                 html += "</tr>";
             }
 
