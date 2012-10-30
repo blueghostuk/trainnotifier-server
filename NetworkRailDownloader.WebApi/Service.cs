@@ -1,19 +1,32 @@
 ﻿using NetworkRailDownloader.Common;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration.Install;
+using System.Data;
 using System.Diagnostics;
-using System.Net;
+using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.ServiceProcess;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Http;
+using System.Web.Http.SelfHost;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Http;
+using System.Web.Http.SelfHost;
 
-namespace NetworkRailDownloader.Console
+namespace NetworkRailDownloader.WebApi
 {
     partial class Service : ServiceBase
     {
-        private WebSocketServerWrapper _wsServerWrapper;
-        private UserManager _userManager;
-        private NMSWrapper _nmsWrapper;
-
         static void Main(string[] args)
         {
             if (args.Length > 0)
@@ -45,6 +58,8 @@ namespace NetworkRailDownloader.Console
             }
         }
 
+        private HttpSelfHostServer _server;
+
         public Service()
         {
             InitializeComponent();
@@ -54,26 +69,48 @@ namespace NetworkRailDownloader.Console
 
         protected override void OnStart(string[] args)
         {
-            _wsServerWrapper = new WebSocketServerWrapper();
-            _userManager = new UserManager(_wsServerWrapper);
-            _wsServerWrapper.Start();
-            Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, 81);
+            Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + ":82");
+            HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress);
 
-            _nmsWrapper = new NMSWrapper(_userManager);
-            _nmsWrapper.Start();
+            config.MessageHandlers.Add(new CorsHeader());
+
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi",
+                routeTemplate: "{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+
+            _server = new HttpSelfHostServer(config);
+            // Start listening 
+            _server.OpenAsync().Wait();
+            Console.WriteLine("Listening on " + baseAddress);
         }
 
         protected override void OnStop()
         {
-            if (_nmsWrapper != null)
+            if (_server != null)
             {
-                _nmsWrapper.Stop();
-            }
-            if (_wsServerWrapper != null)
-            {
-                _wsServerWrapper.Stop();
+                _server.CloseAsync().Wait();
             }
         }
+
+        private sealed class CorsHeader : MessageProcessingHandler
+        {
+            protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+            {
+                request.Headers.Add("Access-Control-Allow-Origin", "*");
+                request.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
+                return request;
+            }
+
+            protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, System.Threading.CancellationToken cancellationToken)
+            {
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
+                response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
+                return response;
+            }
+        }
+        
     }
 
     [RunInstaller(true)]
@@ -87,11 +124,11 @@ namespace NetworkRailDownloader.Console
             //set the privileges
             processInstaller.Account = ServiceAccount.LocalSystem;
 
-            serviceInstaller.DisplayName = "TrainNotifier Web Socket Server";
+            serviceInstaller.DisplayName = "TrainNotifier Web API Server";
             serviceInstaller.StartType = ServiceStartMode.Automatic;
 
             //must be the same as what was set in Program's constructor
-            serviceInstaller.ServiceName = "TrainNotiferWsServer";
+            serviceInstaller.ServiceName = "TrainNotiferWebApiServer";
             this.Installers.Add(processInstaller);
             this.Installers.Add(serviceInstaller);
         }

@@ -63,9 +63,6 @@
     <Reference Include="Alchemy">
       <HintPath>packages\Alchemy.2.2.1\lib\net40\Alchemy.dll</HintPath>
     </Reference>
-    <Reference Include="Essential.Diagnostics">
-      <HintPath>packages\Essential.Diagnostics.1.1.20103.0\lib\Essential.Diagnostics.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>packages\Newtonsoft.Json.4.5.10\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -88,7 +85,6 @@
     <Compile Include="Service.Designer.cs">
       <DependentUpon>Service.cs</DependentUpon>
     </Compile>
-    <Compile Include="TraceHelper.cs" />
     <Compile Include="UserContextEventArgs.cs" />
     <Compile Include="UserManager.cs" />
     <Compile Include="WebSocketServerWrapper.cs" />
