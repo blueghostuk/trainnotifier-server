@@ -3,109 +3,21 @@
 <head>
     <title></title>
     <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-    <link href="Content/bootstrap.min.css" rel="stylesheet" />
-    <script src="Scripts/jquery-1.8.2.min.js"></script>
-    <script src="Scripts/bootstrap.min.js"></script>
-    <script src="Scripts/knockout-2.2.0.js"></script>
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-1.8.2.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/knockout-2.2.0.js"></script>
+    <script src="~/Scripts/websockets.js"></script>
+    <script src="~/Scripts/ajax-lookups.js"></script>
     <script type="text/javascript">
-
-        var ws;
 
         var apiKey = "@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]";
 
-        var pageSize = 30;
+        var server = "@System.Configuration.ConfigurationManager.AppSettings["server"]";
 
-        var currentPage = 1;
+        /*var pageSize = 30;
 
-        function connect() {
-            $("#btn_Connect").attr("disabled", true);
-            $("#btn_Disconnect").attr("disabled", false);
-
-            ws = new WebSocket("ws://@System.Configuration.ConfigurationManager.AppSettings["server"]:81");
-            ws.onopen = function () {
-                setStatus("Connected");
-
-                $("#status").removeClass("btn-warning");
-                $("#status").removeClass("btn-info");
-                $("#status").addClass("btn-success");
-
-                var preFilter = $("#filter-pre-location").val();
-                if (preFilter && preFilter.length > 0) {
-                    preFilterLocation(preFilter.substring(0, (preFilter.indexOf('(') - 1)));
-                }
-            };
-            ws.onmessage = function (msg) {
-                var data = jQuery.parseJSON(msg.data);
-                console.debug(data);
-                setStatus("Received " + data.length + " messages at " + new Date(Date.now()).toLocaleString());
-
-                $("#status").removeClass("btn-warning");
-                $("#status").removeClass("btn-success");
-                $("#status").addClass("btn-info");
-
-                for (var i = 0; i < data.length; i++) {
-                    var message = data[i]; //.body;
-
-                    var existing = $("#" + message.train_id).length == 1;
-                    var cls = "";
-                    if (existing) {
-                        $("." + message.train_id).addClass(message.loc_stanox);
-                        cls = $("#" + message.train_id).attr('class');
-                        cls = cls.replace(" info", "");
-                        parent = message.train_id;
-                    } else {
-                        parent = null;
-                        cls = message.loc_stanox + " " + message.train_id;
-                    }
-
-                    var style = "";
-                    if (currentFilter &&
-                        currentFilter.length > 0 &&
-                        cls.indexOf(currentFilter) == -1) {
-                        style = "display:none;";
-                    }
-
-                    var date = new Date(new Number(message.actual_timestamp));
-                    var html = "";
-
-                    if (!existing) {
-                        html += "<tr class=\"" + cls + " info\" style=\"" + style + "\" id=\"" + message.train_id + "\">";
-                        html += "<td><a href=\"#\" onclick=\"filterTrain('" + message.train_id + "');\">" + message.train_id + "</a></td>";
-                        html += "<td>" + message.train_service_code + "</td>";
-                        html += "<td colspan=\"5\">&nbsp;&nbsp;</td>";
-                        html += "</tr>";
-                    }
-
-                    html += "<tr class=\"" + cls + "\" style=\"" + style + "\" data-timestamp=\"" + message.actual_timestamp + "\">";
-                    html += "<td colspan=\"2\">&nbsp;&nbsp;</td>";
-                    html += "<td>" + message.event_type + "</td>";
-                    html += "<td>" + padTime(date.getUTCHours()) + ":" + padTime(date.getUTCMinutes()) + ":" + padTime(date.getUTCSeconds()) + "</td>";
-                    html += "<td>" + message.direction_ind + "</td>";
-                    html += "<td>" + message.platform + "</td>";
-                    html += "<td><a href=\"#\" class=\"stanox-" + message.loc_stanox + "\" onclick=\"loadLocation('" + message.loc_stanox + "')\">" + message.loc_stanox + "</a></td>";
-
-                    html += "</tr>";
-
-                    if (message.train_terminated && message.train_terminated == "true") {
-                        html += "<tr class=\"" + cls + " " + message.train_id + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
-                    }
-
-                    addMessage(html, parent);
-
-                    sortTrainId(message.train_id);
-
-                    fetchStanox(message.loc_stanox);
-                }
-            };
-            ws.onclose = function () {
-                setStatus("Disconnected");
-                $("#status").removeClass("btn-success");
-                $("#status").removeClass("btn-info");
-                $("#status").addClass("btn-warning");
-                $("#btn_Connect").attr("disabled", false);
-                $("#btn_Disconnect").attr("disabled", true);
-            };
-        }
+        var currentPage = 1;*/
 
         function sortTrainId(trainId) {
             if (!trainId || trainId.length == 0)
@@ -134,17 +46,6 @@
             return time;
         }
 
-        function disconnect() {
-            $("#btn_Connect").attr("disabled", false);
-            $("#btn_Disconnect").attr("disabled", true);
-
-            ws.close();
-            setStatus("Closed");
-            $("#status").removeClass("btn-success");
-            $("#status").removeClass("btn-info");
-            $("#status").addClass("btn-warning");
-        }
-
         function setStatus(status) {
             $("#status").html(status);
         }
@@ -168,65 +69,7 @@
 
         var currentLocation = new LocationViewModel();
 
-        function fetchStanox(stanox) {
-            if (!stanox || stanox.length == 0)
-                return;
-
-            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
-                var html = "";
-                if (data.StationName) {
-                    html = data.StationName;
-                } else {
-                    html = data.Tiploc;
-                }
-                if (data.CRS) {
-                    html += "(" + data.CRS + ")";
-                }
-                $(".stanox-" + stanox).html(html);
-                $(".stanox-" + stanox).tooltip({
-                    title: stanox
-                });
-            });
-        }
-
-        function loadLocation(stanox) {
-            if (!stanox || stanox.length == 0)
-                return;
-
-            currentLocation.locationStanox(stanox);
-            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Stanox/", { id: stanox }, function (data) {
-                currentLocation.locationTiploc(data.Tiploc);
-                currentLocation.locationDescription(data.Description);
-                currentLocation.locationCRS(data.CRS);
-                currentLocation.stationName(data.StationName);
-                currentLocation.stationLocation(data.Lat + ", " + data.Lon);
-                if (data.Lat && data.Lon) {
-                    $("#station-loc").attr("src",
-                        "http://maps.googleapis.com/maps/api/staticmap?center=" + data.Lat + "," + data.Lon +
-                        "5&zoom=14&size=310x310&sensor=false&style=feature:transit.station.rail" +
-                        "&key=" + apiKey);
-                    $("#station-loc").show();
-                } else {
-                    $("#station-loc").hide();
-                }
-            });
-        }
-
         var currentFilter = '';
-
-        function filter(location) {
-            if (!location || location.length == 0) {
-                currentFilter = '';
-                $("#table-trains tbody tr").show();
-                return;
-            }
-
-            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Station/", { id: location }, function (data) {
-                currentFilter = data.Name;
-                $("#table-trains tbody tr").hide();
-                $("#table-trains tbody tr." + data.Name).show();
-            });
-        }
 
         function filterTrain(trainid) {
             if (!trainid || trainid.length == 0 || trainid == currentFilter) {
@@ -237,16 +80,6 @@
             currentFilter = trainid;
             $("#table-trains tbody tr").hide();
             $("#table-trains tbody tr." + trainid).show();
-        }
-
-        function preFilterLocation(location) {
-            if (!location || location.length == 0) {
-                sendPreFilter('');
-            } else {
-                $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Station/", { id: location }, function (data) {
-                    sendPreFilter(data.Name);
-                });
-            }
         }
 
         function sendPreFilter(location) {
@@ -263,33 +96,7 @@
         $(function () {
             ko.applyBindings(currentLocation, $("#locationDetails").get(0));
 
-            $.getJSON("http://@System.Configuration.ConfigurationManager.AppSettings["server"]:82/Station/", null, function (results) {
-                if (!results || results.length == 0)
-                    return;
-
-                _locations = Array();
-
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i] && results[i].length > 0)
-                        _locations.push(results[i]);
-                }
-
-                $("#filter-location").typeahead({
-                    source: _locations,
-                    updater: function (item) {
-                        filter(item.substring(0, (item.indexOf('(') - 1)));
-                        return item;
-                    }
-                });
-
-                $("#filter-pre-location").typeahead({
-                    source: _locations,
-                    update: function (item) {
-                        sendPreFilter(item.substring(0, (item.indexOf('(') - 1)));
-                        return item;
-                    }
-                });
-            });
+            preLoadStations();
 
             $('#filter-location').on('change', function (evt) {
                 if ($(evt.target).val() == '') {
