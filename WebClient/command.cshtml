@@ -25,6 +25,7 @@
         }
 
         $(function () {
+            ko.applyBindings(currentTrain, $("#trains").get(0));
 
             $('#filter-location').on('change', function (evt) {
                 if ($(evt.target).val() == '') {
@@ -41,15 +42,62 @@
             });
         });
 
+
+        function TrainViewModel() {
+            var self = this;
+
+            self.Id = ko.observable();
+            self.ServiceCode = ko.observable();
+            self.Stops = ko.observableArray();
+
+            self.addStop = function (stop) {
+                self.Stops.push(stop);
+            };
+
+            self.clearStops = function () {
+                self.Stops.removeAll();
+            }
+        }
+
+        function StopViewModel() {
+            this.Stanox = ko.observable();
+            this.PlannedTime = ko.observable();
+            this.ActualTimeStamp = ko.observable();
+            this.EventType = ko.observable();
+            this.Line = ko.observable();
+            this.Platform = ko.observable();
+        }
+
+        var currentTrain = new TrainViewModel();
+
         function connectWs() {
             connect();
             ws.onmessage = function (msg) {
-                $("#trains").html(msg.data);
+                //$("#trains").html(msg.data);
+                // TODO: determine command sent, this should be sent in msg (TODO as well)
+                currentTrain.clearStops();
+
+                var data = jQuery.parseJSON(msg.data);
+                currentTrain.Id(data.Id);
+                currentTrain.ServiceCode(data.ServiceCode);
+                for (i in data.Steps) {
+                    var stop = new StopViewModel();
+                    stop.Stanox(data.Steps[i].Stanox);
+                    stop.PlannedTime(data.Steps[i].PlannedTime);
+                    stop.ActualTimeStamp(data.Steps[i].ActualTimeStamp);
+                    stop.EventType(data.Steps[i].EventType);
+                    stop.Line(data.Steps[i].Line);
+                    stop.Platform(data.Steps[i].Platform);
+
+                    currentTrain.addStop(stop);
+                }
             };
         }
 
         function clearData() {
-            $("#trains").html('');
+            currentTrain.Id('');
+            currentTrain.ServiceCode('');
+            currentTrain.clearStops();
         }
 
         function sendCommand() {
@@ -115,7 +163,33 @@
                         <a class="btn" href="#" id="status">Connection Status</a>
                     </div>
                 </div>
-                <div style="height: 600px; overflow: auto;" id="trains">
+                <div style="height: 800px; overflow: auto;" id="trains">
+                    <ul class="nav">
+                        <li class="nav-header">Train Details</li>
+                        <li><strong>Id:</strong> <span data-bind="text: Id"></span></li>
+                        <li><strong>Service Code:</strong> <span data-bind="text: ServiceCode"></span></li>
+                        <li class="nav-header">Stops</li>
+                    </ul>
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <th>Action</th>
+                            <th>Expected Time</th>
+                            <th>Actual Time</th>
+                            <th>Line</th>
+                            <th>Platform</th>
+                            <th>Location</th>
+                        </thead>
+                        <tbody data-bind="foreach: Stops">
+                            <tr>
+                                <td data-bind="text: EventType"></td>
+                                <td data-bind="text: PlannedTime"></td>
+                                <td data-bind="text: ActualTimeStamp"></td>
+                                <td data-bind="text: Line"></td>
+                                <td data-bind="text: Platform"></td>
+                                <td data-bind="text: Stanox"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <!--/span9-->
