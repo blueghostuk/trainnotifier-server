@@ -118,11 +118,13 @@
             });
         });
 
+        function wsOpenCommand() {
+            ws.send("subscribe");
+        }
+
         function connectWs() {
             connect();
-            ws.onopen = function () {
-                ws.send("subscribe");
-            };
+
             ws.onmessage = function (msg) {
                 var data = jQuery.parseJSON(msg.data);
                 console.debug(data);
