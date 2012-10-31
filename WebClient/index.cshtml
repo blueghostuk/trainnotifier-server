@@ -14,7 +14,6 @@
         src="http://maps.googleapis.com/maps/api/js?key=@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]&sensor=false">
     </script>
     <script type="text/javascript">
-
         var apiKey = "@System.Configuration.ConfigurationManager.AppSettings["googleApiKey"]";
 
         var server = "@System.Configuration.ConfigurationManager.AppSettings["server"]";
@@ -85,7 +84,7 @@
         }
 
         var _locations;
-        
+
         function LocationViewModel() {
             this.locationStanox = ko.observable();
             this.locationTiploc = ko.observable();
@@ -119,29 +118,104 @@
             });
         });
 
+        function connectWs() {
+            connect();
+            ws.onopen = function () {
+                ws.send("subscribe");
+            };
+            ws.onmessage = function (msg) {
+                var data = jQuery.parseJSON(msg.data);
+                console.debug(data);
+                setStatus("Received " + data.length + " messages at " + new Date(Date.now()).toLocaleString());
+
+                $("#status").removeClass("btn-warning");
+                $("#status").removeClass("btn-success");
+                $("#status").addClass("btn-info");
+
+                for (var i = 0; i < data.length; i++) {
+                    var message = data[i]; //.body;
+
+                    var existing = $("#" + message.train_id).length == 1;
+                    var cls = "";
+                    if (existing) {
+                        $("." + message.train_id).addClass(message.loc_stanox);
+                        cls = $("#" + message.train_id).attr('class');
+                        cls = cls.replace(" info", "");
+                        parent = message.train_id;
+                    } else {
+                        parent = null;
+                        cls = message.loc_stanox + " " + message.train_id;
+                    }
+
+                    var style = "";
+                    if (currentFilter &&
+                        currentFilter.length > 0 &&
+                        cls.indexOf(currentFilter) == -1) {
+                        style = "display:none;";
+                    }
+
+                    var date = new Date(new Number(message.actual_timestamp));
+                    var html = "";
+
+                    if (!existing) {
+                        html += "<tr class=\"" + cls + " info\" style=\"" + style + "\" id=\"" + message.train_id + "\">";
+                        html += "<td><a href=\"#\" onclick=\"filterTrain('" + message.train_id + "');\">" + message.train_id + "</a></td>";
+                        html += "<td>" + message.train_service_code + "</td>";
+                        html += "<td colspan=\"5\"><a href=\"#\" data-toggle=\"modal\" data-target=\"#mapModal\" onclick=\"showMap('" + message.train_id + "');\">View Map</button></td>";
+                        html += "</tr>";
+                    }
+
+                    html += "<tr class=\"" + cls + "\" style=\"" + style + "\" data-timestamp=\"" + message.actual_timestamp + "\">";
+                    html += "<td colspan=\"2\">&nbsp;&nbsp;</td>";
+                    html += "<td>" + message.event_type + "</td>";
+                    html += "<td>" + padTime(date.getUTCHours()) + ":" + padTime(date.getUTCMinutes()) + ":" + padTime(date.getUTCSeconds()) + "</td>";
+                    html += "<td>" + message.direction_ind + "</td>";
+                    html += "<td>" + message.platform + "</td>";
+                    html += "<td><a href=\"#\" class=\"stanox-" + message.loc_stanox + "\" onclick=\"loadLocation('" + message.loc_stanox + "')\">" + message.loc_stanox + "</a></td>";
+
+                    html += "</tr>";
+
+                    if (message.train_terminated && message.train_terminated == "true") {
+                        html += "<tr class=\"" + cls + " " + message.train_id + " warning\"  style=\"" + style + "\"><td colspan=\"7\">Terminated</td></tr>";
+                    }
+
+                    addMessage(html, parent);
+
+                    sortTrainId(message.train_id);
+
+                    fetchStanox(message.loc_stanox);
+                }
+            };
+        }
+
     </script>
     <style type="text/css">
-        html,
         body {
-            height: 100%;
+            padding-top: 60px;
+            padding-bottom: 40px;
         }
 
-        #footer .container {
-            padding: 20px 0;
-            border-top: 1px solid #e7e7e7;
-        }
-
-        #footer p {
-            color: #777;
-            margin-bottom: 0;
+        .sidebar-nav {
+            padding: 9px 0;
         }
     </style>
 </head>
 <body>
     <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-            <div class="container">
+            <div class="container-fluid">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
                 <a class="brand" href="#">@System.Configuration.ConfigurationManager.AppSettings["brandingTitle"]</a>
+                <div class="nav-collapse collapse">
+                    <ul class="nav">
+                        <li class="active"><a href="#">Live Feed</a></li>
+                        <li><a href="~/command.cshtml">Command Screen</a></li>
+                    </ul>
+                </div>
+                <!--/.nav-collapse -->
             </div>
         </div>
     </div>
@@ -149,8 +223,7 @@
         <div class="row-fluid">
             <div class="span3">
                 <div class="well sidebar-nav" id="locationDetails">
-                    <ul class="nav nav-list clearfix">
-                        <br />
+                    <ul class="nav nav-list">
                         <li class="nav-header">Location</li>
                         <li><strong>Stanox:</strong> <span data-bind="text: locationStanox"></span></li>
                         <li><strong>Tiploc:</strong> <span data-bind="text: locationTiploc"></span></li>
@@ -164,60 +237,60 @@
                         </li>
                     </ul>
                 </div>
+                <!--/.well -->
             </div>
+            <!--/span3-->
             <div class="span9">
-                <div class="hero-unit">
-                    <div class="btn-group">
-                        <div class="input-prepend">
+                <div class="btn-group">
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-filter"></i></span>
+                        <input type="text" id="filter-pre-location" class="span4" placeholder="Filter Data Location (optional)" title="Clear and press ENTER to reset" />&nbsp;&nbsp;&nbsp;
+                        <a class="btn btn_connect" onclick="connectWs()" title="Connect to server"><i class="icon-play"></i></a>
+                        <a class="btn btn_disconnect" onclick="disconnect()" disabled="disabled" title="Disconnect from server"><i class="icon-stop"></i></a>
+                        <a class="btn" href="#" title="Clear table" onclick="clearTable();"><i class="icon-remove"></i></a>
+                        <a class="btn" href="#" id="status">Connection Status</a>
+                    </div>
+                </div>
+                <div class="navbar-inner">
+                    <form class="navbar-search pull-right" onsubmit="return false;">
+                        <div class="input-prepend" style="margin-right: 20px">
                             <span class="add-on"><i class="icon-filter"></i></span>
-                            <input type="text" id="filter-pre-location" class="span4" placeholder="Filter Data Location (optional)" title="Clear and press ENTER to reset" />&nbsp;&nbsp;&nbsp;
-                            
-                            <a class="btn" id="btn_Connect" onclick="connect()" title="Connect to server"><i class="icon-play"></i></a>
-                            <a class="btn" id="btn_Disconnect" onclick="disconnect()" disabled="disabled" title="Disconnect from server"><i class="icon-stop"></i></a>
-                            <a class="btn" href="#" title="Clear table" onclick="clearTable();"><i class="icon-remove"></i></a>
-                            <a class="btn" href="#" id="status">Connection Status</a>
+                            <input type="text" id="filter-location" class="span12" placeholder="Filter Table Location" title="Clear and press ENTER to reset" />
+                            <br />
                         </div>
-                    </div>
-                    <div class="navbar-inner">
-                        <form class="navbar-search pull-right" onsubmit="return false;">
-                            <div class="input-prepend" style="margin-right: 20px">
-                                <span class="add-on"><i class="icon-filter"></i></span>
-                                <input type="text" id="filter-location" class="span12" placeholder="Filter Table Location" title="Clear and press ENTER to reset" />
-                                <br />
-                            </div>
-                        </form>
-                    </div>
-                    <div style="height: 600px; overflow: auto;">
-                        <table class="table .table-hover table-bordered" id="table-trains">
-                            <thead>
-                                <th>Train ID</th>
-                                <th>Service Code</th>
-                                <th>Action</th>
-                                <th>Time</th>
-                                <th>Direction</th>
-                                <th>Platform</th>
-                                <th>Location</th>
-                            </thead>
-                            <tbody id="data">
-                            </tbody>
-                        </table>
-                        <div class="pagination pagination-centered">
-                            <ul>
-                                <li><a href="#">Prev</a></li>
-                                <li><a href="#">1</a></li>
-                                <li><a href="#">2</a></li>
-                                <li><a href="#">3</a></li>
-                                <li><a href="#">4</a></li>
-                                <li><a href="#">Next</a></li>
-                            </ul>
-                        </div>
+                    </form>
+                </div>
+                <div style="height: 600px; overflow: auto;">
+                    <table class="table .table-hover table-bordered" id="table-trains">
+                        <thead>
+                            <th>Train ID</th>
+                            <th>Service Code</th>
+                            <th>Action</th>
+                            <th>Time</th>
+                            <th>Direction</th>
+                            <th>Platform</th>
+                            <th>Location</th>
+                        </thead>
+                        <tbody id="data">
+                        </tbody>
+                    </table>
+                    <div class="pagination pagination-centered">
+                        <ul>
+                            <li><a href="#">Prev</a></li>
+                            <li><a href="#">1</a></li>
+                            <li><a href="#">2</a></li>
+                            <li><a href="#">3</a></li>
+                            <li><a href="#">4</a></li>
+                            <li><a href="#">Next</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
+            <!--/span9-->
         </div>
-    </div>
-    <div id="footer">
-        <div class="container">
+        <!--/row-fluid-->
+        <hr />
+        <footer>
             <p>
                 Copyright &copy; Michael Pritchard 2012. <a href="https://twitter.com/blueghostuk" class="twitter-follow-button" data-show-count="false">Follow @@blueghostuk</a>
                 <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "//platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "twitter-wjs");</script>
@@ -229,8 +302,9 @@
                 <a href="http://alchemywebsockets.net/" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>Alchemy Websockets</a> (server-side).
                 Source: <a href="https://github.com/blueghostuk/networkrail-downloader" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>on github</a>
             </p>
-        </div>
+        </footer>
     </div>
+    <!--/container-fluid-->
     <div id="mapModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel" aria-hidden="true">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
