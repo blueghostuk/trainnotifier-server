@@ -22,6 +22,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.SelfHost;
+using NetworkRailDownloader.WebApi.MessageHandlers;
 
 namespace NetworkRailDownloader.WebApi
 {
@@ -92,25 +93,7 @@ namespace NetworkRailDownloader.WebApi
             {
                 _server.CloseAsync().Wait();
             }
-        }
-
-        private sealed class CorsHeader : MessageProcessingHandler
-        {
-            protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
-            {
-                request.Headers.Add("Access-Control-Allow-Origin", "*");
-                request.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
-                return request;
-            }
-
-            protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, System.Threading.CancellationToken cancellationToken)
-            {
-                response.Headers.Add("Access-Control-Allow-Origin", "*");
-                response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
-                return response;
-            }
-        }
-        
+        }        
     }
 
     [RunInstaller(true)]
