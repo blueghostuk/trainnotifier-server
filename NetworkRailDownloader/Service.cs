@@ -13,6 +13,7 @@ namespace NetworkRailDownloader.Console
         private WebSocketServerWrapper _wsServerWrapper;
         private UserManager _userManager;
         private NMSWrapper _nmsWrapper;
+        private CacheController _cacheController;
 
         static void Main(string[] args)
         {
@@ -64,6 +65,7 @@ namespace NetworkRailDownloader.Console
             Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, 81);
 
             _nmsWrapper = new NMSWrapper(_userManager, _asService ? true : false);
+            _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
             _nmsWrapper.Start();
         }
 
@@ -76,6 +78,10 @@ namespace NetworkRailDownloader.Console
             if (_wsServerWrapper != null)
             {
                 _wsServerWrapper.Stop();
+            }
+            if (_cacheController != null)
+            {
+                _cacheController.Dispose();
             }
         }
     }
