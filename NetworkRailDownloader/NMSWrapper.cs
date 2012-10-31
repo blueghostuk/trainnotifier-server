@@ -2,6 +2,7 @@
 using NetworkRailDownloader.Common;
 using NetworkRailDownloader.Downloader;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace NetworkRailDownloader.Console
         private readonly UserManager _userManager;
         private readonly IDownloader _nmsDownloader;
 
+        public event EventHandler<FeedEventArgs> FeedDataRecieved;
+
         public NMSWrapper(UserManager userManager, bool quitOnError = false)
         {
             _userManager = userManager;
@@ -23,9 +26,14 @@ namespace NetworkRailDownloader.Console
         {
             _nmsDownloader.FeedDataRecieved += (src, feedData) =>
             {
-                dynamic dataJson = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
+                dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
                 Parallel.ForEach(_userManager.ActiveUsers
-                    .Where(u => DoSendData(dataJson, u.Value)), uc => SendData(uc, dataJson as IEnumerable<dynamic>));
+                    .Where(u => u.Value.State == UserContextState.SubscribeToFeed)
+                    .Where(u => DoSendData(evtData, u.Value.StateArgs.ToString())), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+
+                var eh = FeedDataRecieved;
+                if (null != eh)
+                    eh(this, new FeedEventArgs(evtData));
             };
 
             Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
@@ -49,14 +57,24 @@ namespace NetworkRailDownloader.Console
             return false;
         }
 
-        private static void SendData(KeyValuePair<UserContext, string> uc, IEnumerable<dynamic> evtData)
+        private static void SendData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
         {
             var data = evtData;
-            if (!string.IsNullOrWhiteSpace(uc.Value))
+            if (!string.IsNullOrWhiteSpace(uc.Value.StateArgs.ToString()))
             {
                 data = evtData.Where(e => e.body.loc_stanox == uc.Value);
             }
             uc.Key.Send(JsonConvert.SerializeObject(data.Select(e => e.body)));
+        }
+    }
+
+    public sealed class FeedEventArgs : EventArgs
+    {
+        public readonly dynamic Data;
+
+        public FeedEventArgs(dynamic data)
+        {
+            Data = data;
         }
     }
 }
