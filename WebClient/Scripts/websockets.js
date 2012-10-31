@@ -16,6 +16,10 @@ function connect() {
         if (preFilter && preFilter.length > 0) {
             preFilterLocation(preFilter.substring(0, (preFilter.indexOf('(') - 1)));
         }
+
+        try{
+            wsOpenCommand();
+        } catch (err) { }
     };
     ws.onclose = function () {
         setStatus("Disconnected");
