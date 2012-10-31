@@ -94,6 +94,7 @@
     <Content Include="Content\images\glyphicons-halflings.png" />
     <Content Include="index.cshtml" />
     <Content Include="packages.config" />
+    <Content Include="command.cshtml" />
     <None Include="Properties\PublishProfiles\WS3.pubxml" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
     <Content Include="Scripts\ajax-lookups.js" />

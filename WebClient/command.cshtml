@@ -1,0 +1,140 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-1.8.2.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/knockout-2.2.0.js"></script>
+    <script src="~/Scripts/websockets.js"></script>
+    <script src="~/Scripts/ajax-lookups.js"></script>
+    </script>
+    <script type="text/javascript">
+
+        var server = "@System.Configuration.ConfigurationManager.AppSettings["server"]";
+
+        function padTime(time) {
+            if (time < 10)
+                return "0" + time;
+            return time;
+        }
+
+        function setStatus(status) {
+            $("#status").html(status);
+        }
+
+        $(function () {
+
+            $('#filter-location').on('change', function (evt) {
+                if ($(evt.target).val() == '') {
+                    filter(null);
+                }
+            });
+
+            $('#filter-pre-location').on('change', function (evt) {
+                var item = $(evt.target).val();
+                if (item && item.length > 0)
+                    preFilterLocation(item.substring(0, (item.indexOf('(') - 1)));
+                else
+                    sendPreFilter('');
+            });
+        });
+
+        function connectWs() {
+            connect();
+            ws.onmessage = function (msg) {
+                $("#trains").html(msg.data);
+            };
+        }
+
+        function clearData() {
+            $("#trains").html('');
+        }
+
+        function sendCommand() {
+            ws.send($("#filter-command").val());
+        }
+
+        function setCommand(command) {
+            $("#filter-command").val(command);
+        }
+
+    </script>
+    <style type="text/css">
+        body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+        }
+
+        .sidebar-nav {
+            padding: 9px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container-fluid">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a>
+                <a class="brand" href="#">@System.Configuration.ConfigurationManager.AppSettings["brandingTitle"]</a>
+                <div class="nav-collapse collapse">
+                    <ul class="nav">
+                        <li><a href="~/index.cshtml">Live Feed</a></li>
+                        <li class="active"><a href="#">Command Screen</a></li>
+                    </ul>
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span3">
+                <div class="well sidebar-nav" id="locationDetails">
+                    <ul class="nav nav-list">
+                        <li class="nav-header">Commands</li>
+                        <li><a onclick="setCommand('gettrain--:');"><strong>Get Train:</strong> gettrain--:[train id]</a></li>
+                    </ul>
+                </div>
+                <!--/.well -->
+            </div>
+            <!--/span3-->
+            <div class="span9">
+                <div class="btn-group">
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-asterisk"></i></span>
+                        <input type="text" id="filter-command" class="span4" placeholder="Enter Command" />&nbsp;&nbsp;&nbsp;
+                        <a class="btn btn_disconnect" id="btn_Command" onclick="sendCommand()" disabled="disabled" title="Send Command"><i class="icon-arrow-right"></i></a>
+                        <a class="btn" id="btn_Connect" onclick="connectWs()" title="Connect to server"><i class="icon-play"></i></a>
+                        <a class="btn btn_disconnect" onclick="disconnect()" disabled="disabled" title="Disconnect from server"><i class="icon-stop"></i></a>
+                        <a class="btn" href="#" title="Clear data" onclick="clearData();"><i class="icon-remove"></i></a>
+                        <a class="btn" href="#" id="status">Connection Status</a>
+                    </div>
+                </div>
+                <div style="height: 600px; overflow: auto;" id="trains">
+                </div>
+            </div>
+            <!--/span9-->
+        </div>
+        <!--/row-fluid-->
+        <hr />
+        <footer>
+            <p>
+                Copyright &copy; Michael Pritchard 2012. <a href="https://twitter.com/blueghostuk" class="twitter-follow-button" data-show-count="false">Follow @@blueghostuk</a>
+                <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "//platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "twitter-wjs");</script>
+                <br />
+                Contains information of Network Rail Infrastructure Limited licensed under the following licence:<br />
+                <a href="http://www.networkrail.co.uk/data-feeds/terms-and-conditions" target="_blank" title="Opens in new window"><i class="icon-share-alt" title="Opens in new window"></i>www.networkrail.co.uk/data-feeds/terms-and-conditions</a>
+                <br />
+                Uses: <a href="http://twitter.github.com/bootstrap/" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>Twitter Bootstrap</a>, 
+                <a href="http://alchemywebsockets.net/" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>Alchemy Websockets</a> (server-side).
+                Source: <a href="https://github.com/blueghostuk/networkrail-downloader" target="_blank"><i class="icon-share-alt" title="Opens in new window"></i>on github</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
