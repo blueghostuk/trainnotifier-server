@@ -9,7 +9,7 @@ namespace NetworkRailDownloader.WebApi.Controllers
 {
     public class StationController : ApiController
     {
-        [WebApiOutputCache(86400, 604800, false)]
+        //[WebApiOutputCache(86400, 604800, false)]
         public IEnumerable<string> Get()
         {
             IEnumerable<dynamic> results = new TiplocRepository().Get();
@@ -20,7 +20,7 @@ namespace NetworkRailDownloader.WebApi.Controllers
                 .Cast<string>();
         }
 
-        [WebApiOutputCache(3600, 604800, false)]
+        //[WebApiOutputCache(3600, 604800, false)]
         public Stanox Get(string id)
         {
             dynamic result = new TiplocRepository().GetByStationName(id);
