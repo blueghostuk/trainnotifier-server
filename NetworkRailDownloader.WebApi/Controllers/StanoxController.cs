@@ -9,7 +9,7 @@ namespace NetworkRailDownloader.WebApi.Controllers
 {
     public class StanoxController : ApiController
     {
-        [WebApiOutputCache(86400, 604800, false)]
+        //[WebApiOutputCache(86400, 604800, false)]
         public IEnumerable<Stanox> Get()
         {
             IEnumerable<dynamic> results = new TiplocRepository().Get();
@@ -18,7 +18,7 @@ namespace NetworkRailDownloader.WebApi.Controllers
                 .Cast<Stanox>();
         }
 
-        [WebApiOutputCache(3600, 604800, false)]
+        //[WebApiOutputCache(3600, 604800, false)]
         public Stanox Get(string id)
         {
             dynamic result = new TiplocRepository().GetByStanox(id);
