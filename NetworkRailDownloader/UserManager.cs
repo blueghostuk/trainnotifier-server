@@ -19,33 +19,50 @@ namespace NetworkRailDownloader.Console
             webSocketServer.OnConnected += (s, context) =>
             {
                 Trace.TraceInformation("Connection From : {0}", context.UserContext.ClientAddress);
-                _activeUsers.Add(context.UserContext, new UserContextData());
+                AddNewUser(context.UserContext);
             };
 
             webSocketServer.OnDisconnect += (s, context) =>
             {
                 Trace.TraceInformation("{0} disconnected", context.UserContext.ClientAddress);
-                _activeUsers.Remove(context.UserContext);
+                RemoveUser(context.UserContext);
             };
 
             webSocketServer.OnReceive += (s, context) =>
             {
                 Trace.TraceInformation("Received {0} from {1}", context.UserContext.DataFrame.ToString(), context.UserContext.ClientAddress);
                 string command = context.UserContext.DataFrame.ToString();
+                UserContextData data = null;
+                if (!_activeUsers.TryGetValue(context.UserContext, out data))
+                {
+                    data = AddNewUser(context.UserContext);
+                }
                 switch (command)
                 {
                     case "subscribe":
-                        _activeUsers[context.UserContext].State = UserContextState.SubscribeToFeed;
+                        data.State = UserContextState.SubscribeToFeed;
                         break;
                     case "unsubscribe":
-                        _activeUsers[context.UserContext].State = UserContextState.None;
+                        data.State = UserContextState.None;
                         break;
                     default:
-                        _activeUsers[context.UserContext].StateArgs = command;
+                        data.StateArgs = command;
                         break;
                 }
-                _activeUsers[context.UserContext].LastRequest = command;
+                data.LastRequest = command;
             };
+        }
+
+        private void RemoveUser(UserContext context)
+        {
+            _activeUsers.Remove(context);
+        }
+
+        private UserContextData AddNewUser(UserContext context)
+        {
+            UserContextData data = new UserContextData();
+            _activeUsers.Add(context, data);
+            return data;
         }
     }
 
