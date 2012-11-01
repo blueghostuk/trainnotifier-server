@@ -21,26 +21,14 @@ function fetchStanox(stanox) {
     });
 }
 
-function loadLocation(stanox) {
+function loadLocation(stanox, callback) {
     if (!stanox || stanox.length == 0)
         return;
 
-    currentLocation.locationStanox(stanox);
     $.getJSON("http://" + server + ":82/Stanox/", { id: stanox }, function (data) {
-        currentLocation.locationTiploc(data.Tiploc);
-        currentLocation.locationDescription(data.Description);
-        currentLocation.locationCRS(data.CRS);
-        currentLocation.stationName(data.StationName);
-        currentLocation.stationLocation(data.Lat + ", " + data.Lon);
-        if (data.Lat && data.Lon) {
-            $("#station-loc").attr("src",
-                "http://maps.googleapis.com/maps/api/staticmap?center=" + data.Lat + "," + data.Lon +
-                "5&zoom=14&size=310x310&sensor=false&style=feature:transit.station.rail" +
-                "&key=" + apiKey);
-            $("#station-loc").show();
-        } else {
-            $("#station-loc").hide();
-        }
+        if (!callback)
+            callback = loadLocationCallback;
+        callback(data);
     });
 }
 
