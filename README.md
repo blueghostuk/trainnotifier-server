@@ -6,7 +6,7 @@ To gain access to data you need to sign up at https://datafeeds.networkrail.co.u
 
 Uses Apache ActiveMQ - http://activemq.apache.org/nms/index.html
 
-You may be able to access a demo site @ http://blueghostuk.homeip.net/NR/
+You may be able to access a demo site @ http://www.trainnotifier.co.uk
 
 Copyright (C) 2012 Michael Pritchard
 
