@@ -7,6 +7,20 @@ namespace NetworkRailDownloader.Common
 {
     public static class TraceHelper
     {
+        private static readonly RollingFileTraceListener _rollingFileTraceListener = new RollingFileTraceListener
+        {
+            ConvertWriteToEvent = true,
+            Template = "{DateTime:HH':'mm':'ssZ} [{Thread}] {EventType}: {Message}{Data}"
+        };
+
+        public static void FlushLog()
+        {
+            if (_rollingFileTraceListener != null)
+            {
+                _rollingFileTraceListener.Flush();
+            }
+        } 
+
         public static void SetupTrace()
         {
             string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
@@ -19,11 +33,7 @@ namespace NetworkRailDownloader.Common
             {
                 Template = "{DateTime:HH':'mm':'ssZ} [{Thread}] {EventType}: {Message}{Data}"
             });
-            Trace.Listeners.Add(new RollingFileTraceListener
-            {
-                ConvertWriteToEvent = true,
-                Template = "{DateTime:HH':'mm':'ssZ} [{Thread}] {EventType}: {Message}{Data}"
-            });
+            Trace.Listeners.Add(_rollingFileTraceListener);
         }
     }
 }

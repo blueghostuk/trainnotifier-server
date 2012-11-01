@@ -1,4 +1,5 @@
 ﻿using NetworkRailDownloader.Common;
+using System;
 using System.ComponentModel;
 using System.Configuration.Install;
 using System.Diagnostics;
@@ -51,6 +52,12 @@ namespace NetworkRailDownloader.Console
             InitializeComponent();
 
             TraceHelper.SetupTrace();
+
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
+                TraceHelper.FlushLog();
+            };
         }
 
         protected override void OnStart(string[] args)
