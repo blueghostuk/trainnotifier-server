@@ -29,7 +29,7 @@ namespace NetworkRailDownloader.Console
                 }
                 else if (args[0] == "console")
                 {
-                    Service service = new Service(false);
+                    Service service = new Service();
                     service.OnStart(null);
 
                     System.Console.WriteLine("Press any key to disconnect");
@@ -46,13 +46,9 @@ namespace NetworkRailDownloader.Console
             }
         }
 
-        private readonly bool _asService = true;
-
-        public Service(bool asService = true)
+        public Service()
         {
             InitializeComponent();
-
-            _asService = asService;
 
             TraceHelper.SetupTrace();
         }
@@ -64,7 +60,7 @@ namespace NetworkRailDownloader.Console
             _wsServerWrapper.Start();
             Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, 81);
 
-            _nmsWrapper = new NMSWrapper(_userManager, _asService ? true : false);
+            _nmsWrapper = new NMSWrapper(_userManager);
             _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
             _nmsWrapper.Start();
         }
