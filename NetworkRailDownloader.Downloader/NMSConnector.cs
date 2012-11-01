@@ -62,6 +62,7 @@ namespace NetworkRailDownloader.Downloader
             catch (Apache.NMS.NMSException nmsE)
             {
                 Trace.TraceError("Exception: {0}", nmsE);
+                TraceHelper.FlushLog();
                 ResubscribeMechanism(feed);
             }
             catch (RetryException)
@@ -104,6 +105,7 @@ namespace NetworkRailDownloader.Downloader
                             if (!cm.QuitOk)
                             {
                                 Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                                TraceHelper.FlushLog();
                                 throw new RetryException();
                             }
                         }
