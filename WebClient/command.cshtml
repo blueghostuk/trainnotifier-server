@@ -26,6 +26,7 @@
 
         $(function () {
             ko.applyBindings(currentTrain, $("#trains").get(0));
+            ko.applyBindings(currentStation, $("#stanox").get(0));
 
             $('#filter-location').on('change', function (evt) {
                 if ($(evt.target).val() == '') {
@@ -48,6 +49,9 @@
 
             self.Id = ko.observable();
             self.ServiceCode = ko.observable();
+            self.Activated = ko.observable();
+            self.SchedOrigin = ko.observable();
+            self.SchedDepart = ko.observable();
             self.Stops = ko.observableArray();
 
             self.addStop = function (stop) {
@@ -60,37 +64,70 @@
         }
 
         function StopViewModel() {
-            this.Stanox = ko.observable();
-            this.PlannedTime = ko.observable();
-            this.ActualTimeStamp = ko.observable();
-            this.EventType = ko.observable();
-            this.Line = ko.observable();
-            this.Platform = ko.observable();
+            var self = this;
+
+            self.Stanox = ko.observable();
+            self.PlannedTime = ko.observable();
+            self.ActualTimeStamp = ko.observable();
+            self.EventType = ko.observable();
+            self.Line = ko.observable();
+            self.Platform = ko.observable();
+        }
+
+        function StanoxSearchResultViewModel() {
+            var self = this;
+
+            self.Stanox = ko.observable();
+            self.Trains = ko.observableArray();
+
+            self.addTrain = function (train) {
+                self.Trains.push(train);
+            };
+
+            self.clearTrains = function () {
+                self.Trains.removeAll();
+            }
         }
 
         var currentTrain = new TrainViewModel();
+        var currentStation = new StanoxSearchResultViewModel();
 
         function connectWs() {
             connect();
 
             ws.onmessage = function (msg) {
-                //$("#trains").html(msg.data);
-                // TODO: determine command sent, this should be sent in msg (TODO as well)
-                currentTrain.clearStops();
 
                 var data = jQuery.parseJSON(msg.data);
-                currentTrain.Id(data.Id);
-                currentTrain.ServiceCode(data.ServiceCode);
-                for (i in data.Steps) {
-                    var stop = new StopViewModel();
-                    stop.Stanox(data.Steps[i].Stanox);
-                    stop.PlannedTime(data.Steps[i].PlannedTime);
-                    stop.ActualTimeStamp(data.Steps[i].ActualTimeStamp);
-                    stop.EventType(data.Steps[i].EventType);
-                    stop.Line(data.Steps[i].Line);
-                    stop.Platform(data.Steps[i].Platform);
+                switch (data.Command) {
+                    case "gettrain":
+                        currentTrain.clearStops();
+                        data = data.Response;
+                        currentTrain.Id(data.Id);
+                        currentTrain.ServiceCode(data.ServiceCode);
+                        currentTrain.Activated(data.Activated);
+                        currentTrain.SchedOrigin(data.SchedOriginStanox);
+                        currentTrain.SchedDepart(data.SchedOriginDeparture);
+                        for (i in data.Steps) {
+                            var stop = new StopViewModel();
+                            stop.Stanox(data.Steps[i].Stanox);
+                            stop.PlannedTime(data.Steps[i].PlannedTime);
+                            stop.ActualTimeStamp(data.Steps[i].ActualTimeStamp);
+                            stop.EventType(data.Steps[i].EventType);
+                            stop.Line(data.Steps[i].Line);
+                            stop.Platform(data.Steps[i].Platform);
 
-                    currentTrain.addStop(stop);
+                            currentTrain.addStop(stop);
+                        }
+                        break;
+                    case "station":
+                    case "crs":
+                        currentStation.clearTrains();
+                        data = data.Response;
+                        currentStation.Stanox(data.Name);
+                        for (i in data.TrainIds) {
+                            currentStation.addTrain(data.TrainIds[i]);
+                        }
+                        break;
                 }
             };
         }
@@ -107,6 +144,11 @@
 
         function setCommand(command) {
             $("#filter-command").val(command);
+        }
+
+        function loadTrain(el) {
+            setCommand('gettrain--:' + $(el).children().html());
+            sendCommand();
         }
 
     </script>
@@ -147,6 +189,16 @@
                     <ul class="nav nav-list">
                         <li class="nav-header">Commands</li>
                         <li><a onclick="setCommand('gettrain--:');"><strong>Get Train:</strong> gettrain--:[train id]</a></li>
+                        <li><a onclick="setCommand('stanox----:');"><strong>Get Station Trains:</strong> stanox----:[stanox]</a></li>
+                        <li><a onclick="setCommand('crs-------:');"><strong>Get Station Trains:</strong> crs-------:[crs]</a></li>
+                    </ul>
+                </div>
+                <div class="well sidebar-nav" id="stanox">
+                    <ul class="nav nav-list">
+                        <li class="nav-header">Station Trains: <span data-bind="text: Stanox"></span></li>
+                    </ul>
+                    <ul class="nav nav-list" data-bind="foreach: Trains" style="height: 600px; overflow: auto;">
+                        <li><a href="#" onclick="loadTrain(this);"><span data-bind="text: $data"></span></a></li>
                     </ul>
                 </div>
                 <!--/.well -->
@@ -158,7 +210,7 @@
                         <span class="add-on"><i class="icon-asterisk"></i></span>
                         <input type="text" id="filter-command" class="span4" placeholder="Enter Command" />&nbsp;&nbsp;&nbsp;
                         <a class="btn btn_disconnect" id="btn_Command" onclick="sendCommand()" disabled="disabled" title="Send Command"><i class="icon-arrow-right"></i></a>
-                        <a class="btn" id="btn_Connect" onclick="connectWs()" title="Connect to server"><i class="icon-play"></i></a>
+                        <a class="btn btn_connect" id="btn_Connect" onclick="connectWs()" title="Connect to server"><i class="icon-play"></i></a>
                         <a class="btn btn_disconnect" onclick="disconnect()" disabled="disabled" title="Disconnect from server"><i class="icon-stop"></i></a>
                         <a class="btn" href="#" title="Clear data" onclick="clearData();"><i class="icon-remove"></i></a>
                         <a class="btn" href="#" id="status">Connection Status</a>
@@ -169,6 +221,9 @@
                         <li class="nav-header">Train Details</li>
                         <li><strong>Id:</strong> <span data-bind="text: Id"></span></li>
                         <li><strong>Service Code:</strong> <span data-bind="text: ServiceCode"></span></li>
+                        <li><strong>Activated:</strong> <span data-bind="text: Activated"></span></li>
+                        <li><strong>Scheduled Origin:</strong> <span data-bind="text: SchedOrigin"></span></li>
+                        <li><strong>Scheduled Departure Time:</strong> <span data-bind="text: SchedDepart"></span></li>
                         <li class="nav-header">Stops</li>
                     </ul>
                     <table class="table table-hover table-bordered">

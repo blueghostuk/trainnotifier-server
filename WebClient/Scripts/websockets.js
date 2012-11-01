@@ -11,6 +11,7 @@ function connect() {
         $("#status").removeClass("btn-warning");
         $("#status").removeClass("btn-info");
         $("#status").addClass("btn-success");
+        $(".btn_connect").attr("disabled", true);
 
         var preFilter = $("#filter-pre-location").val();
         if (preFilter && preFilter.length > 0) {
