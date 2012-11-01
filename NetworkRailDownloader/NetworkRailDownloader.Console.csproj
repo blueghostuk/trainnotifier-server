@@ -79,6 +79,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheController.cs" />
+    <Compile Include="Model\CommandResponse.cs" />
+    <Compile Include="Model\Stanox.cs" />
     <Compile Include="Model\TrainMovement.cs" />
     <Compile Include="Model\TrainMovementStep.cs" />
     <Compile Include="NMSWrapper.cs" />
@@ -124,6 +126,10 @@
     <ProjectReference Include="..\NetworkRailDownloader.Downloader\NetworkRailDownloader.Downloader.csproj">
       <Project>{e49f108e-329b-4317-bd3f-882ce964753d}</Project>
       <Name>NetworkRailDownloader.Downloader</Name>
+    </ProjectReference>
+    <ProjectReference Include="NetworkRailDownloader.ServiceLayer\NetworkRailDownloader.ServiceLayer.csproj">
+      <Project>{5aae47c1-e8a0-456d-86ca-c92b0c68f27c}</Project>
+      <Name>NetworkRailDownloader.ServiceLayer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetworkRailDownloader.Console.Model
 {
@@ -15,7 +13,14 @@ namespace NetworkRailDownloader.Console.Model
         public DateTime? SchedOriginDeparture { get; set; }
 
         private readonly ICollection<TrainMovementStep> _steps;
-        public IEnumerable<TrainMovementStep> Steps { get { return _steps; } }
+        public IEnumerable<TrainMovementStep> Steps
+        {
+            get
+            {
+                return _steps
+                    .OrderBy(s => s.ActualTimeStamp);
+            }
+        }
 
         public TrainMovement()
         {
