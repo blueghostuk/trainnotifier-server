@@ -16,10 +16,10 @@ namespace NetworkRailDownloader.Console
 
         public event EventHandler<FeedEventArgs> FeedDataRecieved;
 
-        public NMSWrapper(UserManager userManager, bool quitOnError = false)
+        public NMSWrapper(UserManager userManager)
         {
             _userManager = userManager;
-            _nmsDownloader = new NMSConnector(quitOnError);
+            _nmsDownloader = new NMSConnector();
         }
 
         public void Start()
