@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace TrainNotifier.Common.Model
@@ -6,19 +7,42 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public sealed class Stanox
     {
-        private readonly ICollection<string> _trainIds;
-        private readonly string _stanox;
+        private ICollection<string> _trainIds;
 
         [DataMember]
-        public string Name { get { return _stanox; } }
+        public string Name { get; set; }
 
         [DataMember]
-        public IEnumerable<string> TrainIds { get { return _trainIds; } }
-
-        public Stanox(string stanox)
+        public IEnumerable<string> TrainIds
         {
-            _stanox = stanox;
+            get
+            {
+                if (_trainIds == null)
+                    return Enumerable.Empty<string>();
+
+                return _trainIds;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    _trainIds = new HashSet<string>(value);
+                }
+                else
+                {
+                    _trainIds = new HashSet<string>();
+                }
+            }
+        }
+
+        public Stanox()
+        {
             _trainIds = new HashSet<string>();
+        }
+
+        public Stanox(string stanox) : this()
+        {
+            Name = stanox;
         }
 
         public void AddTrainId(string trainId)

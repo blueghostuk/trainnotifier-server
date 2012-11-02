@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Runtime.Caching;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
@@ -14,7 +15,7 @@ namespace TrainNotifier.WcfLibrary
         {
             return new CacheItemPolicy
             {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(1)
+                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDays"]))
             };
         }
 
