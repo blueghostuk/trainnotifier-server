@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetworkRailDownloader.Common.Model
+namespace TrainNotifier.Common.Model
 {
     public class CommandResponse<T>
     {

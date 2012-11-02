@@ -1,17 +1,11 @@
-﻿using NetworkRailDownloader.Common;
-using NetworkRailDownloader.Common.Services;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
 using System.Configuration.Install;
-using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
+using TrainNotifier.Common;
 using TrainNotifier.WcfLibrary;
 
 namespace TrainNotifer.Console.Wcf

@@ -1,7 +1,7 @@
-﻿using NetworkRailDownloader.Common.Model;
-using System.ServiceModel;
+﻿using System.ServiceModel;
+using TrainNotifier.Common.Model;
 
-namespace NetworkRailDownloader.Common.Services
+namespace TrainNotifier.Common.Services
 {
     [ServiceContract]
     public interface ICacheService

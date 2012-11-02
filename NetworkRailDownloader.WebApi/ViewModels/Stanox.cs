@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetworkRailDownloader.WebApi.ViewModels
+namespace TrainNotifier.Console.WebApi.ViewModels
 {
     public class Stanox
     {

@@ -1,13 +1,13 @@
 ﻿using Alchemy.Classes;
-using NetworkRailDownloader.Common;
-using NetworkRailDownloader.Downloader;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TrainNotifier.Common;
+using TrainNotifier.Common.NMS;
 
-namespace NetworkRailDownloader.Common
+namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class NMSWrapper
     {

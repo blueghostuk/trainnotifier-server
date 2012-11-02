@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace NetworkRailDownloader.Downloader
+namespace TrainNotifier.Common.NMS
 {
     public class NMSConnectionMonitor : IDisposable
     {

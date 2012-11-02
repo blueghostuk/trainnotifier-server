@@ -1,4 +1,4 @@
-﻿namespace NetworkRailDownloader.Console
+﻿namespace TrainNotifier.Console.WebSocketServer
 {
     partial class Service
     {

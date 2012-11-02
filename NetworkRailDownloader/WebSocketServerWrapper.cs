@@ -1,13 +1,12 @@
 ﻿using Alchemy;
-using Alchemy.Classes;
 using System;
 using System.Net;
 
-namespace NetworkRailDownloader.Common
+namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class WebSocketServerWrapper
     {
-        private readonly WebSocketServer _webSocketServer;
+        private readonly Alchemy.WebSocketServer _webSocketServer;
 
         public event EventHandler<UserContextEventArgs> OnConnect;
         public event EventHandler<UserContextEventArgs> OnConnected;
@@ -17,7 +16,7 @@ namespace NetworkRailDownloader.Common
 
         public WebSocketServerWrapper(int port = 81, IPAddress ipAddress = null)
         {
-            _webSocketServer = new WebSocketServer(port, (ipAddress ?? IPAddress.Any))
+            _webSocketServer = new Alchemy.WebSocketServer(port, (ipAddress ?? IPAddress.Any))
             {
                 TimeOut = TimeSpan.FromMinutes(5)
             };

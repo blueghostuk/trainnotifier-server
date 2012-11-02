@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace NetworkRailDownloader.Common.Model
+namespace TrainNotifier.Common.Model
 {
     [DataContract]
     public sealed class TrainMovement

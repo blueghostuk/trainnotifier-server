@@ -1,7 +1,7 @@
-﻿using NetworkRailDownloader.Common.Model;
-using NetworkRailDownloader.Common.Services;
-using System;
+﻿using System;
 using System.Runtime.Caching;
+using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Services;
 
 namespace TrainNotifier.WcfLibrary
 {
