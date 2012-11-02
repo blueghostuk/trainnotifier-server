@@ -1,15 +1,12 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Common;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Transactions;
-using Dapper;
 
-namespace NetworkRailDownloader.ServiceLayer
+namespace TrainNotifier.ServiceLayer
 {
     public abstract class DbRepository
     {

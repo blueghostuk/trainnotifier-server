@@ -1,5 +1,4 @@
-﻿using NetworkRailDownloader.Common;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Configuration.Install;
 using System.Diagnostics;
@@ -7,8 +6,9 @@ using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
+using TrainNotifier.Common;
 
-namespace NetworkRailDownloader.Console
+namespace TrainNotifier.Console.WebSocketServer
 {
     partial class Service : ServiceBase
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NetworkRailDownloader.Common
+namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class UserContextEventArgs : EventArgs
     {

@@ -7,8 +7,8 @@
     <ProjectGuid>{5160D315-1A64-453A-95DC-43FB80F80FED}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkRailDownloader.Common</RootNamespace>
-    <AssemblyName>NetworkRailDownloader</AssemblyName>
+    <RootNamespace>TrainNotifier.Console.WebSocketServer</RootNamespace>
+    <AssemblyName>TrainNotifier.Console.WebSocketServer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">.\</SolutionDir>
@@ -57,7 +57,7 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>NetworkRailDownloader.Console.Service</StartupObject>
+    <StartupObject>TrainNotifier.Console.WebSocketServer.Service</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Alchemy">

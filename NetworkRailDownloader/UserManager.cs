@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace NetworkRailDownloader.Common
+namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class UserManager
     {

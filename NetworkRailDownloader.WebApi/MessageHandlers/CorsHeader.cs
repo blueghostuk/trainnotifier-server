@@ -1,6 +1,6 @@
 ﻿using System.Net.Http;
 
-namespace NetworkRailDownloader.WebApi.MessageHandlers
+namespace TrainNotifier.Console.WebApi.MessageHandlers
 {
     internal sealed class CorsHeader : MessageProcessingHandler
     {

@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace NetworkRailDownloader.Common
+namespace TrainNotifier.Common
 {
     public static class TraceHelper
     {

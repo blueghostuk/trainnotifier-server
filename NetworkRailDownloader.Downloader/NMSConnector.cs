@@ -1,7 +1,6 @@
 ﻿using Apache.NMS;
 using Apache.NMS.Stomp;
 using Apache.NMS.Stomp.Commands;
-using NetworkRailDownloader.Common;
 using System;
 using System.Configuration;
 using System.Diagnostics;
@@ -9,8 +8,9 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using TrainNotifier.Common;
 
-namespace NetworkRailDownloader.Downloader
+namespace TrainNotifier.Common.NMS
 {
     public sealed class NMSConnector : IDownloader
     {

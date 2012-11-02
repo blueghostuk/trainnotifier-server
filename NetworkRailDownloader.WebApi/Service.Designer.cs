@@ -1,4 +1,4 @@
-﻿namespace NetworkRailDownloader.WebApi
+﻿namespace TrainNotifier.Console.WebApi
 {
     partial class Service
     {

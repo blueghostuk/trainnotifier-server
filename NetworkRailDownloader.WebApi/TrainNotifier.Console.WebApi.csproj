@@ -7,8 +7,8 @@
     <ProjectGuid>{694EFCF9-3813-4B87-BA9D-132DB7F407BF}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkRailDownloader.WebApi</RootNamespace>
-    <AssemblyName>NetworkRailDownloader.WebApi</AssemblyName>
+    <RootNamespace>TrainNotifier.Console.WebApi</RootNamespace>
+    <AssemblyName>TrainNotifier.Console.WebApi</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\NetworkRailDownloader\</SolutionDir>
@@ -57,7 +57,7 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>NetworkRailDownloader.WebApi.Service</StartupObject>
+    <StartupObject>TrainNotifier.Console.WebApi.Service</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MySql.Data">

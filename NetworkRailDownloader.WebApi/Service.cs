@@ -1,30 +1,15 @@
-﻿using NetworkRailDownloader.Common;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
+using System.Configuration;
 using System.Configuration.Install;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.SelfHost;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
-using System.Web.Http.SelfHost;
-using NetworkRailDownloader.WebApi.MessageHandlers;
+using TrainNotifier.Common;
+using TrainNotifier.Console.WebApi.MessageHandlers;
 
-namespace NetworkRailDownloader.WebApi
+namespace TrainNotifier.Console.WebApi
 {
     partial class Service : ServiceBase
     {
@@ -84,7 +69,7 @@ namespace NetworkRailDownloader.WebApi
             _server = new HttpSelfHostServer(config);
             // Start listening 
             _server.OpenAsync().Wait();
-            Console.WriteLine("Listening on " + baseAddress);
+            System.Console.WriteLine("Listening on " + baseAddress);
         }
 
         protected override void OnStop()

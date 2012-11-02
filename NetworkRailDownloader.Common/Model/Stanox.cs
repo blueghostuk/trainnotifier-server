@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace NetworkRailDownloader.Common.Model
+namespace TrainNotifier.Common.Model
 {
     [DataContract]
     public sealed class Stanox

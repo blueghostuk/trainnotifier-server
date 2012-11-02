@@ -7,8 +7,8 @@
     <ProjectGuid>{55F15444-39A6-4B55-AA31-CED7A996DE47}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkRailDownloader.Common</RootNamespace>
-    <AssemblyName>NetworkRailDownloader.Common</AssemblyName>
+    <RootNamespace>TrainNotifier.Common</RootNamespace>
+    <AssemblyName>TrainNotifier.Common</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\NetworkRailDownloader\</SolutionDir>

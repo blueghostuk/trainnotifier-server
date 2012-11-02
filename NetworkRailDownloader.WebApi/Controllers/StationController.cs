@@ -1,11 +1,10 @@
-﻿using NetworkRailDownloader.ServiceLayer;
-using NetworkRailDownloader.WebApi.ActionFilters;
-using NetworkRailDownloader.WebApi.ViewModels;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using TrainNotifier.Console.WebApi.ViewModels;
+using TrainNotifier.ServiceLayer;
 
-namespace NetworkRailDownloader.WebApi.Controllers
+namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class StationController : ApiController
     {

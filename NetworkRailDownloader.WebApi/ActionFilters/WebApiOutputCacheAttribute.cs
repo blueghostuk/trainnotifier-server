@@ -7,7 +7,7 @@ using System.Threading;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 
-namespace NetworkRailDownloader.WebApi.ActionFilters
+namespace TrainNotifier.Console.WebApi.ActionFilters
 {
     /// <see cref="http://www.strathweb.com/2012/05/output-caching-in-asp-net-web-api/"/>
     internal sealed class WebApiOutputCacheAttribute : ActionFilterAttribute

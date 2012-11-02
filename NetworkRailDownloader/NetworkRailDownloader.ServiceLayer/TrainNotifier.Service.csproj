@@ -7,8 +7,8 @@
     <ProjectGuid>{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkRailDownloader.ServiceLayer</RootNamespace>
-    <AssemblyName>NetworkRailDownloader.ServiceLayer</AssemblyName>
+    <RootNamespace>TrainNotifier.Service</RootNamespace>
+    <AssemblyName>TrainNotifier.Service</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>

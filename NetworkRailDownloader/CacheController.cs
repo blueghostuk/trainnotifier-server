@@ -1,17 +1,12 @@
-﻿using NetworkRailDownloader.Common;
-using NetworkRailDownloader.Common.Model;
-using NetworkRailDownloader.Common.Services;
-using NetworkRailDownloader.ServiceLayer;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Caching;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
+using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Services;
+using TrainNotifier.ServiceLayer;
 
-namespace NetworkRailDownloader.Console
+namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class CacheController : IDisposable
     {
