@@ -4,14 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5160D315-1A64-453A-95DC-43FB80F80FED}</ProjectGuid>
+    <ProjectGuid>{694EFCF9-3813-4B87-BA9D-132DB7F407BF}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NetworkRailDownloader.Console</RootNamespace>
-    <AssemblyName>NetworkRailDownloader</AssemblyName>
+    <RootNamespace>NetworkRailDownloader.WebApi</RootNamespace>
+    <AssemblyName>NetworkRailDownloader.WebApi</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">.\</SolutionDir>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\NetworkRailDownloader\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -33,6 +33,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SlowCheetahTargets Condition=" '$(SlowCheetahTargets)'=='' ">$(LOCALAPPDATA)\Microsoft\MSBuild\SlowCheetah\v1\SlowCheetah.Transforms.targets</SlowCheetahTargets>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Local|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug-Local\</OutputPath>
@@ -42,9 +45,6 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SlowCheetahTargets Condition=" '$(SlowCheetahTargets)'=='' ">$(LOCALAPPDATA)\Microsoft\MSBuild\SlowCheetah\v1\SlowCheetah.Transforms.targets</SlowCheetahTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Staging|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -57,24 +57,37 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>NetworkRailDownloader.Console.Service</StartupObject>
+    <StartupObject>NetworkRailDownloader.WebApi.Service</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Alchemy">
-      <HintPath>packages\Alchemy.2.2.1\lib\net40\Alchemy.dll</HintPath>
-    </Reference>
-    <Reference Include="MySql.Data, Version=6.5.4.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+    <Reference Include="MySql.Data">
+      <HintPath>..\NetworkRailDownloader\packages\MySql.Data.6.5.4\lib\net40\MySql.Data.dll</HintPath>
       <Private>True</Private>
-      <HintPath>packages\MySql.Data.6.5.4\lib\net40\MySql.Data.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json.4.5.10\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\NetworkRailDownloader\packages\Newtonsoft.Json.4.5.10\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\NetworkRailDownloader\packages\Microsoft.AspNet.WebApi.Client.4.0.20710.0\lib\net40\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\NetworkRailDownloader\packages\Microsoft.AspNet.WebApi.Core.4.0.20710.0\lib\net40\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.SelfHost, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\NetworkRailDownloader\packages\Microsoft.AspNet.WebApi.SelfHost.4.0.20918.0\lib\net40\System.Web.Http.SelfHost.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\NetworkRailDownloader\packages\Microsoft.AspNet.WebApi.WebHost.4.0.20710.0\lib\net40\System.Web.Http.WebHost.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -82,12 +95,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CacheController.cs" />
-    <Compile Include="Model\CommandResponse.cs" />
-    <Compile Include="Model\Stanox.cs" />
-    <Compile Include="Model\TrainMovement.cs" />
-    <Compile Include="Model\TrainMovementStep.cs" />
-    <Compile Include="NMSWrapper.cs" />
+    <Compile Include="ActionFilters\WebApiOutputCacheAttribute.cs" />
+    <Compile Include="Controllers\StanoxController.cs" />
+    <Compile Include="Controllers\StationController.cs" />
+    <Compile Include="MessageHandlers\CorsHeader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
@@ -95,9 +106,7 @@
     <Compile Include="Service.Designer.cs">
       <DependentUpon>Service.cs</DependentUpon>
     </Compile>
-    <Compile Include="UserContextEventArgs.cs" />
-    <Compile Include="UserManager.cs" />
-    <Compile Include="WebSocketServerWrapper.cs" />
+    <Compile Include="ViewModels\Stanox.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -123,17 +132,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NetworkRailDownloader.Common\NetworkRailDownloader.Common.csproj">
+    <ProjectReference Include="..\NetworkRailDownloader.Common\TrainNotifier.Common.csproj">
       <Project>{55f15444-39a6-4b55-aa31-ced7a996de47}</Project>
-      <Name>NetworkRailDownloader.Common</Name>
+      <Name>TrainNotifier.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NetworkRailDownloader.Downloader\NetworkRailDownloader.Downloader.csproj">
-      <Project>{e49f108e-329b-4317-bd3f-882ce964753d}</Project>
-      <Name>NetworkRailDownloader.Downloader</Name>
-    </ProjectReference>
-    <ProjectReference Include="NetworkRailDownloader.ServiceLayer\NetworkRailDownloader.ServiceLayer.csproj">
+    <ProjectReference Include="..\NetworkRailDownloader\NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj">
       <Project>{5aae47c1-e8a0-456d-86ca-c92b0c68f27c}</Project>
-      <Name>NetworkRailDownloader.ServiceLayer</Name>
+      <Name>TrainNotifier.Service</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

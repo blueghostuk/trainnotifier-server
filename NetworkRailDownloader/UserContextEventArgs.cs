@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace NetworkRailDownloader.Console
+namespace NetworkRailDownloader.Common
 {
     internal sealed class UserContextEventArgs : EventArgs
     {
