@@ -1,10 +1,13 @@
-﻿using NetworkRailDownloader.Console.Model;
+﻿using NetworkRailDownloader.Common;
+using NetworkRailDownloader.Common.Model;
+using NetworkRailDownloader.Common.Services;
 using NetworkRailDownloader.ServiceLayer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Caching;
+using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,22 +15,13 @@ namespace NetworkRailDownloader.Console
 {
     internal sealed class CacheController : IDisposable
     {
-        private static readonly ObjectCache _tmCache = new MemoryCache("TrainMovements");
-        private static readonly ObjectCache _stanoxCache = new MemoryCache("Stanox");
-
         private readonly UserManager _userManager;
-        private static readonly StanoxRepository _stanoxRepository = new StanoxRepository();
-
-        private static CacheItemPolicy GetDefaultCacheItemPolicy()
-        {
-            return new CacheItemPolicy
-            {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(1)
-            };
-        }
+        private readonly StanoxRepository _stanoxRepository = new StanoxRepository();
+        private readonly ICacheService _cacheService = new CacheServiceClient();
 
         public CacheController(NMSWrapper nmsWrapper, WebSocketServerWrapper wssWrapper, UserManager userManager)
         {
+            ((ICommunicationObject)_cacheService).Open();
             _userManager = userManager;
             nmsWrapper.FeedDataRecieved += (s, f) =>
             {
@@ -90,44 +84,39 @@ namespace NetworkRailDownloader.Console
             };
         }
 
-        private static void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
+        private void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
         {
-            TrainMovement tm = TryGetTrainMovement(trainId);
-            if (tm != null)
+            TrainMovement trainMovement;
+            if (_cacheService.TryGetTrainMovement(trainId, out trainMovement))
             {
                 string response = JsonConvert.SerializeObject(new CommandResponse<TrainMovement>
                 {
                     Command = "gettrain",
                     Args = trainId,
-                    Response = tm
+                    Response = trainMovement
                 });
                 context.UserContext.Send(response);
             }
         }
 
-        private static void HandleStanoxCommand(UserContextEventArgs context, string command, string stanox)
+        private void HandleStanoxCommand(UserContextEventArgs context, string command, string stanoxName)
         {
-            Stanox st = TryGetStanox(stanox);
-            if (st != null)
+            Stanox stanox;
+            if (_cacheService.TryGetStanox(stanoxName, out stanox))
             {
                 string response = JsonConvert.SerializeObject(new CommandResponse<Stanox>
                 {
                     Command = command,
-                    Args = stanox,
-                    Response = st
+                    Args = stanoxName,
+                    Response = stanox
                 });
                 context.UserContext.Send(response);
             }
         }
 
-        private static Stanox TryGetStanox(string stanox)
-        {
-            return _stanoxCache.Get(stanox) as Stanox;
-        }
-
         private void CacheActivation(dynamic body)
         {
-            TrainMovement tm = new TrainMovement
+            TrainMovement trainMovement = new TrainMovement
             {
                 Activated = UnixTsToDateTime(double.Parse((string)body.creation_timestamp)),
                 Id = (string)body.train_id,
@@ -135,27 +124,7 @@ namespace NetworkRailDownloader.Console
                 SchedOriginStanox = (string)body.sched_origin_stanox,
                 ServiceCode = (string)body.train_service_code                
             };
-            CacheTrainMovement(tm);
-        }
-
-        private static void CacheTrainMovement(TrainMovement tm)
-        {
-            _tmCache.Add(tm.Id, tm, GetDefaultCacheItemPolicy());
-            CacheStation(tm.SchedOriginStanox, tm.Id);
-        }
-
-        private static void CacheStation(string stanox, string trainId)
-        {
-            if (string.IsNullOrWhiteSpace(stanox) || string.IsNullOrWhiteSpace(trainId))
-                return;
-
-            Stanox s = TryGetStanox(stanox);
-            if (s == null)
-            {
-                s = new Stanox(stanox);
-                _stanoxCache.Add(stanox, s, GetDefaultCacheItemPolicy());
-            }
-            s.AddTrainId(trainId);
+            _cacheService.CacheTrainMovement(trainMovement);
         }
 
         private void CacheTrainMovement(string trainId, dynamic body)
@@ -163,24 +132,24 @@ namespace NetworkRailDownloader.Console
             if (string.IsNullOrWhiteSpace(trainId))
                 return;
 
-            TrainMovement tm = TryGetTrainMovement(trainId);
-            if (tm == null)
+            TrainMovement trainMovement;
+            if (!_cacheService.TryGetTrainMovement(trainId, out trainMovement))
             {
-                tm = new TrainMovement
+                trainMovement = new TrainMovement
                 {
                     Id = (string)body.train_id,
                     ServiceCode = (string)body.train_service_code
                 };
-                CacheTrainMovement(tm);
+                _cacheService.CacheTrainMovement(trainMovement);
             }
-            if (tm != null)
+            if (trainMovement != null)
             {
                 DateTime? plannedTime = null;
                 if (!string.IsNullOrEmpty((string)body.planned_timestamp))
                 {
                     plannedTime = UnixTsToDateTime(double.Parse((string)body.planned_timestamp));
                 }
-                TrainMovementStep tms = new TrainMovementStep
+                TrainMovementStep step = new TrainMovementStep
                 {
                     ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp)),
                     EventType = (string)body.event_type,
@@ -190,15 +159,8 @@ namespace NetworkRailDownloader.Console
                     Stanox = (string)body.loc_stanox,
                     Terminated = ((string)body.train_teminated) == "true"
                 };
-                tm.AddTrainMovementStep(tms);
-                CacheStation(tms.Stanox, trainId);
+                _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
             }
-        }
-
-        private static TrainMovement TryGetTrainMovement(string trainId)
-        {
-            TrainMovement tm = _tmCache.Get(trainId) as TrainMovement;
-            return tm;
         }
 
         private static readonly DateTime _epoch = new DateTime(1970, 1, 1);
@@ -210,6 +172,10 @@ namespace NetworkRailDownloader.Console
 
         public void Dispose()
         {
+            if (_cacheService != null)
+            {
+                ((ICommunicationObject)_cacheService).Close();
+            }
         }
     }
 }

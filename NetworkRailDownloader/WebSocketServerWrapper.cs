@@ -3,7 +3,7 @@ using Alchemy.Classes;
 using System;
 using System.Net;
 
-namespace NetworkRailDownloader.Console
+namespace NetworkRailDownloader.Common
 {
     internal sealed class WebSocketServerWrapper
     {

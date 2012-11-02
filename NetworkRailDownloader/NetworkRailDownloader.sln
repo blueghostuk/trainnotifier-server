@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRailDownloader.Console", "NetworkRailDownloader.Console.csproj", "{5160D315-1A64-453A-95DC-43FB80F80FED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.WebSocketServer", "TrainNotifier.Console.WebSocketServer.csproj", "{5160D315-1A64-453A-95DC-43FB80F80FED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRailDownloader.Downloader", "..\NetworkRailDownloader.Downloader\NetworkRailDownloader.Downloader.csproj", "{E49F108E-329B-4317-BD3F-882CE964753D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Common.NMS", "..\NetworkRailDownloader.Downloader\TrainNotifier.Common.NMS.csproj", "{E49F108E-329B-4317-BD3F-882CE964753D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRailDownloader.Common", "..\NetworkRailDownloader.Common\NetworkRailDownloader.Common.csproj", "{55F15444-39A6-4B55-AA31-CED7A996DE47}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Common", "..\NetworkRailDownloader.Common\TrainNotifier.Common.csproj", "{55F15444-39A6-4B55-AA31-CED7A996DE47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebClient", "..\WebClient\WebClient.csproj", "{FCB0778D-D13E-4FBD-873E-671365CB441B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.WebClient", "..\WebClient\TrainNotifier.WebClient.csproj", "{FCB0778D-D13E-4FBD-873E-671365CB441B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRailDownloader.WebApi", "..\NetworkRailDownloader.WebApi\NetworkRailDownloader.WebApi.csproj", "{694EFCF9-3813-4B87-BA9D-132DB7F407BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.WebApi", "..\NetworkRailDownloader.WebApi\TrainNotifier.Console.WebApi.csproj", "{694EFCF9-3813-4B87-BA9D-132DB7F407BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkRailDownloader.ServiceLayer", "NetworkRailDownloader.ServiceLayer\NetworkRailDownloader.ServiceLayer.csproj", "{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Service", "NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj", "{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{23ECD4A4-342F-47F0-B222-F2FDE91FFDAB}"
 	ProjectSection(SolutionItems) = preProject
@@ -19,6 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{23ECD4
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.WcfServer", "..\TrainNotifer.Console.Wcf\TrainNotifier.Console.WcfServer.csproj", "{198FFD3F-834A-4CBC-B08C-7338F59C11C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.WcfLibrary", "..\TrainNotifier.WcfLibrary\TrainNotifier.WcfLibrary.csproj", "{15B3E0D2-6217-493A-A690-158C497F5318}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,6 +80,22 @@ Global
 		{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
 		{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AAE47C1-E8A0-456D-86CA-C92B0C68F27C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug-Local|Any CPU.ActiveCfg = Debug-Local|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug-Local|Any CPU.Build.0 = Debug-Local|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug-Staging|Any CPU.ActiveCfg = Debug-Staging|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Debug-Staging|Any CPU.Build.0 = Debug-Staging|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{198FFD3F-834A-4CBC-B08C-7338F59C11C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug-Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug-Local|Any CPU.Build.0 = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug-Staging|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15B3E0D2-6217-493A-A690-158C497F5318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
