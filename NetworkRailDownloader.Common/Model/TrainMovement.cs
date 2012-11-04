@@ -56,4 +56,26 @@ namespace TrainNotifier.Common.Model
         }
 
     }
+
+    public static class TrainMovementMapper
+    {
+        public static TrainMovement MapFromBody(dynamic body)
+        {
+            return new TrainMovement
+            {
+                Activated = UnixTsToDateTime(double.Parse((string)body.creation_timestamp)),
+                Id = (string)body.train_id,
+                SchedOriginDeparture = UnixTsToDateTime(double.Parse((string)body.origin_dep_timestamp)),
+                SchedOriginStanox = (string)body.sched_origin_stanox,
+                ServiceCode = (string)body.train_service_code
+            };
+        }
+
+        private static readonly DateTime _epoch = new DateTime(1970, 1, 1);
+
+        private static DateTime UnixTsToDateTime(double timeStamp)
+        {
+            return _epoch.AddMilliseconds(timeStamp);
+        }
+    }
 }
