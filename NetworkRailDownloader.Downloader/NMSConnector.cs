@@ -21,8 +21,8 @@ namespace TrainNotifier.Common.NMS
         private IConnection GetConnection()
         {
             Trace.TraceInformation("Connecting to: {0}", ConfigurationManager.AppSettings["ActiveMQConnectionString"]);
-            return new ConnectionFactory(ConfigurationManager.AppSettings["ActiveMQConnectionString"]).CreateConnection(ConfigurationManager.AppSettings["Username"], 
-                ConfigurationManager.AppSettings["Password"]);
+            return new ConnectionFactory(ConfigurationManager.AppSettings["ActiveMQConnectionString"])
+                .CreateConnection(ConfigurationManager.AppSettings["Username"], ConfigurationManager.AppSettings["Password"]);
         }
 
         public void DownloadSchedule(string filePath, Toc toc = Toc.All, ScheduleType schedule = ScheduleType.Full, DayOfWeek? day = null)
@@ -71,9 +71,18 @@ namespace TrainNotifier.Common.NMS
             }
         }
 
+        private byte _retries = 0;
+        private readonly byte MaxRetries = 3;
+
         private void ResubscribeMechanism(Feed feed)
         {
+            if (_retries > MaxRetries)
+            {
+                Trace.TraceError("Exceeded retry count of {0}. Quitting", MaxRetries);
+                throw new RetryException();
+            }
             Thread.Sleep(TimeSpan.FromMinutes(1));
+            _retries++;
             SubscribeToFeed(feed);
         }
 

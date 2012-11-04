@@ -35,7 +35,7 @@
     <Reference Include="Apache.NMS">
       <HintPath>..\NetworkRailDownloader\packages\Apache.NMS.1.5.1\lib\net40\Apache.NMS.dll</HintPath>
     </Reference>
-    <Reference Include="Apache.NMS.Stomp, Version=1.5.2.2508, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+    <Reference Include="Apache.NMS.Stomp, Version=1.5.3.2795, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Apache.NMS.Stomp\1.5.3\Apache.NMS.Stomp.dll</HintPath>
     </Reference>
