@@ -11,17 +11,25 @@ namespace TrainNotifier.WcfLibrary
         private static readonly ObjectCache _tmCache = new MemoryCache("TrainMovements");
         private static readonly ObjectCache _stanoxCache = new MemoryCache("Stanox");
 
-        private static CacheItemPolicy GetDefaultCacheItemPolicy()
+        private static CacheItemPolicy GetDefaultTMCacheItemPolicy()
         {
             return new CacheItemPolicy
             {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDays"]))
+                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysTM"]))
+            };
+        }
+
+        private static CacheItemPolicy GetDefaultStanoxCacheItemPolicy()
+        {
+            return new CacheItemPolicy
+            {
+                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysStanox"]))
             };
         }
 
         public void CacheTrainMovement(TrainMovement trainMovement)
         {
-            _tmCache.Add(trainMovement.Id, trainMovement, GetDefaultCacheItemPolicy());
+            _tmCache.Add(trainMovement.Id, trainMovement, GetDefaultTMCacheItemPolicy());
             CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
         }
 
@@ -34,7 +42,7 @@ namespace TrainNotifier.WcfLibrary
             if (!TryGetStanox(stanoxName, out stanox))
             {
                 stanox = new Stanox(stanoxName);
-                _stanoxCache.Add(stanoxName, stanox, GetDefaultCacheItemPolicy());
+                _stanoxCache.Add(stanoxName, stanox, GetDefaultStanoxCacheItemPolicy());
             }
             stanox.AddTrainId(trainId);
         }
