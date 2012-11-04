@@ -62,19 +62,49 @@ namespace TrainNotifier.Console.WebSocketServer
             wssWrapper.OnReceive += (s, context) =>
             {
                 string command = context.UserContext.DataFrame.ToString();
-                switch (new string(command.Take(10).ToArray()))
+                int idx = command.IndexOf(':');
+                if (idx != -1)
                 {
-                    case "gettrain--":
-                        HandleGetTrainCommand(context, new string(command.Skip(11).ToArray()));
-                        break;
-                    case "stanox----":
-                        HandleStanoxCommand(context, "stanox", new string(command.Skip(11).ToArray()));
-                        break;
-                    case "crs-------":
-                        HandleStanoxCommand(context, "crs", _stanoxRepository.GetStanoxByCrs(new string(command.Skip(11).ToArray())));
-                        break;
+                    string cmdText = new string(command.Take(idx).ToArray());
+                    string args = new string(command.Skip(idx + 1).ToArray());
+                    switch (cmdText)
+                    {
+                        case "gettrain":
+                            HandleGetTrainCommand(context, args);
+                            break;
+                        case "subtrain":
+                            HandleSubTrainCommand(context, args, true);
+                            break;
+                        case "unsubtrain":
+                            HandleSubTrainCommand(context, args, false);
+                            break;
+                        case "stanox":
+                            HandleStanoxCommand(context, "stanox", args);
+                            break;
+                        case "crs":
+                            HandleStanoxCommand(context, "crs", _stanoxRepository.GetStanoxByCrs(args));
+                            break;
+                    }
                 }
             };
+        }
+
+        private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)
+        {
+            UserContextData uc = _userManager.ActiveUsers[context.UserContext];
+            if (uc != null)
+            {
+                if (subscribe)
+                {
+                    HandleGetTrainCommand(context, trainId);
+                    uc.StateArgs = trainId;
+                    uc.State = UserContextState.SubscribeToTrain;
+                }
+                else
+                {
+                    uc.State = UserContextState.None;
+                }
+            }
         }
 
         private void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
@@ -131,14 +161,7 @@ namespace TrainNotifier.Console.WebSocketServer
 
         private void CacheActivation(dynamic body)
         {
-            TrainMovement trainMovement = new TrainMovement
-            {
-                Activated = UnixTsToDateTime(double.Parse((string)body.creation_timestamp)),
-                Id = (string)body.train_id,
-                SchedOriginDeparture = UnixTsToDateTime(double.Parse((string)body.origin_dep_timestamp)),
-                SchedOriginStanox = (string)body.sched_origin_stanox,
-                ServiceCode = (string)body.train_service_code
-            };
+            TrainMovement trainMovement = TrainMovementMapper.MapFromBody(body);
             CacheServiceClient _cacheService = null;
             try
             {
@@ -175,21 +198,7 @@ namespace TrainNotifier.Console.WebSocketServer
                 }
                 if (trainMovement != null)
                 {
-                    DateTime? plannedTime = null;
-                    if (!string.IsNullOrEmpty((string)body.planned_timestamp))
-                    {
-                        plannedTime = UnixTsToDateTime(double.Parse((string)body.planned_timestamp));
-                    }
-                    TrainMovementStep step = new TrainMovementStep
-                    {
-                        ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp)),
-                        EventType = (string)body.event_type,
-                        Line = (string)body.line_ind,
-                        PlannedTime = plannedTime,
-                        Platform = (string)body.platform,
-                        Stanox = (string)body.loc_stanox,
-                        Terminated = ((string)body.train_teminated) == "true"
-                    };
+                    TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
                     _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
                 }
             }
@@ -198,13 +207,6 @@ namespace TrainNotifier.Console.WebSocketServer
                 if (_cacheService != null)
                     _cacheService.Close();
             }
-        }
-
-        private static readonly DateTime _epoch = new DateTime(1970, 1, 1);
-
-        private static DateTime UnixTsToDateTime(double timeStamp)
-        {
-            return _epoch.AddMilliseconds(timeStamp);
         }
 
         public void Dispose()

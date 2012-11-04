@@ -81,7 +81,8 @@ namespace TrainNotifier.Console.WebSocketServer
     public enum UserContextState
     {
         None,
-        SubscribeToFeed
+        SubscribeToFeed,
+        SubscribeToTrain
     }
 
 }

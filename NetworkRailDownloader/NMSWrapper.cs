@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TrainNotifier.Common;
+using TrainNotifier.Common.Model;
 using TrainNotifier.Common.NMS;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -29,7 +30,11 @@ namespace TrainNotifier.Console.WebSocketServer
                 dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
                 Parallel.ForEach(_userManager.ActiveUsers
                     .Where(u => u.Value.State == UserContextState.SubscribeToFeed)
-                    .Where(u => DoSendData(evtData, u.Value.StateArgs.ToString())), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+                    .Where(u => DoSendData(evtData, u.Value.StateArgs)), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+
+                Parallel.ForEach(_userManager.ActiveUsers
+                    .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
+                    .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
 
                 var eh = FeedDataRecieved;
                 if (null != eh)
@@ -42,6 +47,19 @@ namespace TrainNotifier.Console.WebSocketServer
         public void Stop()
         {
             _nmsDownloader.Quit();
+        }
+
+        private bool DataContainsTrain(dynamic evtData, string trainId)
+        {
+            if (string.IsNullOrWhiteSpace(trainId))
+                return true;
+
+            foreach (dynamic evt in evtData)
+            {
+                if (evt.body.train_id == trainId)
+                    return true;
+            }
+            return false;
         }
 
         private static bool DoSendData(dynamic evtData, string filter)
@@ -62,9 +80,25 @@ namespace TrainNotifier.Console.WebSocketServer
             var data = evtData;
             if (!string.IsNullOrWhiteSpace(uc.Value.StateArgs.ToString()))
             {
-                data = evtData.Where(e => e.body.loc_stanox == uc.Value);
+                data = evtData.Where(e => e.body.loc_stanox == uc.Value.StateArgs);
             }
             uc.Key.Send(JsonConvert.SerializeObject(data.Select(e => e.body)));
+        }
+
+        private void SendTrainData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
+        {
+            var data = evtData
+                .Where(e => e.body.train_id == uc.Value.StateArgs)
+                .Select(e => TrainMovementStepMapper.MapFromBody(e.body))
+                .Cast<TrainMovementStep>()
+                .ToList();
+
+            uc.Key.Send(JsonConvert.SerializeObject(new CommandResponse<IEnumerable<TrainMovementStep>>
+            {
+                Command = "subtrainupdate",
+                Args = uc.Value.StateArgs,
+                Response = data
+            }));
         }
     }
 

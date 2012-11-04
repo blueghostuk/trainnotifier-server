@@ -53,6 +53,7 @@
             self.SchedOrigin = ko.observable();
             self.SchedDepart = ko.observable();
             self.Stops = ko.observableArray();
+            self.LastUpdate = ko.observable();
 
             self.addStop = function (stop) {
                 self.Stops.push(stop);
@@ -99,6 +100,37 @@
 
                 var data = jQuery.parseJSON(msg.data);
                 switch (data.Command) {
+                    case "subtrainupdate":
+                        data = data.Response;
+                        currentTrain.LastUpdate(new Date(Date.now()).toLocaleString());
+                        for (i in data) {
+                            var stop = new StopViewModel();
+                            stop.Stanox(data[i].Stanox);
+                            stop.PlannedTime(data[i].PlannedTime);
+                            stop.ActualTimeStamp(data[i].ActualTimeStamp);
+                            stop.EventType(data[i].EventType);
+                            stop.Line(data[i].Line);
+                            stop.Platform(data[i].Platform);
+
+                            currentTrain.addStop(stop);
+
+                            loadLocation(data[i].Stanox, function (data) {
+                                var html = "";
+                                if (data.StationName) {
+                                    html = data.StationName;
+                                } else {
+                                    html = data.Tiploc;
+                                }
+                                if (data.CRS) {
+                                    html += "(" + data.CRS + ")";
+                                }
+                                $("." + data.Name).html(html);
+                                $("." + data.Name).attr('title', data.Description + '(' + data.Name + ')');
+                                $("." + data.Name).tooltip();
+                            });
+                        }
+                        break;
+                    case "subtrain":
                     case "gettrain":
                         currentTrain.clearStops();
                         data = data.Response;
@@ -107,6 +139,7 @@
                         currentTrain.Activated(data.Activated);
                         currentTrain.SchedOrigin(data.SchedOriginStanox);
                         currentTrain.SchedDepart(data.SchedOriginDeparture);
+                        currentTrain.LastUpdate(new Date(Date.now()).toLocaleString());
                         for (i in data.Steps) {
                             var stop = new StopViewModel();
                             stop.Stanox(data.Steps[i].Stanox);
@@ -153,7 +186,10 @@
             currentTrain.clearStops();
         }
 
-        function sendCommand() {
+        function sendCommand(resetSub) {
+            if (resetSub) {
+                ws.send("unsubtrain:");
+            }
             ws.send($("#filter-command").val());
         }
 
@@ -162,13 +198,23 @@
         }
 
         function loadTrain(el) {
-            setCommand('gettrain--:' + $(el).children().html());
-            sendCommand();
+            setCommand('gettrain:' + $(el).children().html());
+            sendCommand(true);
         }
 
         function loadStanox(el) {
-            setCommand('stanox----:' + $(el).attr('class'));
-            sendCommand();
+            setCommand('stanox:' + $(el).attr('class'));
+            sendCommand(true);
+        }
+
+        function loadTrainSub(el) {
+            setCommand('subtrain:' + $(el).html());
+            _currentTrainSub = $(el).html();
+            sendCommand(true);
+        }
+
+        function parseCommand() {
+            sendCommand(true);
         }
 
     </script>
@@ -208,9 +254,10 @@
                 <div class="well sidebar-nav" id="locationDetails">
                     <ul class="nav nav-list">
                         <li class="nav-header">Commands</li>
-                        <li><a onclick="setCommand('gettrain--:');"><strong>Get Train:</strong> gettrain--:[train id]</a></li>
-                        <li><a onclick="setCommand('stanox----:');"><strong>Get Station Trains:</strong> stanox----:[stanox]</a></li>
-                        <li><a onclick="setCommand('crs-------:');"><strong>Get Station Trains:</strong> crs-------:[crs]</a></li>
+                        <li><a onclick="setCommand('gettrain:');"><strong>Get Train:</strong> gettrain:[train id]</a></li>
+                        <li><a onclick="setCommand('subtrain:');"><strong>Subscribe to Train:</strong> subtrain:[train id]</a></li>
+                        <li><a onclick="setCommand('stanox:');"><strong>Get Location Trains:</strong> stanox:[stanox]</a></li>
+                        <li><a onclick="setCommand('crs:');"><strong>Get Location Trains:</strong> crs:[crs]</a></li>
                     </ul>
                 </div>
                 <div class="well sidebar-nav" id="stanox">
@@ -229,7 +276,7 @@
                     <div class="input-prepend">
                         <span class="add-on"><i class="icon-asterisk"></i></span>
                         <input type="text" id="filter-command" class="span9" placeholder="Enter Command" />&nbsp;&nbsp;&nbsp;
-                        <a class="btn btn_disconnect" id="btn_Command" onclick="sendCommand()" disabled="disabled" title="Send Command"><i class="icon-arrow-right"></i></a>
+                        <a class="btn btn_disconnect" id="btn_Command" onclick="parseCommand();" disabled="disabled" title="Send Command"><i class="icon-arrow-right"></i></a>
                         <a class="btn btn_connect" id="btn_Connect" onclick="connectWs()" title="Connect to server"><i class="icon-play"></i></a>
                         <a class="btn btn_disconnect" onclick="disconnect()" disabled="disabled" title="Disconnect from server"><i class="icon-stop"></i></a>
                         <a class="btn" href="#" title="Clear data" onclick="clearData();"><i class="icon-remove"></i></a>
@@ -239,11 +286,12 @@
                 <div style="height: 800px; overflow: auto;" id="trains">
                     <ul class="nav">
                         <li class="nav-header">Train Details</li>
-                        <li><strong>Id:</strong> <span data-bind="text: Id"></span></li>
+                        <li><strong>Id:</strong> <a href="#" onclick="loadTrainSub(this);" data-bind="text: Id" title="Subscribe to train" style="display: inline;"></a></li>
                         <li><strong>Service Code:</strong> <span data-bind="text: ServiceCode"></span></li>
                         <li><strong>Activated:</strong> <span data-bind="text: Activated"></span></li>
                         <li><strong>Scheduled Origin:</strong> <span data-bind="text: SchedOrigin"></span></li>
                         <li><strong>Scheduled Departure Time:</strong> <span data-bind="text: SchedDepart"></span></li>
+                        <li><strong>Last Update:</strong> <span data-bind="text: LastUpdate"></span></li>
                         <li class="nav-header">Stops</li>
                     </ul>
                     <table class="table table-hover table-bordered">
