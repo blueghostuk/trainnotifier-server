@@ -18,6 +18,11 @@ namespace TrainNotifier.Common.NMS
 
         public event EventHandler<FeedEvent> FeedDataRecieved;
 
+        public NMSConnector()
+        {
+            Apache.NMS.Tracer.Trace = new NMSTrace();
+        }
+
         private IConnection GetConnection()
         {
             Trace.TraceInformation("Connecting to: {0}", ConfigurationManager.AppSettings["ActiveMQConnectionString"]);
@@ -96,15 +101,12 @@ namespace TrainNotifier.Common.NMS
                 {
                     connection.ClientId = clientId;
                 }
-                Trace.TraceInformation("Connected to: {0}", connection);
                 using (ISession session = connection.CreateSession())
                 {
-                    Trace.TraceInformation("Created session: {0}", session);
                     ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
                     using (IMessageConsumer consumer = CreateConsumer(session, topic))
                     {
-                        Trace.TraceInformation("Created consumer: {0} to {1}", consumer, topic);
-                        Trace.TraceInformation("Starting connection to consumer");
+                        Trace.TraceInformation("Created consumer to {0}", topic);
                         consumer.Listener += new MessageListener(this.consumer_Listener);
                         connection.Start();
                         using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore, TimeSpan.FromSeconds(10)))
