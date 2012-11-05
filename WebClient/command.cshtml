@@ -41,6 +41,9 @@
                 else
                     sendPreFilter('');
             });
+
+            if (document.location.hash.length > 0)
+                setCommand(document.location.hash.substr(1));
         });
 
 
@@ -84,6 +87,14 @@
                     return "label-important";
 
                 return "label-warning";
+            }, self);
+
+            self.DelayTitle = ko.computed(function () {
+                if (this.Delay() == 0)
+                    return "on time";
+                if (this.Delay() < 0)
+                    return "early";
+                return "late";
             }, self);
         }
 
@@ -217,7 +228,9 @@
             if (resetSub) {
                 ws.send("unsubtrain:");
             }
-            ws.send($("#filter-command").val());
+            var cmd = $("#filter-command").val();
+            ws.send(cmd);
+            document.location.hash = cmd;
         }
 
         function setCommand(command) {
@@ -225,7 +238,7 @@
         }
 
         function loadTrain(el) {
-            setCommand('gettrain:' + $(el).children().html());
+            setCommand('gettrain:' + $(el).html());
             sendCommand(true);
         }
 
@@ -281,10 +294,10 @@
                 <div class="well sidebar-nav" id="locationDetails">
                     <ul class="nav nav-list">
                         <li class="nav-header">Commands</li>
-                        <li><a onclick="setCommand('gettrain:');"><strong>Get Train:</strong> gettrain:[train id]</a></li>
-                        <li><a onclick="setCommand('subtrain:');"><strong>Subscribe to Train:</strong> subtrain:[train id]</a></li>
-                        <li><a onclick="setCommand('stanox:');"><strong>Get Location Trains:</strong> stanox:[stanox]</a></li>
-                        <li><a onclick="setCommand('crs:');"><strong>Get Location Trains:</strong> crs:[crs]</a></li>
+                        <li><a href="#gettrain:" onclick="setCommand('gettrain:');"><strong>Get Train:</strong> gettrain:[train id]</a></li>
+                        <li><a href="#subtrain:" onclick="setCommand('subtrain:');"><strong>Subscribe to Train:</strong> subtrain:[train id]</a></li>
+                        <li><a href="#stanox:" onclick="setCommand('stanox:');"><strong>Get Location Trains:</strong> stanox:[stanox]</a></li>
+                        <li><a href="#crs:" onclick="setCommand('crs:');"><strong>Get Location Trains:</strong> crs:[crs]</a></li>
                     </ul>
                 </div>
                 <div class="well sidebar-nav" id="stanox">
@@ -292,7 +305,7 @@
                         <li class="nav-header">Station Trains: <span data-bind="text: Stanox"></span></li>
                     </ul>
                     <ul class="nav nav-list" data-bind="foreach: Trains" style="height: 600px; overflow: auto;">
-                        <li><a href="#" onclick="loadTrain(this);"><span data-bind="text: $data"></span></a></li>
+                        <li><a onclick="loadTrain(this);" data-bind="text: $data, attr: {href :'#gettrain:' + $data}"></a></li>
                     </ul>
                 </div>
                 <!--/.well -->
@@ -313,26 +326,28 @@
                 <div style="height: 800px; overflow: auto;" id="trains">
                     <ul class="nav">
                         <li class="nav-header">Train Details</li>
-                        <li><strong>Id:</strong> <a href="#" onclick="loadTrainSub(this);" data-bind="text: Id" title="Subscribe to train" style="display: inline;"></a></li>
+                        <li><strong>Id:</strong> <a onclick="loadTrainSub(this);" data-bind="text: Id, attr: {href :'#subtrain:' + Id()}" title="Subscribe to train" style="display: inline;"></a></li>
                         <li><strong>Service Code:</strong> <span data-bind="text: ServiceCode"></span></li>
                         <li><strong>Activated:</strong> <span data-bind="text: Activated"></span></li>
-                        <li><strong>Scheduled Origin:</strong> <a href="#" onclick="loadStanox(this);" data-bind="text: SchedOrigin, css:SchedOrigin" style="display: inline;"></a></li>
+                        <li><strong>Scheduled Origin:</strong> <a onclick="loadStanox(this);" data-bind="text: SchedOrigin, css:SchedOrigin, attr: {href :'#stanox:' + SchedOrigin()}" style="display: inline;"></a></li>
                         <li><strong>Scheduled Departure Time:</strong> <span data-bind="text: SchedDepart"></span></li>
                         <li><strong>Last Update:</strong> <span data-bind="text: LastUpdate"></span></li>
                         <li class="nav-header">Stops</li>
                     </ul>
                     <table class="table table-hover table-bordered">
                         <thead>
-                            <th>Location</th>
-                            <th>Time</th>
-                            <th>Action</th>
-                            <th>Line</th>
-                            <th>Platform</th>
+                            <tr>
+                                <th title="Click to load trains for the given location">Location</th>
+                                <th title="Expected time is tooltip. Delay is shown next to time">Time</th>
+                                <th>Action</th>
+                                <th>Line</th>
+                                <th>Platform</th>
+                            </tr>
                         </thead>
                         <tbody data-bind="foreach: Stops">
                             <tr>
-                                <td><a href="#" onclick="loadStanox(this);" data-bind="text: Stanox, css:Stanox"></a></td>
-                                <td><a href="#" data-bind="text: ActualTimeStamp, attr: { title: PlannedTime }" class="tooltip-dynamic"></a>&nbsp;<span class="label" data-bind="text: Delay, css: DelayResult" ></span></td>
+                                <td><a onclick="loadStanox(this);" data-bind="text: Stanox, css:Stanox, attr: {href :'#stanox:' + Stanox()}"></a></td>
+                                <td><span data-bind="text: ActualTimeStamp, attr: { title: PlannedTime }" class="tooltip-dynamic"></span>&nbsp;<span class="label" data-bind="text: Delay, css: DelayResult, attr: { title: DelayTitle }"></span></td>
                                 <td data-bind="text: EventType"></td>
                                 <td data-bind="text: Line"></td>
                                 <td data-bind="text: Platform"></td>
