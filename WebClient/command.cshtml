@@ -73,6 +73,18 @@
             self.EventType = ko.observable();
             self.Line = ko.observable();
             self.Platform = ko.observable();
+            self.Delay = ko.observable();
+
+            self.DelayResult = ko.computed(function () {
+                if (this.Delay() == 0)
+                    return "label-success";
+                if (this.Delay() < 0)
+                    return "label-info";
+                if (this.Delay() > 10)
+                    return "label-important";
+
+                return "label-warning";
+            }, self);
         }
 
         function StanoxSearchResultViewModel() {
@@ -93,6 +105,16 @@
         var currentTrain = new TrainViewModel();
         var currentStation = new StanoxSearchResultViewModel();
 
+        function formatDateString(d) {
+            function pad(n) { return n < 10 ? '0' + n : n }
+            return pad(d.getUTCDate()) + '/'
+                + pad(d.getUTCMonth() + 1) + '/'
+                + d.getUTCFullYear() + ' '
+                + pad(d.getUTCHours()) + ':'
+                + pad(d.getUTCMinutes()) + ':'
+                + pad(d.getUTCSeconds());
+        }
+
         function connectWs() {
             connect();
 
@@ -102,33 +124,11 @@
                 switch (data.Command) {
                     case "subtrainupdate":
                         data = data.Response;
-                        currentTrain.LastUpdate(new Date(Date.now()).toLocaleString());
+                        currentTrain.LastUpdate(formatDateString(new Date()));
                         for (i in data) {
-                            var stop = new StopViewModel();
-                            stop.Stanox(data[i].Stanox);
-                            stop.PlannedTime(data[i].PlannedTime);
-                            stop.ActualTimeStamp(data[i].ActualTimeStamp);
-                            stop.EventType(data[i].EventType);
-                            stop.Line(data[i].Line);
-                            stop.Platform(data[i].Platform);
-
-                            currentTrain.addStop(stop);
-
-                            loadLocation(data[i].Stanox, function (data) {
-                                var html = "";
-                                if (data.StationName) {
-                                    html = data.StationName;
-                                } else {
-                                    html = data.Tiploc;
-                                }
-                                if (data.CRS) {
-                                    html += "(" + data.CRS + ")";
-                                }
-                                $("." + data.Name).html(html);
-                                $("." + data.Name).attr('title', data.Description + '(' + data.Name + ')');
-                                $("." + data.Name).tooltip();
-                            });
+                            addStop(data.Steps[i]);
                         }
+                        $(".tooltip-dynamic").tooltip();
                         break;
                     case "subtrain":
                     case "gettrain":
@@ -136,36 +136,25 @@
                         data = data.Response;
                         currentTrain.Id(data.Id);
                         currentTrain.ServiceCode(data.ServiceCode);
-                        currentTrain.Activated(data.Activated);
-                        currentTrain.SchedOrigin(data.SchedOriginStanox);
-                        currentTrain.SchedDepart(data.SchedOriginDeparture);
-                        currentTrain.LastUpdate(new Date(Date.now()).toLocaleString());
-                        for (i in data.Steps) {
-                            var stop = new StopViewModel();
-                            stop.Stanox(data.Steps[i].Stanox);
-                            stop.PlannedTime(data.Steps[i].PlannedTime);
-                            stop.ActualTimeStamp(data.Steps[i].ActualTimeStamp);
-                            stop.EventType(data.Steps[i].EventType);
-                            stop.Line(data.Steps[i].Line);
-                            stop.Platform(data.Steps[i].Platform);
-
-                            currentTrain.addStop(stop);
-
-                            loadLocation(data.Steps[i].Stanox, function (data) {
-                                var html = "";
-                                if (data.StationName) {
-                                    html = data.StationName;
-                                } else {
-                                    html = data.Tiploc;
-                                }
-                                if (data.CRS) {
-                                    html += "(" + data.CRS + ")";
-                                }
-                                $("." + data.Name).html(html);
-                                $("." + data.Name).attr('title', data.Description + '(' + data.Name + ')');
-                                $("." + data.Name).tooltip();
-                            });
+                        var activated = "";
+                        if (data.Activated) {
+                            activated = formatDateString(new Date(data.Activated));
                         }
+                        currentTrain.Activated(activated);
+
+                        currentTrain.SchedOrigin(data.SchedOriginStanox);
+                        if (data.SchedOrigin && data.SchedOrigin.length > 0)
+                            fetchLocation(data.SchedOrigin);
+                        var schedDepart = "";
+                        if (data.SchedOriginDeparture) {
+                            schedDepart = formatDateString(new Date(data.SchedOriginDeparture));
+                        }
+                        currentTrain.SchedDepart(schedDepart);
+                        currentTrain.LastUpdate(formatDateString(new Date()));
+                        for (i in data.Steps) {
+                            addStop(data.Steps[i]);
+                        }
+                        $(".tooltip-dynamic").tooltip();
                         break;
                     case "stanox":
                     case "crs":
@@ -178,6 +167,44 @@
                         break;
                 }
             };
+        }
+
+        function addStop(stopEl) {
+            var stop = new StopViewModel();
+            stop.Stanox(stopEl.Stanox);
+
+            var plannedTime = new Date(stopEl.PlannedTime);
+            stop.PlannedTime(formatDateString(plannedTime));
+
+            var actualTime = new Date(stopEl.ActualTimeStamp);
+            stop.ActualTimeStamp(formatDateString(actualTime));
+
+            stop.Delay((actualTime - plannedTime) / 60000);
+
+            stop.EventType(stopEl.EventType);
+            stop.Line(stopEl.Line);
+            stop.Platform(stopEl.Platform);
+
+            currentTrain.addStop(stop);
+
+            fetchLocation(stopEl.Stanox);
+        }
+
+        function fetchLocation(stanox) {
+            loadLocation(stanox, function (data) {
+                var html = "";
+                if (data.StationName) {
+                    html = data.StationName;
+                } else {
+                    html = data.Tiploc;
+                }
+                if (data.CRS) {
+                    html += "(" + data.CRS + ")";
+                }
+                $("." + data.Name).html(html);
+                $("." + data.Name).attr('title', data.Description + '(' + data.Name + ')');
+                $("." + data.Name).tooltip();
+            });
         }
 
         function clearData() {
@@ -289,28 +316,26 @@
                         <li><strong>Id:</strong> <a href="#" onclick="loadTrainSub(this);" data-bind="text: Id" title="Subscribe to train" style="display: inline;"></a></li>
                         <li><strong>Service Code:</strong> <span data-bind="text: ServiceCode"></span></li>
                         <li><strong>Activated:</strong> <span data-bind="text: Activated"></span></li>
-                        <li><strong>Scheduled Origin:</strong> <span data-bind="text: SchedOrigin"></span></li>
+                        <li><strong>Scheduled Origin:</strong> <a href="#" onclick="loadStanox(this);" data-bind="text: SchedOrigin, css:SchedOrigin" style="display: inline;"></a></li>
                         <li><strong>Scheduled Departure Time:</strong> <span data-bind="text: SchedDepart"></span></li>
                         <li><strong>Last Update:</strong> <span data-bind="text: LastUpdate"></span></li>
                         <li class="nav-header">Stops</li>
                     </ul>
                     <table class="table table-hover table-bordered">
                         <thead>
+                            <th>Location</th>
+                            <th>Time</th>
                             <th>Action</th>
-                            <th>Expected Time</th>
-                            <th>Actual Time</th>
                             <th>Line</th>
                             <th>Platform</th>
-                            <th>Location</th>
                         </thead>
                         <tbody data-bind="foreach: Stops">
                             <tr>
+                                <td><a href="#" onclick="loadStanox(this);" data-bind="text: Stanox, css:Stanox"></a></td>
+                                <td><a href="#" data-bind="text: ActualTimeStamp, attr: { title: PlannedTime }" class="tooltip-dynamic"></a>&nbsp;<span class="label" data-bind="text: Delay, css: DelayResult" ></span></td>
                                 <td data-bind="text: EventType"></td>
-                                <td data-bind="text: PlannedTime"></td>
-                                <td data-bind="text: ActualTimeStamp"></td>
                                 <td data-bind="text: Line"></td>
                                 <td data-bind="text: Platform"></td>
-                                <td><a href="#" onclick="loadStanox(this);" data-bind="text: Stanox, css:Stanox"></a></td>
                             </tr>
                         </tbody>
                     </table>
