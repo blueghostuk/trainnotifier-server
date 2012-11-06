@@ -9,7 +9,6 @@
     <script src="~/Scripts/knockout-2.2.0.js"></script>
     <script src="~/Scripts/websockets.js"></script>
     <script src="~/Scripts/ajax-lookups.js"></script>
-    </script>
     <script type="text/javascript">
 
         var server = "@System.Configuration.ConfigurationManager.AppSettings["server"]";
@@ -137,7 +136,7 @@
                         data = data.Response;
                         currentTrain.LastUpdate(formatDateString(new Date()));
                         for (i in data) {
-                            addStop(data.Steps[i]);
+                            addStop(data[i]);
                         }
                         $(".tooltip-dynamic").tooltip();
                         break;
