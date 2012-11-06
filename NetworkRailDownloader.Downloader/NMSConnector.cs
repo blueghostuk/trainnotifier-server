@@ -77,7 +77,7 @@ namespace TrainNotifier.Common.NMS
         }
 
         private byte _retries = 0;
-        private readonly byte MaxRetries = 3;
+        private readonly byte MaxRetries = 5;
 
         private void ResubscribeMechanism(Feed feed)
         {
@@ -86,7 +86,7 @@ namespace TrainNotifier.Common.NMS
                 Trace.TraceError("Exceeded retry count of {0}. Quitting", MaxRetries);
                 throw new RetryException();
             }
-            Thread.Sleep(TimeSpan.FromMinutes(1));
+            Thread.Sleep(TimeSpan.FromSeconds(5 * _retries));
             _retries++;
             SubscribeToFeed(feed);
         }

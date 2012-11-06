@@ -29,6 +29,7 @@ namespace TrainNotifier.Console.WebSocketServer
 
                         // cancellation
                         case 2:
+                            CacheTrainCancellation((string)message.body.train_id, message.body);
                             break;
 
                         // train movement
@@ -199,6 +200,40 @@ namespace TrainNotifier.Console.WebSocketServer
                 if (trainMovement != null)
                 {
                     TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+                    _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
+                }
+            }
+            finally
+            {
+                if (_cacheService != null)
+                    _cacheService.Close();
+            }
+        }
+
+        private void CacheTrainCancellation(string trainId, dynamic body)
+        {
+            if (string.IsNullOrWhiteSpace(trainId))
+                return;
+
+            CacheServiceClient _cacheService = null;
+            try
+            {
+                _cacheService = new CacheServiceClient();
+                _cacheService.Open();
+                TrainMovement trainMovement;
+                if (!_cacheService.TryGetTrainMovement(trainId, out trainMovement))
+                {
+                    trainMovement = new TrainMovement
+                    {
+                        Id = (string)body.train_id,
+                        ServiceCode = (string)body.train_service_code
+                    };
+                    _cacheService.CacheTrainMovement(trainMovement);
+                }
+                if (trainMovement != null)
+                {
+                    TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+                    step.State = State.Cancelled;
                     _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
                 }
             }

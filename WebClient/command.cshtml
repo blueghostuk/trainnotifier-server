@@ -95,6 +95,36 @@
                     return "early";
                 return "late";
             }, self);
+
+            self.State = ko.observable();
+
+            self.StateClass = ko.computed(function () {
+                switch (this.State()) {
+                    case 1:
+                        return "warning";
+                        break;
+                    case 2:
+                        return "error";
+                        break;
+                    default:
+                    //case "Normal":
+                        return "";
+                }
+            }, self);
+
+            self.StateTitle = ko.computed(function () {
+                switch (this.State()) {
+                    case 1:
+                        return "Terminated";
+                        break;
+                    case 2:
+                        return "Cancelled";
+                        break;
+                    default:
+                        //case "Normal":
+                        return "";
+                }
+            }, self);
         }
 
         function StanoxSearchResultViewModel() {
@@ -194,6 +224,8 @@
             stop.EventType(stopEl.EventType);
             stop.Line(stopEl.Line);
             stop.Platform(stopEl.Platform);
+
+            stop.State(stopEl.State);
 
             currentTrain.addStop(stop);
 
@@ -344,7 +376,7 @@
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: Stops">
-                            <tr>
+                            <tr data-bind="css: StateClass, attr: { title: StateTitle }">
                                 <td><a onclick="loadStanox(this);" data-bind="text: Stanox, css:Stanox, attr: {href :'#stanox:' + Stanox()}"></a></td>
                                 <td><span data-bind="text: ActualTimeStamp, attr: { title: PlannedTime }" class="tooltip-dynamic"></span>&nbsp;<span class="label" data-bind="text: Delay, css: DelayResult, attr: { title: DelayTitle }"></span></td>
                                 <td data-bind="text: EventType"></td>
