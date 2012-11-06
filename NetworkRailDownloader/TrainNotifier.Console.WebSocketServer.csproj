@@ -131,7 +131,7 @@
       <Project>{e49f108e-329b-4317-bd3f-882ce964753d}</Project>
       <Name>TrainNotifier.Common.NMS</Name>
     </ProjectReference>
-    <ProjectReference Include="NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj">
+    <ProjectReference Include="..\NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj">
       <Project>{5aae47c1-e8a0-456d-86ca-c92b0c68f27c}</Project>
       <Name>TrainNotifier.Service</Name>
     </ProjectReference>
