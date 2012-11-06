@@ -102,6 +102,7 @@ packages
 *.Debug-Local.config
 *.Debug-Staging.config
 *.Release-Local.config
+*.Azure.config
 
 #web deploy files
 *.pubxml
