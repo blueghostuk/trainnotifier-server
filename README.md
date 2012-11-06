@@ -1,4 +1,4 @@
-traindata-downloader
+trainnotifier-server
 ======================
 Downloads data https://datafeeds.networkrail.co.uk/ using c#.
 
