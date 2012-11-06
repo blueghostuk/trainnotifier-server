@@ -49,6 +49,7 @@
     <Compile Include="IDownloader.cs" />
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\Stanox.cs" />
+    <Compile Include="Model\TrainDescriber.cs" />
     <Compile Include="Model\TrainMovement.cs" />
     <Compile Include="Model\TrainMovementStep.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
