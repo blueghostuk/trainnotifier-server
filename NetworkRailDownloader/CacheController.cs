@@ -232,8 +232,7 @@ namespace TrainNotifier.Console.WebSocketServer
                 }
                 if (trainMovement != null)
                 {
-                    TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
-                    step.State = State.Cancelled;
+                    TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
                     _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
                 }
             }
