@@ -18,7 +18,7 @@ namespace TrainNotifier.Console.WebSocketServer
         {
             _webSocketServer = new Alchemy.WebSocketServer(port, (ipAddress ?? IPAddress.Any))
             {
-                TimeOut = TimeSpan.FromMinutes(5)
+                TimeOut = TimeSpan.FromMilliseconds(-1)
             };
             _webSocketServer.OnConnect = new OnEventDelegate((uctx) =>
             {
