@@ -59,18 +59,7 @@ namespace TrainNotifier.Common.Model
     {
         public static TrainMovementStep MapFromBody(dynamic body, bool cancellation = false)
         {
-            DateTime? plannedTime = null;
-            if (!string.IsNullOrEmpty((string)body.planned_timestamp))
-            {
-                plannedTime = UnixTsToDateTime(double.Parse((string)body.planned_timestamp));
-            }
-
             TrainMovementStep tm = GetStep(cancellation);
-            tm.ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp));
-            tm.EventType = (string)body.event_type;
-            tm.Line = (string)body.line_ind;
-            tm.PlannedTime = plannedTime;
-            tm.Platform = (string)body.platform;
             tm.Stanox = (string)body.loc_stanox;
             tm.Terminated = ((string)body.train_teminated) == "true";
 
@@ -79,10 +68,22 @@ namespace TrainNotifier.Common.Model
                 ((CancelledTrainMovementStep)tm).CancelledTime = UnixTsToDateTime(double.Parse((string)body.canx_timestamp));
                 ((CancelledTrainMovementStep)tm).CancelledReasonCode = body.canx_reason_code;
                 ((CancelledTrainMovementStep)tm).CancelledType = body.canx_type;
+                tm.ActualTimeStamp = DateTime.UtcNow;
                 tm.State = State.Cancelled;
             }
             else
             {
+                DateTime? plannedTime = null;
+                if (!string.IsNullOrEmpty((string)body.planned_timestamp))
+                {
+                    plannedTime = UnixTsToDateTime(double.Parse((string)body.planned_timestamp));
+                }
+                tm.PlannedTime = plannedTime;
+
+                tm.EventType = (string)body.event_type;
+                tm.Line = (string)body.line_ind;
+                tm.ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp));
+                tm.Platform = (string)body.platform;
                 tm.State = GetState(body);
             }
 
