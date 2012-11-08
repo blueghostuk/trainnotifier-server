@@ -55,6 +55,17 @@ namespace TrainNotifier.WcfLibrary
 
         public void CacheTrainStep(string trainId, string serviceCode, TrainMovementStep step)
         {
+            CacheTrainStepLocal(trainId, serviceCode, step);
+        }
+
+        public void CacheTrainCancellation(string trainId, string serviceCode, CancelledTrainMovementStep step)
+        {
+            CacheTrainStepLocal(trainId, serviceCode, step);
+        }
+
+        private void CacheTrainStepLocal(string trainId, string serviceCode, TrainMovementStep step)
+        {
+
             TrainMovement trainMovement;
             if (!TryGetTrainMovement(trainId, out trainMovement))
             {
