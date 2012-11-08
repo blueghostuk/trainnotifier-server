@@ -18,6 +18,11 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CacheTrainStep(trainId, serviceCode, step);
         }
 
+        public void CacheTrainCancellation(string trainId, string serviceCode, CancelledTrainMovementStep step)
+        {
+            base.Channel.CacheTrainCancellation(trainId, serviceCode, step);
+        }
+
         public bool TryGetTrainMovement(string trainId, out TrainMovement trainMovement)
         {
             return base.Channel.TryGetTrainMovement(trainId, out trainMovement);

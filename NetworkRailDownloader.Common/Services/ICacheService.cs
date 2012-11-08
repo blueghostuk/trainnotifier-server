@@ -13,6 +13,9 @@ namespace TrainNotifier.Common.Services
         void CacheTrainStep(string trainId, string serviceCode, TrainMovementStep step);
 
         [OperationContract]
+        void CacheTrainCancellation(string trainId, string serviceCode, CancelledTrainMovementStep step);
+
+        [OperationContract]
         bool TryGetTrainMovement(string trainId, out TrainMovement trainMovement);
 
         [OperationContract]

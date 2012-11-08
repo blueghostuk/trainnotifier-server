@@ -95,7 +95,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActionFilters\WebApiOutputCacheAttribute.cs" />
+    <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
     <Compile Include="Controllers\StanoxController.cs" />
     <Compile Include="Controllers\StationController.cs" />
     <Compile Include="MessageHandlers\CorsHeader.cs" />
