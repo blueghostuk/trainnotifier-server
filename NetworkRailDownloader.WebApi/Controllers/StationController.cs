@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Console.WebApi.ViewModels;
 using TrainNotifier.ServiceLayer;
 
@@ -8,7 +9,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class StationController : ApiController
     {
-        //[WebApiOutputCache(86400, 604800, false)]
+        [CachingActionFilterAttribute(86400)]
         public IEnumerable<string> Get()
         {
             IEnumerable<dynamic> results = new TiplocRepository().Get();
@@ -19,7 +20,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 .Cast<string>();
         }
 
-        //[WebApiOutputCache(3600, 604800, false)]
+        [CachingActionFilterAttribute(3600)]
         public Stanox Get(string id)
         {
             dynamic result = new TiplocRepository().GetByStationName(id);
