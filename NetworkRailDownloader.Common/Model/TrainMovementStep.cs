@@ -16,9 +16,6 @@ namespace TrainNotifier.Common.Model
         public DateTime ActualTimeStamp { get; set; }
 
         [DataMember]
-        public bool Terminated { get; set; }
-
-        [DataMember]
         public string Stanox { get; set; }
 
         [DataMember]
@@ -61,7 +58,6 @@ namespace TrainNotifier.Common.Model
         {
             TrainMovementStep tm = GetStep(cancellation);
             tm.Stanox = (string)body.loc_stanox;
-            tm.Terminated = ((string)body.train_teminated) == "true";
 
             if (cancellation)
             {
