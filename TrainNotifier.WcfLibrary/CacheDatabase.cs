@@ -61,7 +61,7 @@ namespace TrainNotifier.WcfLibrary
                     stanox = tms.Stanox,
                     platform = tms.Platform,
                     line = tms.Line,
-                    terminated = tms.Terminated
+                    terminated = tms.State == State.Terminated
                 });
             });
         }
