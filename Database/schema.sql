@@ -1,7 +1,6 @@
 -- --------------------------------------------------------
--- Server version:               5.0.95-community-log - MySQL Community Edition (GPL)
 -- HeidiSQL version:             7.0.0.4053
--- Date/time:                    2012-11-08 21:05:44
+-- Date/time:                    2012-11-08 23:36:50
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -146,20 +145,13 @@ CREATE TABLE IF NOT EXISTS `IntermediateLocation` (
 -- Dumping structure for table natrail.LiveTrain
 CREATE TABLE IF NOT EXISTS `LiveTrain` (
   `TrainId` char(10) NOT NULL,
-  `schedule_source` char(1) default NULL,
-  `schedule_end_date` datetime default NULL,
-  `tp_origin_timestamp` datetime default NULL,
   `creation_timestamp` datetime default NULL,
-  `tp_origin_stanox` varchar(50) default NULL,
   `origin_dep_timestamp` datetime default NULL,
   `train_service_code` varchar(50) default NULL,
   `toc_id` varchar(50) default NULL,
-  `train_call_type` varchar(50) default NULL,
   `train_uid` varchar(50) default NULL,
-  `schedule_type` char(1) default NULL,
   `sched_origin_stanox` varchar(50) default NULL,
-  `sched_wtt_id` varchar(50) default NULL,
-  `sched_start_date` datetime default NULL
+  `sched_wtt_id` varchar(50) default NULL
 ) ENGINE=ARCHIVE DEFAULT CHARSET=latin1;
 
 -- Data exporting was unselected.
@@ -185,7 +177,6 @@ CREATE TABLE IF NOT EXISTS `LiveTrainStop` (
   `planned_timestamp` datetime default NULL,
   `actual_timestamp` datetime default NULL,
   `reporting_stanox` varchar(50) default NULL,
-  `next_report_stanox` varchar(50) default NULL,
   `platform` varchar(50) default NULL,
   `line` varchar(50) default NULL,
   `train_terminated` tinyint(3) unsigned NOT NULL default '0'
