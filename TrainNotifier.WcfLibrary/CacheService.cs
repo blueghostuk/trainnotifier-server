@@ -27,10 +27,13 @@ namespace TrainNotifier.WcfLibrary
             };
         }
 
+        private static readonly CacheDatabase _cacheDb = new CacheDatabase();
+
         public void CacheTrainMovement(TrainMovement trainMovement)
         {
             _tmCache.Add(trainMovement.Id, trainMovement, GetDefaultTMCacheItemPolicy());
             CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
+            _cacheDb.AddActivation(trainMovement);
         }
 
         public void CacheStation(string stanoxName, string trainId)
@@ -65,7 +68,6 @@ namespace TrainNotifier.WcfLibrary
 
         private void CacheTrainStepLocal(string trainId, string serviceCode, TrainMovementStep step)
         {
-
             TrainMovement trainMovement;
             if (!TryGetTrainMovement(trainId, out trainMovement))
             {
@@ -78,6 +80,14 @@ namespace TrainNotifier.WcfLibrary
             }
             trainMovement.AddTrainMovementStep(step);
             CacheStation(step.Stanox, trainId);
+            if (step is CancelledTrainMovementStep)
+            {
+                _cacheDb.AddCancellation(trainMovement, (CancelledTrainMovementStep)step);
+            }
+            else
+            {
+                _cacheDb.AddMovement(trainMovement, step);
+            }
         }
 
         public bool TryGetTrainMovement(string trainId, out TrainMovement trainMovement)

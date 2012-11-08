@@ -20,6 +20,12 @@ namespace TrainNotifier.Common.Model
         public string SchedOriginStanox { get; set; }
         [DataMember]
         public DateTime? SchedOriginDeparture { get; set; }
+        [DataMember]
+        public string TocId { get; set; }
+        [DataMember]
+        public string WorkingTTId { get; set; }
+        [DataMember]
+        public string TrainUid { get; set; }
 
         [DataMember]
         public IEnumerable<TrainMovementStep> Steps
@@ -61,13 +67,28 @@ namespace TrainNotifier.Common.Model
     {
         public static TrainMovement MapFromBody(dynamic body)
         {
+            string wttId = null;
+            try
+            {
+                wttId = (string)body.sched_wtt_id;
+            }
+            catch { }
+            string trainUid = null;
+            try
+            {
+                trainUid = (string)body.train_uid;
+            }
+            catch { }
             return new TrainMovement
             {
                 Activated = UnixTsToDateTime(double.Parse((string)body.creation_timestamp)),
                 Id = (string)body.train_id,
                 SchedOriginDeparture = UnixTsToDateTime(double.Parse((string)body.origin_dep_timestamp)),
                 SchedOriginStanox = (string)body.sched_origin_stanox,
-                ServiceCode = (string)body.train_service_code
+                ServiceCode = (string)body.train_service_code,
+                TocId = (string)body.toc_id,
+                WorkingTTId = wttId,
+                TrainUid = trainUid
             };
         }
 
