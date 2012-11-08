@@ -70,7 +70,7 @@ namespace TrainNotifier.Common.Model
             string wttId = null;
             try
             {
-                wttId = (string)body.sched_wtt_id;
+                wttId = (string)body.schedule_wtt_id;
             }
             catch { }
             string trainUid = null;
