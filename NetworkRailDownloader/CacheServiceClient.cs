@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using System.Collections.Generic;
+using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
 
@@ -31,6 +32,11 @@ namespace TrainNotifier.Console.WebSocketServer
         public bool TryGetStanox(string stanoxName, out Stanox stanox)
         {
             return base.Channel.TryGetStanox(stanoxName, out stanox);
+        }
+
+        public bool TryGetService(string headCode, out IEnumerable<string> trainIds)
+        {
+            return base.Channel.TryGetService(headCode, out trainIds);
         }
 
         public void CacheStation(string stanoxName, string trainId)
