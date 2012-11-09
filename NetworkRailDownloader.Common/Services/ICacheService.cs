@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using System.Collections.Generic;
+using System.ServiceModel;
 using TrainNotifier.Common.Model;
 
 namespace TrainNotifier.Common.Services
@@ -20,6 +21,9 @@ namespace TrainNotifier.Common.Services
 
         [OperationContract]
         bool TryGetStanox(string stanoxName, out Stanox stanox);
+
+        [OperationContract]
+        bool TryGetService(string headCode, out IEnumerable<string> trainIds);
 
         [OperationContract]
         void CacheStation(string stanoxName, string trainId);

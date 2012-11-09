@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Runtime.Caching;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
@@ -9,6 +11,7 @@ namespace TrainNotifier.WcfLibrary
     public class CacheService : ICacheService
     {
         private static readonly ObjectCache _tmCache = new MemoryCache("TrainMovements");
+        private static readonly ObjectCache _headCodeCache = new MemoryCache("TrainServices");
         private static readonly ObjectCache _stanoxCache = new MemoryCache("Stanox");
 
         private static CacheItemPolicy GetDefaultTMCacheItemPolicy()
@@ -16,6 +19,14 @@ namespace TrainNotifier.WcfLibrary
             return new CacheItemPolicy
             {
                 AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysTM"]))
+            };
+        }
+
+        private static CacheItemPolicy GetDefaultTrainServiceCacheItemPolicy()
+        {
+            return new CacheItemPolicy
+            {
+                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysHeadCode"]))
             };
         }
 
@@ -34,6 +45,18 @@ namespace TrainNotifier.WcfLibrary
             _tmCache.Add(trainMovement.Id, trainMovement, GetDefaultTMCacheItemPolicy());
             CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
             _cacheDb.AddActivation(trainMovement);
+            if (!string.IsNullOrWhiteSpace(trainMovement.WorkingTTId))
+            {
+                string wttid = trainMovement.WorkingTTId.Substring(0, trainMovement.WorkingTTId.Length -1);
+                ICollection<string> existing = _headCodeCache.Get(wttid) as ICollection<string>;
+                if (existing == null)
+                {
+                    existing = new HashSet<string>();
+                    _headCodeCache.Add(wttid, existing, GetDefaultTrainServiceCacheItemPolicy());
+                }
+
+                existing.Add(trainMovement.Id);
+            }
         }
 
         public void CacheStation(string stanoxName, string trainId)
@@ -94,6 +117,13 @@ namespace TrainNotifier.WcfLibrary
         {
             trainMovement = _tmCache.Get(trainId) as TrainMovement;
             return trainMovement != null;
+        }
+
+        public bool TryGetService(string headCode, out IEnumerable<string> trainIds)
+        {
+            trainIds = _headCodeCache.Get(headCode) as IEnumerable<string>;
+
+            return trainIds != null;
         }
     }
 }

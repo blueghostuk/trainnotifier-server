@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
@@ -70,6 +71,9 @@ namespace TrainNotifier.Console.WebSocketServer
                     string args = new string(command.Skip(idx + 1).ToArray());
                     switch (cmdText)
                     {
+                        case "getservice":
+                            HandleGetServiceCommand(context, args);
+                            break;
                         case "gettrain":
                             HandleGetTrainCommand(context, args);
                             break;
@@ -90,30 +94,64 @@ namespace TrainNotifier.Console.WebSocketServer
             };
         }
 
+        private void HandleGetServiceCommand(UserContextEventArgs context, string headCode)
+        {
+            CacheServiceClient _cacheService = null;
+            try
+            {
+                IEnumerable<string> data;
+                _cacheService = new CacheServiceClient();
+                _cacheService.Open();
+                if (_cacheService.TryGetService(headCode, out data))
+                {
+                    string response = JsonConvert.SerializeObject(new CommandResponse<IEnumerable<string>>
+                    {
+                        Command = "getservice",
+                        Args = headCode,
+                        Response = data
+                    });
+                    context.UserContext.Send(response);
+                }
+            }
+            finally
+            {
+                if (_cacheService != null)
+                    _cacheService.Close();
+            }
+        }
+
         private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)
         {
-            UserContextData uc = _userManager.ActiveUsers[context.UserContext];
-            if (uc != null)
+            CacheServiceClient _cacheService = null;
+            try
             {
-                if (subscribe)
+                TrainMovement trainMovement;
+                _cacheService = new CacheServiceClient();
+                _cacheService.Open();
+                if (_cacheService.TryGetTrainMovement(trainId, out trainMovement))
                 {
-                    HandleGetTrainCommand(context, trainId);
-                    uc.StateArgs = trainId;
-                    uc.State = UserContextState.SubscribeToTrain;
+                    string response = JsonConvert.SerializeObject(new CommandResponse<TrainMovement>
+                    {
+                        Command = "gettrain",
+                        Args = trainId,
+                        Response = trainMovement
+                    });
+                    context.UserContext.Send(response);
                 }
-                else
-                {
-                    uc.State = UserContextState.None;
-                }
+            }
+            finally
+            {
+                if (_cacheService != null)
+                    _cacheService.Close();
             }
         }
 
         private void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
         {
-            TrainMovement trainMovement;
             CacheServiceClient _cacheService = null;
             try
             {
+                TrainMovement trainMovement;
                 _cacheService = new CacheServiceClient();
                 _cacheService.Open();
                 if (_cacheService.TryGetTrainMovement(trainId, out trainMovement))
