@@ -70,8 +70,9 @@ namespace TrainNotifier.Common.NMS
                 TraceHelper.FlushLog();
                 ResubscribeMechanism(feed);
             }
-            catch (RetryException)
+            catch (RetryException re)
             {
+                Trace.TraceError("Exception: {0}", re);
                 ResubscribeMechanism(feed);
             }
         }
@@ -86,6 +87,8 @@ namespace TrainNotifier.Common.NMS
                 Trace.TraceError("Exceeded retry count of {0}. Quitting", MaxRetries);
                 throw new RetryException();
             }
+            TimeSpan retryTs = TimeSpan.FromSeconds(5 * _retries);
+            Trace.TraceError("Retry attempt no {0} in {1}", _retries, retryTs);
             Thread.Sleep(TimeSpan.FromSeconds(5 * _retries));
             _retries++;
             SubscribeToFeed(feed);
