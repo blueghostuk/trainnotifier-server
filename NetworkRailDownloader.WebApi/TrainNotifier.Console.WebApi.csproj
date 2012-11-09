@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
+    <Compile Include="Controllers\ArchiveController.cs" />
     <Compile Include="Controllers\StanoxController.cs" />
     <Compile Include="Controllers\StationController.cs" />
     <Compile Include="MessageHandlers\CorsHeader.cs" />
@@ -107,6 +108,7 @@
       <DependentUpon>Service.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Stanox.cs" />
+    <Compile Include="ViewModels\WttIdSearchResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
