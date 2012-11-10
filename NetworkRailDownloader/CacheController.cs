@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.ServiceModel;
 using TrainNotifier.Common.Model;
-using TrainNotifier.Common.Services;
 using TrainNotifier.ServiceLayer;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -96,13 +94,13 @@ namespace TrainNotifier.Console.WebSocketServer
 
         private void HandleGetServiceCommand(UserContextEventArgs context, string headCode)
         {
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
                 IEnumerable<string> data;
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
-                if (_cacheService.TryGetService(headCode, out data))
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
+                if (cacheService.TryGetService(headCode, out data))
                 {
                     string response = JsonConvert.SerializeObject(new CommandResponse<IEnumerable<string>>
                     {
@@ -115,46 +113,38 @@ namespace TrainNotifier.Console.WebSocketServer
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
         private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)
         {
-            CacheServiceClient _cacheService = null;
-            try
+            UserContextData uc = _userManager.ActiveUsers[context.UserContext];
+            if (uc != null)
             {
-                TrainMovement trainMovement;
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
-                if (_cacheService.TryGetTrainMovement(trainId, out trainMovement))
+                if (subscribe)
                 {
-                    string response = JsonConvert.SerializeObject(new CommandResponse<TrainMovement>
-                    {
-                        Command = "gettrain",
-                        Args = trainId,
-                        Response = trainMovement
-                    });
-                    context.UserContext.Send(response);
+                    HandleGetTrainCommand(context, trainId);
+                    uc.StateArgs = trainId;
+                    uc.State = UserContextState.SubscribeToTrain;
                 }
-            }
-            finally
-            {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                else
+                {
+                    uc.State = UserContextState.None;
+                }
             }
         }
 
         private void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
         {
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
                 TrainMovement trainMovement;
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
-                if (_cacheService.TryGetTrainMovement(trainId, out trainMovement))
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
+                if (cacheService.TryGetTrainMovement(trainId, out trainMovement))
                 {
                     string response = JsonConvert.SerializeObject(new CommandResponse<TrainMovement>
                     {
@@ -167,20 +157,20 @@ namespace TrainNotifier.Console.WebSocketServer
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
         private void HandleStanoxCommand(UserContextEventArgs context, string command, string stanoxName)
         {
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
                 Stanox stanox;
-                if (_cacheService.TryGetStanox(stanoxName, out stanox))
+                if (cacheService.TryGetStanox(stanoxName, out stanox))
                 {
                     string response = JsonConvert.SerializeObject(new CommandResponse<Stanox>
                     {
@@ -193,25 +183,25 @@ namespace TrainNotifier.Console.WebSocketServer
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
         private void CacheActivation(dynamic body)
         {
             TrainMovement trainMovement = TrainMovementMapper.MapFromBody(body);
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
-                _cacheService.CacheTrainMovement(trainMovement);
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
+                cacheService.CacheTrainMovement(trainMovement);
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
@@ -220,31 +210,31 @@ namespace TrainNotifier.Console.WebSocketServer
             if (string.IsNullOrWhiteSpace(trainId))
                 return;
 
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
                 TrainMovement trainMovement;
-                if (!_cacheService.TryGetTrainMovement(trainId, out trainMovement))
+                if (!cacheService.TryGetTrainMovement(trainId, out trainMovement))
                 {
                     trainMovement = new TrainMovement
                     {
-                        Id = (string)body.train_id,
-                        ServiceCode = (string)body.train_service_code
+                        Id = body.train_id,
+                        ServiceCode = body.train_service_code
                     };
-                    _cacheService.CacheTrainMovement(trainMovement);
+                    cacheService.CacheTrainMovement(trainMovement);
                 }
                 if (trainMovement != null)
                 {
                     TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
-                    _cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
+                    cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
                 }
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
@@ -253,31 +243,31 @@ namespace TrainNotifier.Console.WebSocketServer
             if (string.IsNullOrWhiteSpace(trainId))
                 return;
 
-            CacheServiceClient _cacheService = null;
+            CacheServiceClient cacheService = null;
             try
             {
-                _cacheService = new CacheServiceClient();
-                _cacheService.Open();
+                cacheService = new CacheServiceClient();
+                cacheService.Open();
                 TrainMovement trainMovement;
-                if (!_cacheService.TryGetTrainMovement(trainId, out trainMovement))
+                if (!cacheService.TryGetTrainMovement(trainId, out trainMovement))
                 {
                     trainMovement = new TrainMovement
                     {
-                        Id = (string)body.train_id,
-                        ServiceCode = (string)body.train_service_code
+                        Id = body.train_id,
+                        ServiceCode = body.train_service_code
                     };
-                    _cacheService.CacheTrainMovement(trainMovement);
+                    cacheService.CacheTrainMovement(trainMovement);
                 }
                 if (trainMovement != null)
                 {
                     CancelledTrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
-                    _cacheService.CacheTrainCancellation(trainId, (string)body.train_service_code, step);
+                    cacheService.CacheTrainCancellation(trainId, (string)body.train_service_code, step);
                 }
             }
             finally
             {
-                if (_cacheService != null)
-                    _cacheService.Close();
+                if (cacheService != null)
+                    cacheService.Close();
             }
         }
 
