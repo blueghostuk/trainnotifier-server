@@ -69,12 +69,6 @@ namespace TrainNotifier.Console.WebSocketServer
                     string args = new string(command.Skip(idx + 1).ToArray());
                     switch (cmdText)
                     {
-                        case "getservice":
-                            HandleGetServiceCommand(context, args);
-                            break;
-                        case "gettrain":
-                            HandleGetTrainCommand(context, args);
-                            break;
                         case "subtrain":
                             HandleSubTrainCommand(context, args, true);
                             break;
@@ -92,32 +86,6 @@ namespace TrainNotifier.Console.WebSocketServer
             };
         }
 
-        private void HandleGetServiceCommand(UserContextEventArgs context, string headCode)
-        {
-            CacheServiceClient cacheService = null;
-            try
-            {
-                IEnumerable<string> data;
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                if (cacheService.TryGetService(headCode, out data))
-                {
-                    string response = JsonConvert.SerializeObject(new CommandResponse<IEnumerable<string>>
-                    {
-                        Command = "getservice",
-                        Args = headCode,
-                        Response = data
-                    });
-                    context.UserContext.Send(response);
-                }
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
-            }
-        }
-
         private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)
         {
             UserContextData uc = _userManager.ActiveUsers[context.UserContext];
@@ -125,7 +93,6 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 if (subscribe)
                 {
-                    HandleGetTrainCommand(context, trainId);
                     uc.StateArgs = trainId;
                     uc.State = UserContextState.SubscribeToTrain;
                 }
@@ -133,32 +100,6 @@ namespace TrainNotifier.Console.WebSocketServer
                 {
                     uc.State = UserContextState.None;
                 }
-            }
-        }
-
-        private void HandleGetTrainCommand(UserContextEventArgs context, string trainId)
-        {
-            CacheServiceClient cacheService = null;
-            try
-            {
-                TrainMovement trainMovement;
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                if (cacheService.TryGetTrainMovement(trainId, out trainMovement))
-                {
-                    string response = JsonConvert.SerializeObject(new CommandResponse<TrainMovement>
-                    {
-                        Command = "gettrain",
-                        Args = trainId,
-                        Response = trainMovement
-                    });
-                    context.UserContext.Send(response);
-                }
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
             }
         }
 
@@ -215,21 +156,8 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 cacheService = new CacheServiceClient();
                 cacheService.Open();
-                TrainMovement trainMovement;
-                if (!cacheService.TryGetTrainMovement(trainId, out trainMovement))
-                {
-                    trainMovement = new TrainMovement
-                    {
-                        Id = body.train_id,
-                        ServiceCode = body.train_service_code
-                    };
-                    cacheService.CacheTrainMovement(trainMovement);
-                }
-                if (trainMovement != null)
-                {
-                    TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
-                    cacheService.CacheTrainStep(trainId, (string)body.train_service_code, step);
-                }
+                TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+                cacheService.CacheTrainStep(trainId, step);
             }
             finally
             {
@@ -248,21 +176,8 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 cacheService = new CacheServiceClient();
                 cacheService.Open();
-                TrainMovement trainMovement;
-                if (!cacheService.TryGetTrainMovement(trainId, out trainMovement))
-                {
-                    trainMovement = new TrainMovement
-                    {
-                        Id = body.train_id,
-                        ServiceCode = body.train_service_code
-                    };
-                    cacheService.CacheTrainMovement(trainMovement);
-                }
-                if (trainMovement != null)
-                {
-                    CancelledTrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
-                    cacheService.CacheTrainCancellation(trainId, (string)body.train_service_code, step);
-                }
+                CancelledTrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
+                cacheService.CacheTrainCancellation(trainId, step);
             }
             finally
             {

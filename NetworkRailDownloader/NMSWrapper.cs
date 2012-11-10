@@ -23,7 +23,7 @@ namespace TrainNotifier.Console.WebSocketServer
             _nmsDownloader = new NMSConnector();
         }
 
-        public void Start()
+        public Task Start()
         {
             _nmsDownloader.FeedDataRecieved += (src, feedData) =>
             {
@@ -41,7 +41,7 @@ namespace TrainNotifier.Console.WebSocketServer
                     eh(this, new FeedEventArgs(evtData));
             };
 
-            Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
+            return Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
         }
 
         public void Stop()
