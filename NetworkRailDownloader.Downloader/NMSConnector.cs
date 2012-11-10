@@ -112,7 +112,7 @@ namespace TrainNotifier.Common.NMS
                         Trace.TraceInformation("Created consumer to {0}", topic);
                         consumer.Listener += new MessageListener(this.consumer_Listener);
                         connection.Start();
-                        using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore, TimeSpan.FromSeconds(10)))
+                        using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
                         {
                             Trace.TraceInformation("Waiting for quit");
                             this._quitSemaphore.WaitOne();
