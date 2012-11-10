@@ -22,8 +22,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.WcfSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.WcfLibrary", "..\TrainNotifier.WcfLibrary\TrainNotifier.WcfLibrary.csproj", "{15B3E0D2-6217-493A-A690-158C497F5318}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.WebClient", "..\..\trainnotifier-webclient\WebClient\TrainNotifier.WebClient.csproj", "{FCB0778D-D13E-4FBD-873E-671365CB441B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C14ADA59-8806-45E7-ADB8-98E6811BC91F}"
 	ProjectSection(SolutionItems) = preProject
 		..\.gitattributes = ..\.gitattributes
@@ -111,16 +109,6 @@ Global
 		{15B3E0D2-6217-493A-A690-158C497F5318}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
 		{15B3E0D2-6217-493A-A690-158C497F5318}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15B3E0D2-6217-493A-A690-158C497F5318}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Azure|Any CPU.ActiveCfg = Azure|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Azure|Any CPU.Build.0 = Azure|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug-Local|Any CPU.ActiveCfg = Debug-Local|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug-Local|Any CPU.Build.0 = Debug-Local|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug-Staging|Any CPU.ActiveCfg = Debug-Staging|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Debug-Staging|Any CPU.Build.0 = Debug-Staging|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FCB0778D-D13E-4FBD-873E-671365CB441B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

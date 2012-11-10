@@ -4,8 +4,11 @@ using System.Runtime.Serialization;
 namespace TrainNotifier.Common.Model
 {
     [DataContract]
-    public class TrainMovementStep
+    public class TrainMovementStep : ITrainData
     {
+        [DataMember]
+        public string TrainId { get; set; }
+
         [DataMember]
         public string EventType { get; set; }
 

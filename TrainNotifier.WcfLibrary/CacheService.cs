@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Runtime.Caching;
+using System.Transactions;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
@@ -21,7 +24,7 @@ namespace TrainNotifier.WcfLibrary
             };
         }
 
-        public void CacheTrainMovement(TrainMovement trainMovement)
+        private void CacheTrainMovement(TrainMovement trainMovement)
         {
             CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
             _cacheDb.AddActivation(trainMovement);
@@ -47,26 +50,51 @@ namespace TrainNotifier.WcfLibrary
             return stanox != null;
         }
 
-        public void CacheTrainStep(string trainId, TrainMovementStep step)
+        private void CacheTrainStep(TrainMovementStep step)
         {
-            CacheTrainStepLocal(trainId, step);
-        }
-
-        public void CacheTrainCancellation(string trainId, CancelledTrainMovementStep step)
-        {
-            CacheTrainStepLocal(trainId, step);
-        }
-
-        private void CacheTrainStepLocal(string trainId, TrainMovementStep step)
-        {
-            CacheStation(step.Stanox, trainId);
-            if (step is CancelledTrainMovementStep)
+            if (_cacheDb.AddMovement(step))
             {
-                _cacheDb.AddCancellation(trainId, (CancelledTrainMovementStep)step);
+                CacheStation(step.Stanox, step.TrainId);
             }
-            else
+        }
+
+        private void CacheTrainCancellation(CancelledTrainMovementStep step)
+        {
+            if (_cacheDb.AddCancellation(step))
             {
-                _cacheDb.AddMovement(trainId, step);
+                CacheStation(step.Stanox, step.TrainId);
+            }
+        }
+
+        public void CacheTrainData(IEnumerable<ITrainData> trainData)
+        {
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadUncommitted }))
+            {
+                foreach (var train in trainData)
+                {
+                    TrainMovement tm = train as TrainMovement;
+                    if (tm != null)
+                    {
+                        CacheTrainMovement(tm);
+                    }
+                    else
+                    {
+                        CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
+                        if (ctms != null)
+                        {
+                            CacheTrainCancellation(ctms);
+                        }
+                        else
+                        {
+                            TrainMovementStep tms = train as TrainMovementStep;
+                            if (tms != null)
+                            {
+                                CacheTrainStep(tms);
+                            }
+                        }
+                    }
+                }
+                ts.Complete();
             }
         }
     }

@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace TrainNotifier.Common.Model
 {
     [DataContract]
-    public sealed class TrainMovement
+    public sealed class TrainMovement : ITrainData
     {
         private ICollection<TrainMovementStep> _steps;
 
@@ -14,6 +14,10 @@ namespace TrainNotifier.Common.Model
         public DateTime? Activated { get; set; }
         [DataMember]
         public string Id { get; set; }
+
+        [DataMember]
+        public string TrainId { get { return Id; } set { Id = value; } }
+
         [DataMember]
         public string ServiceCode { get; set; }
         [DataMember]
@@ -60,7 +64,6 @@ namespace TrainNotifier.Common.Model
         {
             _steps.Add(step);
         }
-
     }
 
     public static class TrainMovementMapper
