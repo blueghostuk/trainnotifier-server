@@ -26,6 +26,9 @@ namespace TrainNotifier.Common.Model
 
         [DataMember]
         public State State { get; set; }
+
+        [IgnoreDataMember]
+        public bool Terminated { get; set; }
     }
 
     [DataContract]

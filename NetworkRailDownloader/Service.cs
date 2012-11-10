@@ -6,6 +6,7 @@ using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
+using System.Threading.Tasks;
 using TrainNotifier.Common;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -16,6 +17,8 @@ namespace TrainNotifier.Console.WebSocketServer
         private UserManager _userManager;
         private NMSWrapper _nmsWrapper;
         private CacheController _cacheController;
+
+        private Task _nmsTask;
 
         static void Main(string[] args)
         {
@@ -72,7 +75,23 @@ namespace TrainNotifier.Console.WebSocketServer
 
             _nmsWrapper = new NMSWrapper(_userManager);
             _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
-            _nmsWrapper.Start();
+            _nmsTask = _nmsWrapper.Start();
+
+            Timer t = new Timer((s) =>
+            {
+                if (_nmsTask.IsFaulted)
+                {
+                    Trace.TraceError(_nmsTask.Exception.ToString());
+
+                    Stop();
+                }
+                else if (_nmsTask.IsCompleted)
+                {
+                    Trace.TraceInformation("NMS Task Finished");
+
+                    Stop();
+                }
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
         }
 
         protected override void OnStop()

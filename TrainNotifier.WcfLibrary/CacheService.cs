@@ -1,34 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
 using System.Runtime.Caching;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
+using TrainNotifier.Service;
 
 namespace TrainNotifier.WcfLibrary
 {
     public class CacheService : ICacheService
     {
-        private static readonly ObjectCache _tmCache = new MemoryCache("TrainMovements");
-        private static readonly ObjectCache _headCodeCache = new MemoryCache("TrainServices");
+        private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
+
         private static readonly ObjectCache _stanoxCache = new MemoryCache("Stanox");
-
-        private static CacheItemPolicy GetDefaultTMCacheItemPolicy()
-        {
-            return new CacheItemPolicy
-            {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysTM"]))
-            };
-        }
-
-        private static CacheItemPolicy GetDefaultTrainServiceCacheItemPolicy()
-        {
-            return new CacheItemPolicy
-            {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysHeadCode"]))
-            };
-        }
 
         private static CacheItemPolicy GetDefaultStanoxCacheItemPolicy()
         {
@@ -38,25 +21,10 @@ namespace TrainNotifier.WcfLibrary
             };
         }
 
-        private static readonly CacheDatabase _cacheDb = new CacheDatabase();
-
         public void CacheTrainMovement(TrainMovement trainMovement)
         {
-            _tmCache.Add(trainMovement.Id, trainMovement, GetDefaultTMCacheItemPolicy());
             CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
             _cacheDb.AddActivation(trainMovement);
-            if (!string.IsNullOrWhiteSpace(trainMovement.WorkingTTId))
-            {
-                string wttid = trainMovement.WorkingTTId.Substring(0, trainMovement.WorkingTTId.Length -1);
-                ICollection<string> existing = _headCodeCache.Get(wttid) as ICollection<string>;
-                if (existing == null)
-                {
-                    existing = new HashSet<string>();
-                    _headCodeCache.Add(wttid, existing, GetDefaultTrainServiceCacheItemPolicy());
-                }
-
-                existing.Add(trainMovement.Id);
-            }
         }
 
         public void CacheStation(string stanoxName, string trainId)
@@ -79,51 +47,27 @@ namespace TrainNotifier.WcfLibrary
             return stanox != null;
         }
 
-        public void CacheTrainStep(string trainId, string serviceCode, TrainMovementStep step)
+        public void CacheTrainStep(string trainId, TrainMovementStep step)
         {
-            CacheTrainStepLocal(trainId, serviceCode, step);
+            CacheTrainStepLocal(trainId, step);
         }
 
-        public void CacheTrainCancellation(string trainId, string serviceCode, CancelledTrainMovementStep step)
+        public void CacheTrainCancellation(string trainId, CancelledTrainMovementStep step)
         {
-            CacheTrainStepLocal(trainId, serviceCode, step);
+            CacheTrainStepLocal(trainId, step);
         }
 
-        private void CacheTrainStepLocal(string trainId, string serviceCode, TrainMovementStep step)
+        private void CacheTrainStepLocal(string trainId, TrainMovementStep step)
         {
-            TrainMovement trainMovement;
-            if (!TryGetTrainMovement(trainId, out trainMovement))
-            {
-                trainMovement = new TrainMovement
-                {
-                    Id = trainId,
-                    ServiceCode = serviceCode
-                };
-                CacheTrainMovement(trainMovement);
-            }
-            trainMovement.AddTrainMovementStep(step);
             CacheStation(step.Stanox, trainId);
             if (step is CancelledTrainMovementStep)
             {
-                _cacheDb.AddCancellation(trainMovement, (CancelledTrainMovementStep)step);
+                _cacheDb.AddCancellation(trainId, (CancelledTrainMovementStep)step);
             }
             else
             {
-                _cacheDb.AddMovement(trainMovement, step);
+                _cacheDb.AddMovement(trainId, step);
             }
-        }
-
-        public bool TryGetTrainMovement(string trainId, out TrainMovement trainMovement)
-        {
-            trainMovement = _tmCache.Get(trainId) as TrainMovement;
-            return trainMovement != null;
-        }
-
-        public bool TryGetService(string headCode, out IEnumerable<string> trainIds)
-        {
-            trainIds = _headCodeCache.Get(headCode) as IEnumerable<string>;
-
-            return trainIds != null;
         }
     }
 }

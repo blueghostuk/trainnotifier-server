@@ -9,10 +9,12 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class StationController : ApiController
     {
+        private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
+
         [CachingActionFilterAttribute(86400)]
         public IEnumerable<string> Get()
         {
-            IEnumerable<dynamic> results = new TiplocRepository().Get();
+            IEnumerable<dynamic> results = _tiplocRepo.Get();
 
             return results
                 .Where(r => !string.IsNullOrEmpty(r.StationName))
@@ -23,7 +25,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
         [CachingActionFilterAttribute(3600)]
         public Stanox Get(string id)
         {
-            dynamic result = new TiplocRepository().GetByStationName(id);
+            dynamic result = _tiplocRepo.GetByStationName(id);
 
             if (result != null)
             {

@@ -14,29 +14,19 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CacheTrainMovement(trainMovement);
         }
 
-        public void CacheTrainStep(string trainId, string serviceCode, TrainMovementStep step)
+        public void CacheTrainStep(string trainId, TrainMovementStep step)
         {
-            base.Channel.CacheTrainStep(trainId, serviceCode, step);
+            base.Channel.CacheTrainStep(trainId, step);
         }
 
-        public void CacheTrainCancellation(string trainId, string serviceCode, CancelledTrainMovementStep step)
+        public void CacheTrainCancellation(string trainId, CancelledTrainMovementStep step)
         {
-            base.Channel.CacheTrainCancellation(trainId, serviceCode, step);
-        }
-
-        public bool TryGetTrainMovement(string trainId, out TrainMovement trainMovement)
-        {
-            return base.Channel.TryGetTrainMovement(trainId, out trainMovement);
+            base.Channel.CacheTrainCancellation(trainId, step);
         }
 
         public bool TryGetStanox(string stanoxName, out Stanox stanox)
         {
             return base.Channel.TryGetStanox(stanoxName, out stanox);
-        }
-
-        public bool TryGetService(string headCode, out IEnumerable<string> trainIds)
-        {
-            return base.Channel.TryGetService(headCode, out trainIds);
         }
 
         public void CacheStation(string stanoxName, string trainId)
