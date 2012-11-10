@@ -19,6 +19,7 @@ namespace TrainNotifier.Console.WebSocketServer
         private CacheController _cacheController;
 
         private Task _nmsTask;
+        private Timer _nmsTimer;
 
         static void Main(string[] args)
         {
@@ -77,7 +78,7 @@ namespace TrainNotifier.Console.WebSocketServer
             _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
             _nmsTask = _nmsWrapper.Start();
 
-            Timer t = new Timer((s) =>
+            _nmsTimer = new Timer((s) =>
             {
                 if (_nmsTask.IsFaulted)
                 {
@@ -96,6 +97,12 @@ namespace TrainNotifier.Console.WebSocketServer
 
         protected override void OnStop()
         {
+            Trace.TraceInformation("Stopping Service");
+            if (_nmsTimer != null)
+            {
+                _nmsTimer.Change(-1, -1);
+                _nmsTimer.Dispose();
+            }
             if (_nmsWrapper != null)
             {
                 _nmsWrapper.Stop();
