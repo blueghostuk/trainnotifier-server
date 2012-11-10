@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
@@ -72,6 +73,7 @@ namespace TrainNotifier.Service
 
         public void AddActivation(TrainMovement tm)
         {
+            Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
             const string insertActivation = @"
                     INSERT INTO LiveTrain
 	                SET 
@@ -102,10 +104,11 @@ namespace TrainNotifier.Service
             return ExecuteScalar<object>("SELECT 1 FROM `LiveTrain` WHERE `TrainId` = @trainId", new { trainId }) != null;
         }
 
-        public void AddMovement(string trainId, TrainMovementStep tms)
+        public bool AddMovement(TrainMovementStep tms)
         {
-            if (TrainExists(trainId))
+            if (TrainExists(tms.TrainId))
             {
+                Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
                 const string insertStop = @"
                     INSERT INTO LiveTrainStop
 	                SET 
@@ -120,7 +123,7 @@ namespace TrainNotifier.Service
 
                 ExecuteNonQuery(insertStop, new
                 {
-                    trainId = trainId,
+                    trainId = tms.TrainId,
                     eventType = tms.EventType,
                     plannedTs = tms.PlannedTime,
                     actualTs = tms.ActualTimeStamp,
@@ -129,30 +132,36 @@ namespace TrainNotifier.Service
                     line = tms.Line,
                     terminated = tms.State == State.Terminated
                 });
+
+                return true;
             }
+            return false;
         }
 
-        public void AddCancellation(string trainId, CancelledTrainMovementStep cm)
+        public bool AddCancellation(CancelledTrainMovementStep cm)
         {
-            if (TrainExists(trainId))
+            if (TrainExists(cm.TrainId))
             {
+                Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
                 const string insertStop = @"
                     INSERT INTO LiveTrainCancellation
 	                SET 
                         TrainId = @trainId,  
-                        canx_timestamp = @canxTs, 
-                        loc_stanox = @stanox, 
+                        canx_timestamp = @canxTs,
                         canx_reason_code = @canxReason, 
                         canx_type = @canxType";
 
                 ExecuteNonQuery(insertStop, new
                 {
-                    trainId = trainId,
+                    trainId = cm.TrainId,
                     canxTs = cm.CancelledTime,
-                    stanox = cm.Stanox,
+                    canxType = cm.CancelledType,
                     canxReason = cm.CancelledReasonCode
                 });
+
+                return true;
             }
+            return false;
         }
     }
 }

@@ -17,23 +17,24 @@ namespace TrainNotifier.Console.WebSocketServer
             _userManager = userManager;
             nmsWrapper.FeedDataRecieved += (s, f) =>
             {
+                ICollection<ITrainData> data = new List<ITrainData>(32);
                 foreach (var message in f.Data)
                 {
                     switch (byte.Parse((string)message.header.msg_type))
                     {
                         // activation
                         case 1:
-                            CacheActivation(message.body);
+                            data.Add(CacheActivation(message.body));
                             break;
 
                         // cancellation
                         case 2:
-                            CacheTrainCancellation((string)message.body.train_id, message.body);
+                            data.Add(CacheTrainCancellation((string)message.body.train_id, message.body));
                             break;
 
                         // train movement
                         case 3:
-                            CacheTrainMovement((string)message.body.train_id, message.body);
+                            data.Add(CacheTrainMovement((string)message.body.train_id, message.body));
                             break;
 
                         // unidentified train
@@ -55,6 +56,23 @@ namespace TrainNotifier.Console.WebSocketServer
                         // train change of location
                         case 8:
                             break;
+                    }
+                }
+                data = data.Where(d => d != null)
+                    .ToList();
+                if (data.Any())
+                {
+                    CacheServiceClient cacheService = null;
+                    try
+                    {
+                        cacheService = new CacheServiceClient();
+                        cacheService.Open();
+                        cacheService.CacheTrainData(data);
+                    }
+                    finally
+                    {
+                        if (cacheService != null)
+                            cacheService.Close();
                     }
                 }
             };
@@ -129,61 +147,29 @@ namespace TrainNotifier.Console.WebSocketServer
             }
         }
 
-        private void CacheActivation(dynamic body)
+        private TrainMovement CacheActivation(dynamic body)
         {
-            TrainMovement trainMovement = TrainMovementMapper.MapFromBody(body);
-            CacheServiceClient cacheService = null;
-            try
-            {
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                cacheService.CacheTrainMovement(trainMovement);
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
-            }
+            return TrainMovementMapper.MapFromBody(body);
         }
 
-        private void CacheTrainMovement(string trainId, dynamic body)
+        private TrainMovementStep CacheTrainMovement(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
-                return;
+                return null;
 
-            CacheServiceClient cacheService = null;
-            try
-            {
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
-                cacheService.CacheTrainStep(trainId, step);
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
-            }
+            TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+            step.TrainId = trainId;
+            return step;
         }
 
-        private void CacheTrainCancellation(string trainId, dynamic body)
+        private CancelledTrainMovementStep CacheTrainCancellation(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
-                return;
+                return null;
 
-            CacheServiceClient cacheService = null;
-            try
-            {
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                CancelledTrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
-                cacheService.CacheTrainCancellation(trainId, step);
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
-            }
+            CancelledTrainMovementStep step = TrainMovementStepMapper.MapFromBody(body, true);
+            step.TrainId = trainId;
+            return step;
         }
 
         public void Dispose()
