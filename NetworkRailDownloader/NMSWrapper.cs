@@ -29,8 +29,7 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
                 Parallel.ForEach(_userManager.ActiveUsers
-                    .Where(u => u.Value.State == UserContextState.SubscribeToFeed)
-                    .Where(u => DoSendData(evtData, u.Value.StateArgs)), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+                    .Where(u => u.Value.State == UserContextState.SubscribeToRawFeed), uc => SendData(uc, evtData as IEnumerable<dynamic>));
 
                 Parallel.ForEach(_userManager.ActiveUsers
                     .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
@@ -77,12 +76,7 @@ namespace TrainNotifier.Console.WebSocketServer
 
         private static void SendData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
         {
-            var data = evtData;
-            if (!string.IsNullOrWhiteSpace(uc.Value.StateArgs.ToString()))
-            {
-                data = evtData.Where(e => e.body.loc_stanox == uc.Value.StateArgs);
-            }
-            uc.Key.Send(JsonConvert.SerializeObject(data.Select(e => e.body)));
+            uc.Key.Send(JsonConvert.SerializeObject(evtData.Select(e => e.body)));
         }
 
         private void SendTrainData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
