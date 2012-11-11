@@ -32,7 +32,7 @@ namespace TrainNotifier.Service
         public TrainMovement GetTrainMovementById(string trainId)
         {
             const string sql = @"
-                SELECT
+                SELECT TOP 1
                     Id AS UniqueId,
                     TrainId AS Id,
                     CreationTimestamp AS Activated,
@@ -44,7 +44,7 @@ namespace TrainNotifier.Service
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
                 WHERE TrainId = @trainId
-                ORDER BY sched_wtt_id LIMIT 1";
+                ORDER BY SchedWttId";
 
             TrainMovement tm = ExecuteScalar<TrainMovement>(sql, new { trainId });
             if (tm != null)
@@ -59,7 +59,7 @@ namespace TrainNotifier.Service
                         Line AS Line,
                         TrainTerminated AS Terminated
                     FROM LiveTrainStop
-                    WHERE Id = @trainId";
+                    WHERE TrainId = @trainId";
 
                 IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId })
                     .ToList();
@@ -209,8 +209,8 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE sched_origin_stanox = @stanox
-                ORDER BY origin_dep_timestamp";
+                WHERE OriginStanox = @stanox
+                ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
 
