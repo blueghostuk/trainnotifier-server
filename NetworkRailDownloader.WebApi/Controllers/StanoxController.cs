@@ -20,10 +20,23 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 .Cast<Stanox>();
         }
 
-        [CachingActionFilterAttribute(3600)]
+        [CachingActionFilterAttribute(86400)]
         public Stanox Get(string id)
         {
             dynamic result = _tiplocRepo.GetByStanox(id);
+
+            if (result != null)
+            {
+                return MapStanox(result);
+            }
+
+            return null;
+        }
+
+        [CachingActionFilterAttribute(86400)]
+        public Stanox GetByCrs(string crsCode)
+        {
+            dynamic result = _tiplocRepo.GetByCRSCode(crsCode);
 
             if (result != null)
             {
