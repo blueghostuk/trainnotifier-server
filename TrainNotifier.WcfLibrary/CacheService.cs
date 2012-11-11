@@ -68,7 +68,7 @@ namespace TrainNotifier.WcfLibrary
 
         public void CacheTrainData(IEnumerable<ITrainData> trainData)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadUncommitted }))
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead }))
             {
                 foreach (var train in trainData)
                 {
