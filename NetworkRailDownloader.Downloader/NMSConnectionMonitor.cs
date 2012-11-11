@@ -8,7 +8,6 @@ namespace TrainNotifier.Common.NMS
     public class NMSConnectionMonitor : IDisposable
     {
         private DateTime? _lastMsgRecd;
-        private Timer _timer;
 
         public DateTime? LastMsgRecd
         {
@@ -47,8 +46,6 @@ namespace TrainNotifier.Common.NMS
 
         public void Dispose()
         {
-            if (_timer != null)
-                _timer.Dispose();
         }
     }
 }
