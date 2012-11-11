@@ -10,6 +10,9 @@ namespace TrainNotifier.Common.Model
     {
         private ICollection<TrainMovementStep> _steps;
 
+        [IgnoreDataMember]
+        public Guid UniqueId { get; set; }
+
         [DataMember]
         public DateTime? Activated { get; set; }
         [DataMember]

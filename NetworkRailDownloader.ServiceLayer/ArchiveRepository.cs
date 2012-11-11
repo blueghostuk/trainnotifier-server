@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using TrainNotifier.Common.Model;
@@ -8,16 +9,20 @@ namespace TrainNotifier.Service
 {
     public class ArchiveRepository : DbRepository
     {
+        public ArchiveRepository()
+            : base("archive")
+        { }
+
         public IEnumerable<dynamic> GetBtWttId(string wttId)
         {
             const string sql = @"
                 SELECT
-                    `TrainId` AS `Id`,
-                    `origin_dep_timestamp`,
-                    `sched_origin_stanox`,
-                    `sched_wtt_id`
-                FROM `LiveTrain`
-                WHERE `sched_wtt_id` LIKE @wttId";
+                    TrainId,
+                    OriginDepartTimestamp,
+                    OriginStanox,
+                    SchedWttId
+                FROM LiveTrain
+                WHERE SchedWttId LIKE @wttId";
 
             wttId += "%";
 
@@ -28,34 +33,35 @@ namespace TrainNotifier.Service
         {
             const string sql = @"
                 SELECT
-                    `TrainId` AS `Id`,
-                    `creation_timestamp` AS `Activated`,
-                    `origin_dep_timestamp` AS `SchedOriginDeparture`,
-                    `train_service_code` AS `ServiceCode`,
-                    `toc_id` AS `TocId`,
-                    `train_uid` AS `TrainUid`,
-                    `sched_origin_stanox` AS `SchedOriginStanox`,
-                    `sched_wtt_id` AS `WorkingTTId`
-                FROM `LiveTrain`
-                WHERE `TrainId` = @trainId
-                ORDER BY `sched_wtt_id` LIMIT 1";
+                    Id AS UniqueId,
+                    TrainId AS Id,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                WHERE TrainId = @trainId
+                ORDER BY sched_wtt_id LIMIT 1";
 
             TrainMovement tm = ExecuteScalar<TrainMovement>(sql, new { trainId });
             if (tm != null)
             {
                 const string tmsSql = @"
                     SELECT
-                        `event_type` AS `EventType`,
-                        `planned_timestamp` AS `PlannedTime`,
-                        `actual_timestamp` AS `ActualTimeStamp`,
-                        `reporting_stanox` AS `Stanox`,
-                        `platform` AS `Platform`,
-                        `line` AS `Line`,
-                        `train_terminated` AS `Terminated`
-                    FROM `LiveTrainStop`
-                    WHERE `TrainId` = @trainId";
+                        EventType,
+                        PlannedTimestamp AS PlannedTime,
+                        ActualTimestamp AS ActualTimeStamp,
+                        ReportingStanox AS Stanox,
+                        Platform AS Platform,
+                        Line AS Line,
+                        TrainTerminated AS Terminated
+                    FROM LiveTrainStop
+                    WHERE Id = @trainId";
 
-                IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId })
+                IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId })
                     .ToList();
                 foreach (var tms in tmSteps)
                 {
@@ -75,16 +81,24 @@ namespace TrainNotifier.Service
         {
             Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
             const string insertActivation = @"
-                    INSERT INTO LiveTrain
-	                SET 
-                        TrainId = @trainId,  
-                        creation_timestamp = @activationDate, 
-                        sched_origin_stanox = @Origin, 
-                        origin_dep_timestamp = @OriginTime, 
-                        train_service_code = @ServiceCode, 
-                        toc_id = @tocId, 
-                        train_uid = @trainUid, 
-                        sched_wtt_id = @wttid";
+                INSERT INTO [natrail].[dbo].[LiveTrain]
+                           ([TrainId]
+                           ,[CreationTimestamp]
+                           ,[OriginDepartTimestamp]
+                           ,[TrainServiceCode]
+                           ,[Toc]
+                           ,[TrainUid]
+                           ,[OriginStanox]
+                           ,[SchedWttId])
+                     VALUES
+                           (@trainId
+                           ,@activationDate
+                           ,@OriginTime
+                           ,@ServiceCode
+                           ,@tocId
+                           ,@trainUid
+                           ,@Origin
+                           ,@wttid)";
 
             ExecuteNonQuery(insertActivation, new
             {
@@ -99,31 +113,41 @@ namespace TrainNotifier.Service
             });
         }
 
-        private bool TrainExists(string trainId)
+        private bool TrainExists(string trainId, out Guid? id)
         {
-            return ExecuteScalar<object>("SELECT 1 FROM `LiveTrain` WHERE `TrainId` = @trainId", new { trainId }) != null;
+            id = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
+            return id.HasValue && id.Value != Guid.Empty;
         }
 
         public bool AddMovement(TrainMovementStep tms)
         {
-            if (TrainExists(tms.TrainId))
+            Guid? trainId = null;
+            if (TrainExists(tms.TrainId, out trainId))
             {
                 Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
                 const string insertStop = @"
-                    INSERT INTO LiveTrainStop
-	                SET 
-                        TrainId = @trainId,  
-                        event_type = @eventType, 
-                        planned_timestamp = @plannedTs, 
-                        actual_timestamp = @actualTs, 
-                        reporting_stanox = @stanox, 
-                        platform = @platform,
-                        line = @line,
-                        train_terminated = @terminated";
+                    INSERT INTO [natrail].[dbo].[LiveTrainStop]
+                               ([TrainId]
+                               ,[EventType]
+                               ,[PlannedTimestamp]
+                               ,[ActualTimestamp]
+                               ,[ReportingStanox]
+                               ,[Platform]
+                               ,[Line]
+                               ,[TrainTerminated])
+                         VALUES
+                               (@trainId
+                               ,@eventType
+                               ,@plannedTs
+                               ,@actualTs
+                               ,@stanox
+                               ,@platform
+                               ,@line
+                               ,@terminated)";
 
                 ExecuteNonQuery(insertStop, new
                 {
-                    trainId = tms.TrainId,
+                    trainId,
                     eventType = tms.EventType,
                     plannedTs = tms.PlannedTime,
                     actualTs = tms.ActualTimeStamp,
@@ -140,23 +164,31 @@ namespace TrainNotifier.Service
 
         public bool AddCancellation(CancelledTrainMovementStep cm)
         {
-            if (TrainExists(cm.TrainId))
+            Guid? trainId = null;
+            if (TrainExists(cm.TrainId, out trainId))
             {
                 Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
                 const string insertStop = @"
-                    INSERT INTO LiveTrainCancellation
-	                SET 
-                        TrainId = @trainId,  
-                        canx_timestamp = @canxTs,
-                        canx_reason_code = @canxReason, 
-                        canx_type = @canxType";
+                    INSERT INTO [natrail].[dbo].[LiveTrainCancellation]
+                               ([TrainId]
+                               ,[CancelledTimestamp]
+                               ,[ReasonCode]
+                               ,[Stanox]
+                               ,[Type])
+                         VALUES
+                               (@trainId
+                               ,@canxTs
+                               ,@canxReason
+                               ,@stanox
+                               ,@canxType)";
 
                 ExecuteNonQuery(insertStop, new
                 {
-                    trainId = cm.TrainId,
+                    trainId,
                     canxTs = cm.CancelledTime,
                     canxType = cm.CancelledType,
-                    canxReason = cm.CancelledReasonCode
+                    canxReason = cm.CancelledReasonCode,
+                    stanox = cm.Stanox
                 });
 
                 return true;
@@ -168,17 +200,17 @@ namespace TrainNotifier.Service
         {
             const string sql = @"
                 SELECT
-                    `TrainId` AS `Id`,
-                    `creation_timestamp` AS `Activated`,
-                    `origin_dep_timestamp` AS `SchedOriginDeparture`,
-                    `train_service_code` AS `ServiceCode`,
-                    `toc_id` AS `TocId`,
-                    `train_uid` AS `TrainUid`,
-                    `sched_origin_stanox` AS `SchedOriginStanox`,
-                    `sched_wtt_id` AS `WorkingTTId`
-                FROM `LiveTrain`
-                WHERE `sched_origin_stanox` = @stanox
-                ORDER BY `origin_dep_timestamp`";
+                    TrainId AS Id,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                WHERE sched_origin_stanox = @stanox
+                ORDER BY origin_dep_timestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
 

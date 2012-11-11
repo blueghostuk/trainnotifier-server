@@ -19,10 +19,10 @@ namespace TrainNotifier.Console.WebApi.Controllers
             return _archiveRepo.GetBtWttId(wttId)
                 .Select(r => new WttIdSearchResult
                 {
-                    WttId = r.sched_wtt_id,
-                    TrainId = r.Id,
-                    From = r.sched_origin_stanox,
-                    Depart = r.origin_dep_timestamp
+                    WttId = r.SchedWttId,
+                    TrainId = r.TrainId,
+                    From = r.OriginStanox,
+                    Depart = r.OriginDepartTimestamp
                 });
         }
 
