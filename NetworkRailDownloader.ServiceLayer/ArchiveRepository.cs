@@ -163,5 +163,27 @@ namespace TrainNotifier.Service
             }
             return false;
         }
+
+        public IEnumerable<TrainMovement> GetTrainMovementsOrigin(string stanox)
+        {
+            const string sql = @"
+                SELECT
+                    `TrainId` AS `Id`,
+                    `creation_timestamp` AS `Activated`,
+                    `origin_dep_timestamp` AS `SchedOriginDeparture`,
+                    `train_service_code` AS `ServiceCode`,
+                    `toc_id` AS `TocId`,
+                    `train_uid` AS `TrainUid`,
+                    `sched_origin_stanox` AS `SchedOriginStanox`,
+                    `sched_wtt_id` AS `WorkingTTId`
+                FROM `LiveTrain`
+                WHERE `sched_origin_stanox` = @stanox
+                ORDER BY `origin_dep_timestamp`";
+
+            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
+
+            // TODO: get more detail
+            return tms;                
+        }
     }
 }

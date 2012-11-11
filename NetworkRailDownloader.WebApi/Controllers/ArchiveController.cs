@@ -30,5 +30,10 @@ namespace TrainNotifier.Console.WebApi.Controllers
         {
             return _archiveRepo.GetTrainMovementById(trainId);
         }
+
+        public IEnumerable<TrainMovement> GetTrainMovementsOrigin(string stanox)
+        {
+            return _archiveRepo.GetTrainMovementsOrigin(stanox);
+        }
     }
 }
