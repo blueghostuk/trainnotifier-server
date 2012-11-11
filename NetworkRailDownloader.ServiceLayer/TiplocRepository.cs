@@ -58,5 +58,24 @@ namespace TrainNotifier.ServiceLayer
             // TODO: what if more than 1?
             return Query<dynamic>(sql, new { stationName }).FirstOrDefault();
         }
+
+        public dynamic GetByCRSCode(string crsCode)
+        {
+            const string sql = @"select 
+                 `Tiploc`.Tiploc,
+                 `Tiploc`.Nalco,
+                 `Tiploc`.Description,
+                 `Tiploc`.CRS,
+                 `Station`.StationName,
+                 `Tiploc`.`Stanox`,
+                 Y(Station.Location) AS `lat`,
+                 X(Station.Location) AS `lon`
+                from `natrail`.`Tiploc`
+                left join Station ON Tiploc.Id = Station.TiplocId
+                where Tiploc.CRS = @crsCode";
+
+            // TODO: what if more than 1?
+            return Query<dynamic>(sql, new { crsCode }).FirstOrDefault();
+        }
     }
 }
