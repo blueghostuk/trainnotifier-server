@@ -39,8 +39,12 @@ namespace TrainNotifier.Console.WebSocketServer
                 }
                 switch (command)
                 {
+                    case "raw-on":
                     case "subscribe":
-                        data.State = UserContextState.SubscribeToFeed;
+                        data.State = UserContextState.SubscribeToRawFeed;
+                        break;
+                    case "raw-off":
+                        data.State = UserContextState.SubscribeToFilteredFeed;
                         break;
                     case "unsubscribe":
                         data.State = UserContextState.None;
@@ -81,7 +85,8 @@ namespace TrainNotifier.Console.WebSocketServer
     public enum UserContextState
     {
         None,
-        SubscribeToFeed,
+        SubscribeToRawFeed,
+        SubscribeToFilteredFeed,
         SubscribeToTrain
     }
 
