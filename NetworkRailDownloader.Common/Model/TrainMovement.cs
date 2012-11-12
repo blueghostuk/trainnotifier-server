@@ -15,11 +15,15 @@ namespace TrainNotifier.Common.Model
 
         [DataMember]
         public DateTime? Activated { get; set; }
+
         [DataMember]
         public string Id { get; set; }
 
         [DataMember]
         public string TrainId { get { return Id; } set { Id = value; } }
+
+        [DataMember]
+        public string HeadCode { get; set; }
 
         [DataMember]
         public string ServiceCode { get; set; }
