@@ -83,6 +83,7 @@ namespace TrainNotifier.Service
             const string insertActivation = @"
                 INSERT INTO [natrail].[dbo].[LiveTrain]
                            ([TrainId]
+                           ,[Headcode]
                            ,[CreationTimestamp]
                            ,[OriginDepartTimestamp]
                            ,[TrainServiceCode]
@@ -92,6 +93,7 @@ namespace TrainNotifier.Service
                            ,[SchedWttId])
                      VALUES
                            (@trainId
+                           ,@headcode
                            ,@activationDate
                            ,@OriginTime
                            ,@ServiceCode
@@ -103,6 +105,7 @@ namespace TrainNotifier.Service
             ExecuteNonQuery(insertActivation, new
             {
                 trainId = tm.Id,
+                headcode = tm.Id.Substring(2, 4),
                 activationDate = tm.Activated,
                 Origin = tm.SchedOriginStanox,
                 OriginTime = tm.SchedOriginDeparture,
