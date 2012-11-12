@@ -13,11 +13,12 @@ namespace TrainNotifier.Service
             : base("archive")
         { }
 
-        public IEnumerable<dynamic> GetBtWttId(string wttId)
+        public IEnumerable<dynamic> SearchByWttId(string wttId)
         {
             const string sql = @"
                 SELECT
                     TrainId,
+                    Headcode,
                     OriginDepartTimestamp,
                     OriginStanox,
                     SchedWttId
@@ -29,12 +30,58 @@ namespace TrainNotifier.Service
             return Query<dynamic>(sql, new { wttId });
         }
 
+        public IEnumerable<TrainMovement> SearchByOrigin(string stanox)
+        {
+            const string sql = @"
+                SELECT
+                    TrainId AS Id,
+                    Headcode AS HeadCode,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                WHERE OriginStanox = @stanox
+                ORDER BY OriginDepartTimestamp";
+
+            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
+
+            // TODO: get more detail
+            return tms;
+        }
+        public IEnumerable<TrainMovement> SearchByHeadcode(string headcode)
+        {
+            const string sql = @"
+                SELECT
+                    TrainId AS Id,
+                    Headcode AS HeadCode,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                WHERE Headcode = @headcode
+                ORDER BY OriginDepartTimestamp";
+
+            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { headcode });
+
+            // TODO: get more detail
+            return tms;
+        }
+
         public TrainMovement GetTrainMovementById(string trainId)
         {
             const string sql = @"
                 SELECT TOP 1
                     Id AS UniqueId,
                     TrainId AS Id,
+                    Headcode AS HeadCode,
                     CreationTimestamp AS Activated,
                     OriginDepartTimestamp AS SchedOriginDeparture,
                     TrainServiceCode AS ServiceCode,
@@ -197,28 +244,6 @@ namespace TrainNotifier.Service
                 return true;
             }
             return false;
-        }
-
-        public IEnumerable<TrainMovement> GetTrainMovementsOrigin(string stanox)
-        {
-            const string sql = @"
-                SELECT
-                    TrainId AS Id,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                WHERE OriginStanox = @stanox
-                ORDER BY OriginDepartTimestamp";
-
-            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
-
-            // TODO: get more detail
-            return tms;                
         }
     }
 }
