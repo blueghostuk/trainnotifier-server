@@ -44,7 +44,7 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE OriginStanox = @stanox
+                WHERE OriginStanox = @stanox AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
                 ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
@@ -66,7 +66,7 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE Headcode = @headcode
+                WHERE Headcode = @headcode AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
                 ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { headcode });
