@@ -12,14 +12,16 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
         [CachingActionFilterAttribute(86400)]
-        public IEnumerable<string> Get()
+        public IEnumerable<Stanox> Get()
         {
             IEnumerable<dynamic> results = _tiplocRepo.Get();
 
             return results
                 .Where(r => !string.IsNullOrEmpty(r.StationName))
-                .Select(r => r.StationName + " (" + r.CRS + ")")
-                .Cast<string>();
+                //.Select(r => r.StationName + " (" + r.CRS + ")")
+                //.Cast<string>();
+                .Select(r => MapStanox(r))
+                .Cast<Stanox>();
         }
 
         [CachingActionFilterAttribute(3600)]
