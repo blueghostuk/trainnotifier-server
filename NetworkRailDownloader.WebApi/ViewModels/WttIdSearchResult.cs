@@ -9,6 +9,7 @@ namespace TrainNotifier.Console.WebApi.ViewModels
     public class WttIdSearchResult
     {
         public string TrainId { get; set; }
+        public string HeadCode { get; set; }
         public string WttId { get; set; }
         public string From { get; set; }
         public string To { get; set; }
