@@ -64,6 +64,7 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
                 TraceHelper.FlushLog();
+                ExitCode = -1;
             };
         }
 
@@ -83,7 +84,7 @@ namespace TrainNotifier.Console.WebSocketServer
                 if (_nmsTask.IsFaulted)
                 {
                     Trace.TraceError(_nmsTask.Exception.ToString());
-
+                    ExitCode = 1;
                     Stop();
                 }
                 else if (_nmsTask.IsCompleted)
