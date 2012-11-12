@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Console.WebApi.ViewModels;
@@ -16,11 +13,12 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         public IEnumerable<WttIdSearchResult> GetByWttId(string wttId)
         {
-            return _archiveRepo.GetBtWttId(wttId)
+            return _archiveRepo.SearchByWttId(wttId)
                 .Select(r => new WttIdSearchResult
                 {
-                    WttId = r.SchedWttId,
                     TrainId = r.TrainId,
+                    HeadCode = r.Headcode,
+                    WttId = r.SchedWttId,
                     From = r.OriginStanox,
                     Depart = r.OriginDepartTimestamp
                 });
@@ -31,9 +29,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
             return _archiveRepo.GetTrainMovementById(trainId);
         }
 
-        public IEnumerable<TrainMovement> GetTrainMovementsOrigin(string stanox)
+        public IEnumerable<TrainMovement> GetTrainMovementsByOrigin(string stanox)
         {
-            return _archiveRepo.GetTrainMovementsOrigin(stanox);
+            return _archiveRepo.SearchByOrigin(stanox);
+        }
+
+        public IEnumerable<TrainMovement> GetTrainMovementsByHeadcode(string headcode)
+        {
+            return _archiveRepo.SearchByHeadcode(headcode);
         }
     }
 }
