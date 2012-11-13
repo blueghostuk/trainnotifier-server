@@ -110,6 +110,13 @@ namespace TrainNotifier.Common.NMS
                     using (IMessageConsumer consumer = CreateConsumer(session, topic))
                     {
                         Trace.TraceInformation("Created consumer to {0}", topic);
+                        // dont check expiry
+                        MessageConsumer messageConsumer = consumer as MessageConsumer;
+                        if (messageConsumer != null)
+                        {
+                            messageConsumer.CheckExpiry = false;
+                        }
+
                         consumer.Listener += new MessageListener(this.consumer_Listener);
                         connection.Start();
                         using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
