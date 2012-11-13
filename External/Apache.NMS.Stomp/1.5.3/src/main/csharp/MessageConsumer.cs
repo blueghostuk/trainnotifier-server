@@ -65,6 +65,7 @@ namespace Apache.NMS.Stomp
             this.info = info;
             this.redeliveryPolicy = this.session.Connection.RedeliveryPolicy;
             this.messageTransformation = this.session.Connection.MessageTransformation;
+            this.CheckExpiry = true;
         }
 
         ~MessageConsumer()
@@ -96,6 +97,8 @@ namespace Apache.NMS.Stomp
             get { return this.consumerTransformer; }
             set { this.consumerTransformer = value; }
         }
+
+        public bool CheckExpiry { get; set; }
 
         #endregion
 
@@ -424,7 +427,7 @@ namespace Apache.NMS.Stomp
 
                             try
                             {
-                                bool expired = message.IsExpired();
+                                bool expired = this.CheckExpiry && message.IsExpired();
 
                                 if(!expired)
                                 {
@@ -548,7 +551,7 @@ namespace Apache.NMS.Stomp
                 {
                     return null;
                 }
-                else if(dispatch.Message.IsExpired())
+                else if(CheckExpiry && dispatch.Message.IsExpired())
                 {
                     Tracer.DebugFormat("{0} received expired message: {1}", info.ConsumerId, dispatch.Message.MessageId);
 
