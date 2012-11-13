@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{E8C995C3-FF81-491B-A3B7-9D7C753BDDC3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Apache.NMS.Stomp.Test</AssemblyName>
+    <RootNamespace>Apache.NMS.Stomp.Test</RootNamespace>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>keyfile\NMSKey.snk</AssemblyOriginatorKeyFile>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>build\net-2.0\debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET,NET_2_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <NoWarn>3016</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>build\net-2.0\release\</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DefineConstants>NET,NET_2_0</DefineConstants>
+    <NoWarn>3016</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Apache.NMS, Version=1.5.1.2341, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\Apache.NMS\net-2.0\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.Test, Version=1.5.1.2341, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\Apache.NMS\net-2.0\Apache.NMS.Test.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="nunit.framework, Version=2.5.5.10112, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\NUnit\mono-2.0\nunit.framework.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft.Net.Framework.2.0</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="vs2008-stomp.csproj">
+      <Project>{AA51947C-1370-44DC-8692-1C8EFC5945F7}</Project>
+      <Name>vs2008-stomp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="nmsprovider-test.config" />
+    <None Include="LICENSE.txt" />
+    <None Include="keyfile\NMSKey.snk" />
+    <None Include="Apache.NMS.Stomp.Test.nunit" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <Policies>
+          <TextStylePolicy FileWidth="120" RemoveTrailingWhitespace="True" inheritsSet="VisualStudio" inheritsScope="text/plain" />
+          <StandardHeader Text="/*&#xA; * Licensed to the Apache Software Foundation (ASF) under one or more&#xA; * contributor license agreements.  See the NOTICE file distributed with&#xA; * this work for additional information regarding copyright ownership.&#xA; * The ASF licenses this file to You under the Apache License, Version 2.0&#xA; * (the &quot;License&quot;); you may not use this file except in compliance with&#xA; * the License.  You may obtain a copy of the License at&#xA; *&#xA; *     http://www.apache.org/licenses/LICENSE-2.0&#xA; *&#xA; * Unless required by applicable law or agreed to in writing, software&#xA; * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#xA; * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#xA; * See the License for the specific language governing permissions and&#xA; * limitations under the License.&#xA; */&#xA;" inheritsSet="Apache2License" />
+        </Policies>
+      </Properties>
+    </MonoDevelop>
+    <VisualStudio />
+  </ProjectExtensions>
+  <ItemGroup>
+    <Compile Include="src\test\csharp\StompHelperTest.cs" />
+    <Compile Include="src\test\csharp\StompRedeliveryPolicyTest.cs" />
+    <Compile Include="src\test\csharp\Threads\CompositeTaskRunnerTest.cs" />
+    <Compile Include="src\test\csharp\Threads\ThreadPoolExecutorTest.cs" />
+    <Compile Include="src\test\csharp\Util\MessageDispatchChannelTest.cs" />
+    <Compile Include="src\test\csharp\MessageListenerRedeliveryTest.cs" />
+    <Compile Include="src\test\csharp\StompTopicTransactionTest.cs" />
+    <Compile Include="src\test\csharp\StompTransactionTestSupport.cs" />
+    <Compile Include="src\test\csharp\StompQueueTransactionTest.cs" />
+    <Compile Include="src\test\csharp\Commands\BytesMessageTest.cs" />
+    <Compile Include="src\test\csharp\Commands\CommandTest.cs" />
+    <Compile Include="src\test\csharp\Commands\MessageTest.cs" />
+    <Compile Include="src\test\csharp\Commands\TextMessageTest.cs" />
+    <Compile Include="src\test\csharp\NMSConnectionFactoryTest.cs" />
+    <Compile Include="src\test\csharp\Threads\DedicatedTaskRunnerTest.cs" />
+    <Compile Include="src\test\csharp\Commands\MapMessageTest.cs" />
+    <Compile Include="src\test\csharp\Protocol\XmlPrimitiveMapMarshalerTest.cs" />
+    <Compile Include="src\test\csharp\Commands\ConsumerIdTest.cs" />
+    <Compile Include="src\test\csharp\Commands\ProducerIdTest.cs" />
+  </ItemGroup>
+</Project>
