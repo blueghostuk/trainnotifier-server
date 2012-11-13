@@ -83,8 +83,8 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 if (_nmsTask.IsFaulted)
                 {
-                    Trace.TraceError(_nmsTask.Exception.ToString());
-                    ExitCode = 1;
+                    Trace.TraceError("NMS Task Faulted: {0}", _nmsTask.Exception);
+                    ExitCode = -1;
                     Stop();
                 }
                 else if (_nmsTask.IsCompleted)
