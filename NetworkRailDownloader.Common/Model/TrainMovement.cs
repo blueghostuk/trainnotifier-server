@@ -37,6 +37,8 @@ namespace TrainNotifier.Common.Model
         public string WorkingTTId { get; set; }
         [DataMember]
         public string TrainUid { get; set; }
+        [DataMember]
+        public TrainState State { get; set; }
 
         [DataMember]
         public IEnumerable<TrainMovementStep> Steps
@@ -65,12 +67,26 @@ namespace TrainNotifier.Common.Model
         public TrainMovement()
         {
             _steps = new HashSet<TrainMovementStep>();
+            State = TrainState.Activated;
         }
 
         public void AddTrainMovementStep(TrainMovementStep step)
         {
             _steps.Add(step);
         }
+    }
+
+    [DataContract]
+    public enum TrainState : short
+    {
+        [EnumMember()]
+        Activated = 1,
+        [EnumMember()]
+        Cancelled = 2,
+        [EnumMember()]
+        InProgress = 3,
+        [EnumMember()]
+        Terminated = 4,
     }
 
     public static class TrainMovementMapper

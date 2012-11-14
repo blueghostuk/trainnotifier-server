@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Transactions;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
 
@@ -137,7 +138,8 @@ namespace TrainNotifier.Service
                            ,[Toc]
                            ,[TrainUid]
                            ,[OriginStanox]
-                           ,[SchedWttId])
+                           ,[SchedWttId]
+                           ,[StateId])
                      VALUES
                            (@trainId
                            ,@headcode
@@ -147,7 +149,8 @@ namespace TrainNotifier.Service
                            ,@tocId
                            ,@trainUid
                            ,@Origin
-                           ,@wttid)";
+                           ,@wttid
+                           ,@state)";
 
             ExecuteNonQuery(insertActivation, new
             {
@@ -159,7 +162,8 @@ namespace TrainNotifier.Service
                 ServiceCode = tm.ServiceCode,
                 tocId = tm.TocId,
                 trainUid = tm.TrainUid,
-                wttid = tm.WorkingTTId
+                wttid = tm.WorkingTTId,
+                state = tm.State
             });
         }
 
@@ -172,10 +176,12 @@ namespace TrainNotifier.Service
         public bool AddMovement(TrainMovementStep tms)
         {
             Guid? trainId = null;
-            if (TrainExists(tms.TrainId, out trainId))
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
             {
-                Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
-                const string insertStop = @"
+                if (TrainExists(tms.TrainId, out trainId))
+                {
+                    Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
+                    const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainStop]
                                ([TrainId]
                                ,[EventType]
@@ -195,19 +201,23 @@ namespace TrainNotifier.Service
                                ,@line
                                ,@terminated)";
 
-                ExecuteNonQuery(insertStop, new
-                {
-                    trainId,
-                    eventType = tms.EventType,
-                    plannedTs = tms.PlannedTime,
-                    actualTs = tms.ActualTimeStamp,
-                    stanox = tms.Stanox,
-                    platform = tms.Platform,
-                    line = tms.Line,
-                    terminated = tms.State == State.Terminated
-                });
+                    ExecuteNonQuery(insertStop, new
+                    {
+                        trainId,
+                        eventType = tms.EventType,
+                        plannedTs = tms.PlannedTime,
+                        actualTs = tms.ActualTimeStamp,
+                        stanox = tms.Stanox,
+                        platform = tms.Platform,
+                        line = tms.Line,
+                        terminated = tms.State == State.Terminated
+                    });
 
-                return true;
+                    UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress);
+
+                    ts.Complete();
+                    return true;
+                }
             }
             return false;
         }
@@ -215,10 +225,12 @@ namespace TrainNotifier.Service
         public bool AddCancellation(CancelledTrainMovementStep cm)
         {
             Guid? trainId = null;
-            if (TrainExists(cm.TrainId, out trainId))
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
             {
-                Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
-                const string insertStop = @"
+                if (TrainExists(cm.TrainId, out trainId))
+                {
+                    Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
+                    const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainCancellation]
                                ([TrainId]
                                ,[CancelledTimestamp]
@@ -232,18 +244,32 @@ namespace TrainNotifier.Service
                                ,@stanox
                                ,@canxType)";
 
-                ExecuteNonQuery(insertStop, new
-                {
-                    trainId,
-                    canxTs = cm.CancelledTime,
-                    canxType = cm.CancelledType,
-                    canxReason = cm.CancelledReasonCode,
-                    stanox = cm.Stanox
-                });
+                    ExecuteNonQuery(insertStop, new
+                    {
+                        trainId,
+                        canxTs = cm.CancelledTime,
+                        canxType = cm.CancelledType,
+                        canxReason = cm.CancelledReasonCode,
+                        stanox = cm.Stanox
+                    });
 
-                return true;
+                    UpdateTrainState(trainId.Value, TrainState.Cancelled);
+
+                    ts.Complete();
+                    return true;
+                }
             }
             return false;
+        }
+
+        public void UpdateTrainState(Guid trainId, TrainState state)
+        {
+            const string updateState = @"
+                    UPDATE [natrail].[dbo].[LiveTrain]
+                       SET [StateId] = @state
+                     WHERE [Id] = @trainId";
+
+            ExecuteNonQuery(updateState, new { state, trainId });
         }
     }
 }
