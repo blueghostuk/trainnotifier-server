@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
 
@@ -71,8 +73,15 @@ namespace TrainNotifier.Console.WebSocketServer
                     }
                     finally
                     {
-                        if (cacheService != null)
-                            cacheService.Close();
+                        try
+                        {
+                            if (cacheService != null)
+                                cacheService.Close();
+                        }
+                        catch (CommunicationObjectFaultedException e)
+                        {
+                            Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                        }
                     }
                 }
             };
