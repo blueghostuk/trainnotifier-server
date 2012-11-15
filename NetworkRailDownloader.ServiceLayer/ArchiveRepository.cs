@@ -175,14 +175,20 @@ namespace TrainNotifier.Service
 
         private bool RunningTrainExists(string id, out Guid? dbId)
         {
-            dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress });
-            return dbId.HasValue && dbId.Value != Guid.Empty;
+            try
+            {
+                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress });
+                return dbId.HasValue && dbId.Value != Guid.Empty;
+            }
+            catch (InvalidOperationException) { } // TODO: more than one found
+            dbId = null;
+            return false;
         }
 
         public bool AddMovement(TrainMovementStep tms)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            {
+            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
+            //{
                 Guid? trainId = null;
                 if (TrainExists(tms.TrainId, out trainId))
                 {
@@ -221,17 +227,17 @@ namespace TrainNotifier.Service
 
                     UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress);
 
-                    ts.Complete();
+                    //ts.Complete();
                     return true;
                 }
-            }
+            //}
             return false;
         }
 
         public bool AddCancellation(CancelledTrainMovementStep cm)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            {
+            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
+            //{
                 Guid? trainId = null;
                 if (TrainExists(cm.TrainId, out trainId))
                 {
@@ -261,10 +267,10 @@ namespace TrainNotifier.Service
 
                     UpdateTrainState(trainId.Value, TrainState.Cancelled);
 
-                    ts.Complete();
+                    //ts.Complete();
                     return true;
                 }
-            }
+            //}
             return false;
         }
 
@@ -280,9 +286,8 @@ namespace TrainNotifier.Service
 
         public void AddTrainDescriber(TrainDescriber td)
         {
-
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            {
+            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
+            //{
                 Guid? trainId = null;
                 if (RunningTrainExists(td.Description, out trainId))
                 {
@@ -378,8 +383,8 @@ namespace TrainNotifier.Service
                         //default:
                     }
                 }
-                ts.Complete();
-            }
+                //ts.Complete();
+            //}
         }
     }
 }
