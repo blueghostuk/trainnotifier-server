@@ -68,8 +68,8 @@ namespace TrainNotifier.WcfLibrary
 
         public void CacheTrainData(IEnumerable<ITrainData> trainData)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
-            {
+            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
+            //{
                 foreach (var train in trainData)
                 {
                     TrainMovement tm = train as TrainMovement;
@@ -94,20 +94,20 @@ namespace TrainNotifier.WcfLibrary
                         }
                     }
                 }
-                ts.Complete();
-            }
+                //ts.Complete();
+            //}
         }
 
         public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
-            {
+            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
+            //{
                 foreach (var train in trainData)
                 {
                     _cacheDb.AddTrainDescriber(train);
                 }
-                ts.Complete();
-            }
+                //ts.Complete();
+            //}
         }
     }
 }
