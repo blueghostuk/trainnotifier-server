@@ -25,19 +25,30 @@ namespace TrainNotifier.Console.WebSocketServer
 
         public Task Start()
         {
-            _nmsDownloader.FeedDataRecieved += (src, feedData) =>
+            _nmsDownloader.TrainDataRecieved += (src, feedData) =>
             {
                 dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
-                Parallel.ForEach(_userManager.ActiveUsers
-                    .Where(u => u.Value.State == UserContextState.SubscribeToFeed), uc => SendData(uc, evtData as IEnumerable<dynamic>));
 
-                Parallel.ForEach(_userManager.ActiveUsers
-                    .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
-                    .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
+                switch (feedData.FeedSource)
+                {
+                    case Feed.TrainMovement:
+
+                        Parallel.ForEach(_userManager.ActiveUsers
+                            .Where(u => u.Value.State == UserContextState.SubscribeToFeed), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+
+                        Parallel.ForEach(_userManager.ActiveUsers
+                            .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
+                            .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
+
+                        break;
+                    case Feed.TrainDescriber:
+
+                        break;
+                }
 
                 var eh = FeedDataRecieved;
                 if (null != eh)
-                    eh(this, new FeedEventArgs(evtData));
+                    eh(this, new FeedEventArgs(feedData.FeedSource, evtData));
             };
 
             return Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
@@ -98,10 +109,12 @@ namespace TrainNotifier.Console.WebSocketServer
 
     public sealed class FeedEventArgs : EventArgs
     {
+        public readonly Feed Source;
         public readonly dynamic Data;
 
-        public FeedEventArgs(dynamic data)
+        public FeedEventArgs(Feed source, dynamic data)
         {
+            Source = source;
             Data = data;
         }
     }

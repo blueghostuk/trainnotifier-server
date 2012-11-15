@@ -8,6 +8,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using TrainNotifier.Common;
 
 namespace TrainNotifier.Common.NMS
@@ -16,7 +17,7 @@ namespace TrainNotifier.Common.NMS
     {
         private readonly AutoResetEvent _quitSemaphore = new AutoResetEvent(false);
 
-        public event EventHandler<FeedEvent> FeedDataRecieved;
+        public event EventHandler<FeedEvent> TrainDataRecieved;
 
         public NMSConnector()
         {
@@ -75,6 +76,11 @@ namespace TrainNotifier.Common.NMS
                 Trace.TraceError("Exception: {0}", re);
                 ResubscribeMechanism(feed);
             }
+            catch (AggregateException ae)
+            {
+                Trace.TraceError("Exception: {0}", ae);
+                ResubscribeMechanism(feed);
+            }
         }
 
         private byte _retries = 0;
@@ -104,36 +110,76 @@ namespace TrainNotifier.Common.NMS
                 {
                     connection.ClientId = clientId;
                 }
-                using (ISession session = connection.CreateSession())
-                {
-                    ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic))
-                    {
-                        Trace.TraceInformation("Created consumer to {0}", topic);
-                        // dont check expiry
-                        MessageConsumer messageConsumer = consumer as MessageConsumer;
-                        if (messageConsumer != null)
-                        {
-                            messageConsumer.CheckExpiry = false;
-                        }
+                Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection));
+                Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection));
 
-                        consumer.Listener += new MessageListener(this.consumer_Listener);
-                        connection.Start();
-                        using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
-                        {
-                            Trace.TraceInformation("Waiting for quit");
-                            this._quitSemaphore.WaitOne();
-                            if (!cm.QuitOk)
-                            {
-                                Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
-                                TraceHelper.FlushLog();
-                                throw new RetryException();
-                            }
-                        }
-                        Trace.TraceInformation("Received Quit signal");
-                    }
-                }
+                Task.WaitAll(tmDataTask, tdDataTask);
                 Trace.TraceInformation("Closing connection to: {0}", connection);
+            }
+        }
+
+        private void GetTrainMovementData(IConnection connection)
+        {
+            using (ISession session = connection.CreateSession())
+            {
+                ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
+                using (IMessageConsumer consumer = CreateConsumer(session, topic))
+                {
+                    Trace.TraceInformation("Created consumer to {0}", topic);
+                    // dont check expiry
+                    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    if (messageConsumer != null)
+                    {
+                        messageConsumer.CheckExpiry = false;
+                    }
+
+                    consumer.Listener += new MessageListener(this.tmConsumer_Listener);
+                    connection.Start();
+                    using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
+                    {
+                        Trace.TraceInformation("Waiting for quit");
+                        this._quitSemaphore.WaitOne();
+                        if (!cm.QuitOk)
+                        {
+                            Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                            TraceHelper.FlushLog();
+                            throw new RetryException();
+                        }
+                    }
+                    Trace.TraceInformation("Received Quit signal");
+                }
+            }
+        }
+        private void GetTrainDescriberData(IConnection connection)
+        {
+            using (ISession session = connection.CreateSession())
+            {
+                ITopic topic = session.GetTopic("TD_LNW_WMC_SIG_AREA"/*"TD_ALL_SIG_AREA"*/);
+                using (IMessageConsumer consumer = CreateConsumer(session, topic))
+                {
+                    Trace.TraceInformation("Created consumer to {0}", topic);
+                    // dont check expiry
+                    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    if (messageConsumer != null)
+                    {
+                        messageConsumer.CheckExpiry = false;
+                    }
+
+                    consumer.Listener += new MessageListener(this.tdConsumer_Listener);
+                    connection.Start();
+                    using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
+                    {
+                        Trace.TraceInformation("Waiting for quit");
+                        this._quitSemaphore.WaitOne();
+                        if (!cm.QuitOk)
+                        {
+                            Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                            TraceHelper.FlushLog();
+                            throw new RetryException();
+                        }
+                    }
+                    Trace.TraceInformation("Received Quit signal");
+                }
             }
         }
 
@@ -148,17 +194,41 @@ namespace TrainNotifier.Common.NMS
                 return session.CreateConsumer(destination);
         }
 
-        private void consumer_Listener(IMessage message)
+        private void tmConsumer_Listener(IMessage message)
         {
-            //message.Acknowledge();
+            string text = ParseData(message);
+            if (!string.IsNullOrEmpty(text))
+            {
+                RaiseDataRecd(Feed.TrainMovement, text);
+            }
+        }
+
+        private void tdConsumer_Listener(IMessage message)
+        {
+            string text = ParseData(message);
+            if (!string.IsNullOrEmpty(text))
+            {
+                RaiseDataRecd(Feed.TrainDescriber, text);
+            }
+        }
+
+        private string ParseData(IMessage message)
+        {
             TextMessage textMessage = message as TextMessage;
 
-            if (textMessage == null || null == this.FeedDataRecieved)
-                return;
+            if (textMessage == null)
+                return null;
 
             Trace.TraceInformation("Recd Msg: {0}", textMessage.NMSTimestamp);
 
-            this.FeedDataRecieved((object)this, new FeedEvent(Feed.TrainMovement, textMessage.Text));
+            return textMessage.Text;
+        }
+
+        private void RaiseDataRecd(Feed source, string text)
+        {
+            var eh = this.TrainDataRecieved;
+            if (null != eh)
+                eh(this, new FeedEvent(source, text));
         }
 
         public void Quit()

@@ -23,5 +23,10 @@ namespace TrainNotifier.Console.WebSocketServer
         {
             base.Channel.CacheTrainData(trainData);
         }
+
+        public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
+        {
+            base.Channel.CacheTrainDescriberData(trainData);
+        }
     }
 }

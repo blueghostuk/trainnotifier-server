@@ -8,7 +8,7 @@ namespace TrainNotifier.Common
 {
     public interface IDownloader
     {
-        event EventHandler<FeedEvent> FeedDataRecieved;
+        event EventHandler<FeedEvent> TrainDataRecieved;
 
         void DownloadSchedule(string filePath, Toc toc = Toc.All, ScheduleType schedule = ScheduleType.Full, DayOfWeek? day = null);
 
