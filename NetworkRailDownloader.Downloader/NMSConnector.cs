@@ -123,7 +123,7 @@ namespace TrainNotifier.Common.NMS
             using (ISession session = connection.CreateSession())
             {
                 ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
-                using (IMessageConsumer consumer = CreateConsumer(session, topic))
+                using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
                 {
                     Trace.TraceInformation("Created consumer to {0}", topic);
                     // dont check expiry
@@ -155,7 +155,7 @@ namespace TrainNotifier.Common.NMS
             using (ISession session = connection.CreateSession())
             {
                 ITopic topic = session.GetTopic("TD_LNW_WMC_SIG_AREA"/*"TD_ALL_SIG_AREA"*/);
-                using (IMessageConsumer consumer = CreateConsumer(session, topic))
+                using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
                 {
                     Trace.TraceInformation("Created consumer to {0}", topic);
                     // dont check expiry
@@ -185,11 +185,11 @@ namespace TrainNotifier.Common.NMS
 
         private class RetryException : Exception { }
 
-        private IMessageConsumer CreateConsumer(ISession session, ITopic destination)
+        private IMessageConsumer CreateConsumer(ISession session, ITopic destination, string appendedText = null)
         {
             string subscriberId = ConfigurationManager.AppSettings["ActiveMQDurableSubscriberId"];
             if (!string.IsNullOrEmpty(subscriberId))
-                return session.CreateDurableConsumer(destination, subscriberId, null, false);
+                return session.CreateDurableConsumer(destination, string.Concat(subscriberId, appendedText), null, false);
             else
                 return session.CreateConsumer(destination);
         }
