@@ -68,7 +68,7 @@ namespace TrainNotifier.WcfLibrary
 
         public void CacheTrainData(IEnumerable<ITrainData> trainData)
         {
-            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead }))
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
             {
                 foreach (var train in trainData)
                 {
@@ -93,6 +93,18 @@ namespace TrainNotifier.WcfLibrary
                             }
                         }
                     }
+                }
+                ts.Complete();
+            }
+        }
+
+        public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
+        {
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.RequiresNew))
+            {
+                foreach (var train in trainData)
+                {
+                    _cacheDb.AddTrainDescriber(train);
                 }
                 ts.Complete();
             }

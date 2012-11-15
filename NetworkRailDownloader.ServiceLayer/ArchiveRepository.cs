@@ -167,17 +167,23 @@ namespace TrainNotifier.Service
             });
         }
 
-        private bool TrainExists(string trainId, out Guid? id)
+        private bool TrainExists(string trainId, out Guid? dbId)
         {
-            id = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
-            return id.HasValue && id.Value != Guid.Empty;
+            dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
+            return dbId.HasValue && dbId.Value != Guid.Empty;
+        }
+
+        private bool RunningTrainExists(string id, out Guid? dbId)
+        {
+            dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress });
+            return dbId.HasValue && dbId.Value != Guid.Empty;
         }
 
         public bool AddMovement(TrainMovementStep tms)
         {
-            Guid? trainId = null;
             using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
             {
+                Guid? trainId = null;
                 if (TrainExists(tms.TrainId, out trainId))
                 {
                     Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
@@ -224,9 +230,9 @@ namespace TrainNotifier.Service
 
         public bool AddCancellation(CancelledTrainMovementStep cm)
         {
-            Guid? trainId = null;
             using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
             {
+                Guid? trainId = null;
                 if (TrainExists(cm.TrainId, out trainId))
                 {
                     Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
@@ -270,6 +276,110 @@ namespace TrainNotifier.Service
                      WHERE [Id] = @trainId";
 
             ExecuteNonQuery(updateState, new { state, trainId });
+        }
+
+        public void AddTrainDescriber(TrainDescriber td)
+        {
+
+            using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
+            {
+                Guid? trainId = null;
+                if (RunningTrainExists(td.Description, out trainId))
+                {
+                    Trace.TraceInformation("Saving TD to: {0}", trainId.Value);
+
+                    switch (td.Type)
+                    {
+                        case "CA":
+                            CaTD caVal = td as CaTD;
+                            if (caVal != null)
+                            {
+                                const string casql = @"
+                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
+                                               ([TrainId]
+                                               ,[MessageType]
+                                               ,[Timestamp]
+                                               ,[AreaId]
+                                               ,[From]
+                                               ,[To])
+                                         VALUES
+                                               (@trainId
+                                               ,@type
+                                               ,@ts
+                                               ,@area
+                                               ,@from
+                                               ,@to)";
+                                ExecuteNonQuery(casql, new
+                                {
+                                    trainId = trainId.Value,
+                                    type = caVal.Type,
+                                    ts = caVal.Time,
+                                    area = caVal.AreaId,
+                                    from = caVal.From,
+                                    to = caVal.To
+                                });
+                            }
+                            break;
+                        case "CB":
+                            CbTD cbVal = td as CbTD;
+                            if (cbVal != null)
+                            {
+                                const string cbsql = @"
+                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
+                                               ([TrainId]
+                                               ,[MessageType]
+                                               ,[Timestamp]
+                                               ,[AreaId]
+                                               ,[From])
+                                         VALUES
+                                               (@trainId
+                                               ,@type
+                                               ,@ts
+                                               ,@area
+                                               ,@from)";
+                                ExecuteNonQuery(cbsql, new
+                                {
+                                    trainId = trainId.Value,
+                                    type = cbVal.Type,
+                                    ts = cbVal.Time,
+                                    area = cbVal.AreaId,
+                                    from = cbVal.From
+                                });
+                            }
+                            break;
+                        case "CC":
+                            CcTD ccVal = td as CcTD;
+                            if (ccVal != null)
+                            {
+                                const string ccsql = @"
+                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
+                                               ([TrainId]
+                                               ,[MessageType]
+                                               ,[Timestamp]
+                                               ,[AreaId]
+                                               ,[To])
+                                         VALUES
+                                               (@trainId
+                                               ,@type
+                                               ,@ts
+                                               ,@area
+                                               ,@to)";
+                                ExecuteNonQuery(ccsql, new
+                                {
+                                    trainId = trainId.Value,
+                                    type = ccVal.Type,
+                                    ts = ccVal.Time,
+                                    area = ccVal.AreaId,
+                                    to = ccVal.To
+                                });
+                            }
+                            break;
+                        //case "CT":
+                        //default:
+                    }
+                }
+                ts.Complete();
+            }
         }
     }
 }

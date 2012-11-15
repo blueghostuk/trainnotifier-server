@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.ServiceModel;
 
 namespace TrainNotifier.Common.Model
 {
     [DataContract]
+    [ServiceKnownType(typeof(CaTD))]
+    [ServiceKnownType(typeof(CbTD))]
+    [ServiceKnownType(typeof(CcTD))]
+    [ServiceKnownType(typeof(CtTD))]
     public abstract class TrainDescriber
     {
         [DataMember]
@@ -12,6 +18,8 @@ namespace TrainNotifier.Common.Model
         public string AreaId { get; set; }
         [DataMember]
         public string Description { get; set; }
+        [DataMember]
+        public string Type { get; set; }
     }
 
     [DataContract]
@@ -48,47 +56,86 @@ namespace TrainNotifier.Common.Model
     {
         public static TrainDescriber MapFromBody(dynamic body)
         {
-            DateTime time = UnixTsToDateTime(double.Parse((string)body.time));
-            string areaId = (string)body.area_id;
-            string msg_type = (string)body.msg_type;
+            body = GetBody(body);
 
-            switch (msg_type)
+            if (body != null)
             {
-                case "CA":
-                    return new CaTD
+                try
+                {
+                    DateTime time = UnixTsToDateTime(double.Parse((string)body.time));
+                    string msg_type = (string)body.msg_type;
+
+                    switch (msg_type)
                     {
-                        Time = time,
-                        AreaId = areaId,
-                        Description = body.descr,
-                        To = body.to,
-                        From = body.from
-                    };
-                case "CB":
-                    return new CbTD
-                    {
-                        Time = time,
-                        AreaId = areaId,
-                        Description = body.descr,
-                        From = body.from
-                    };
-                case "CC":
-                    return new CcTD
-                    {
-                        Time = time,
-                        AreaId = areaId,
-                        Description = body.descr,
-                        To = body.to
-                    };
-                case "CT":
-                    return new CtTD
-                    {
-                        Time = time,
-                        AreaId = areaId,
-                        ReportTime = body.report_time
-                    };
-                default:
-                    return null;
+                        case "CA":
+                            return new CaTD
+                            {
+                                Time = time,
+                                AreaId = body.area_id,
+                                Description = body.descr,
+                                To = body.to,
+                                From = body.from,
+                                Type = msg_type
+                            };
+                        case "CB":
+                            return new CbTD
+                            {
+                                Time = time,
+                                AreaId = body.area_id,
+                                Description = body.descr,
+                                From = body.from,
+                                Type = msg_type
+                            };
+                        case "CC":
+                            return new CcTD
+                            {
+                                Time = time,
+                                AreaId = body.area_id,
+                                Description = body.descr,
+                                To = body.to,
+                                Type = msg_type
+                            };
+                        case "CT":
+                            return new CtTD
+                            {
+                                Time = time,
+                                AreaId = body.area_id,
+                                ReportTime = body.report_time,
+                                Type = msg_type
+                            };
+                    }
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceError("Error constructing TrainDescriber: {0}", e);
+                }
             }
+            return null;
+        }
+
+        private static dynamic GetBody(dynamic body)
+        {
+            try
+            {
+                return body.CA_MSG;
+            }
+            catch { }
+            try
+            {
+                return body.CB_MSG;
+            }
+            catch { }
+            try
+            {
+                return body.CC_MSG;
+            }
+            catch { }
+            try
+            {
+                return body.CT_MSG;
+            }
+            catch { }
+            return null;
         }
 
         private static readonly DateTime _epoch = new DateTime(1970, 1, 1);
