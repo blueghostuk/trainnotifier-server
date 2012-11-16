@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\.gitignore = ..\.gitignore
 		..\README.md = ..\README.md
 		..\Database\schema.sql = ..\Database\schema.sql
+		..\Database\sql_server_schema.sql = ..\Database\sql_server_schema.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{B34932EA-A87D-441D-93B1-A2E0475008FD}"
