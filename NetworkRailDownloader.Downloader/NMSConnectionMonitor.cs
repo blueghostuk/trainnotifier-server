@@ -7,13 +7,6 @@ namespace TrainNotifier.Common.NMS
 {
     public class NMSConnectionMonitor : IDisposable
     {
-        private DateTime? _lastMsgRecd;
-
-        public DateTime? LastMsgRecd
-        {
-            get { return _lastMsgRecd; }
-        }
-
         public bool QuitOk { get; set; }
 
         private NMSConnectionMonitor()
@@ -21,26 +14,20 @@ namespace TrainNotifier.Common.NMS
             QuitOk = true;
         }
 
-        public static NMSConnectionMonitor MonitorConnection(IConnection connection, IMessageConsumer consumer,
-            AutoResetEvent resetEvent)
+        public static NMSConnectionMonitor MonitorConnection(IConnection connection, CancellationTokenSource cts)
         {
             NMSConnectionMonitor monitor = new NMSConnectionMonitor();
-            monitor.MonitorConnectionLocal(connection, consumer, resetEvent);
+            monitor.MonitorConnectionLocal(connection, cts);
             return monitor;
         }
 
-        private void MonitorConnectionLocal(IConnection connection, IMessageConsumer consumer, AutoResetEvent resetEvent)
+        private void MonitorConnectionLocal(IConnection connection, CancellationTokenSource cts)
         {
-            consumer.Listener += (m) =>
-            {
-                _lastMsgRecd = DateTime.UtcNow;
-            };
-
             connection.ExceptionListener += (e) =>
             {
                 Trace.TraceError("Connection error: {0}", e);
                 QuitOk = false;
-                resetEvent.Set();
+                cts.Cancel();
             };
         }
 

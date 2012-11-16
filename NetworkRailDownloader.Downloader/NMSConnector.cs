@@ -15,8 +15,6 @@ namespace TrainNotifier.Common.NMS
 {
     public sealed class NMSConnector : IDownloader
     {
-        private readonly AutoResetEvent _quitSemaphore = new AutoResetEvent(false);
-
         public event EventHandler<FeedEvent> TrainDataRecieved;
 
         public NMSConnector()
@@ -85,7 +83,7 @@ namespace TrainNotifier.Common.NMS
 
         private byte _retries = 0;
         private readonly byte MaxRetries = 5;
-
+    
         private void ResubscribeMechanism(Feed feed)
         {
             if (_retries > MaxRetries)
@@ -100,8 +98,11 @@ namespace TrainNotifier.Common.NMS
             SubscribeToFeed(feed);
         }
 
+        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+
         private void Subscribe()
         {
+            _cancellationTokenSource = new CancellationTokenSource();
             using (IConnection connection = this.GetConnection())
             {
                 connection.AcknowledgementMode = AcknowledgementMode.AutoAcknowledge;
@@ -110,15 +111,27 @@ namespace TrainNotifier.Common.NMS
                 {
                     connection.ClientId = clientId;
                 }
-                Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection));
-                Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection));
+                using (var cm = NMSConnectionMonitor.MonitorConnection(connection, _cancellationTokenSource))
+                {
+                    connection.Start();
 
-                Task.WaitAll(tmDataTask, tdDataTask);
-                Trace.TraceInformation("Closing connection to: {0}", connection);
+                    Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+                    Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+                    Task.WaitAll(new[] { tmDataTask, tdDataTask }, _cancellationTokenSource.Token);
+                    if (!cm.QuitOk)
+                    {
+                        Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                        TraceHelper.FlushLog();
+                        throw new RetryException();
+                    }
+                    _cancellationTokenSource.Cancel();
+                    Trace.TraceInformation("Closing connection to: {0}", connection);
+                }
             }
         }
 
-        private void GetTrainMovementData(IConnection connection)
+        private void GetTrainMovementData(IConnection connection, CancellationToken ct)
         {
             using (ISession session = connection.CreateSession())
             {
@@ -134,23 +147,11 @@ namespace TrainNotifier.Common.NMS
                     }
 
                     consumer.Listener += new MessageListener(this.tmConsumer_Listener);
-                    connection.Start();
-                    using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
-                    {
-                        Trace.TraceInformation("Waiting for quit");
-                        this._quitSemaphore.WaitOne();
-                        if (!cm.QuitOk)
-                        {
-                            Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
-                            TraceHelper.FlushLog();
-                            throw new RetryException();
-                        }
-                    }
-                    Trace.TraceInformation("Received Quit signal");
+                    ct.WaitHandle.WaitOne();
                 }
             }
         }
-        private void GetTrainDescriberData(IConnection connection)
+        private void GetTrainDescriberData(IConnection connection, CancellationToken ct)
         {
             using (ISession session = connection.CreateSession())
             {
@@ -166,19 +167,7 @@ namespace TrainNotifier.Common.NMS
                     }
 
                     consumer.Listener += new MessageListener(this.tdConsumer_Listener);
-                    connection.Start();
-                    using (var cm = NMSConnectionMonitor.MonitorConnection(connection, consumer, this._quitSemaphore))
-                    {
-                        Trace.TraceInformation("Waiting for quit");
-                        this._quitSemaphore.WaitOne();
-                        if (!cm.QuitOk)
-                        {
-                            Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
-                            TraceHelper.FlushLog();
-                            throw new RetryException();
-                        }
-                    }
-                    Trace.TraceInformation("Received Quit signal");
+                    ct.WaitHandle.WaitOne();
                 }
             }
         }
@@ -233,7 +222,10 @@ namespace TrainNotifier.Common.NMS
 
         public void Quit()
         {
-            this._quitSemaphore.Set();
+            if (_cancellationTokenSource != null)
+            {
+                _cancellationTokenSource.Cancel();
+            }
         }
     }
 }
