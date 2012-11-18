@@ -56,9 +56,10 @@ namespace TrainNotifier.Service
         }
 
         public IEnumerable<TrainMovement> TrainsCallingAtStation(string stanox)
-        {
+        { 
+            // distinct as can include arrival/departure
             const string sql = @"
-                SELECT
+                SELECT DISTINCT
                     [LiveTrain].[TrainId] AS Id,
                     Headcode AS HeadCode,
                     CreationTimestamp AS Activated,
