@@ -7,6 +7,7 @@ using System.ServiceProcess;
 using System.Web.Http;
 using System.Web.Http.SelfHost;
 using TrainNotifier.Common;
+using TrainNotifier.Console.WebApi.Config;
 using TrainNotifier.Console.WebApi.MessageHandlers;
 
 namespace TrainNotifier.Console.WebApi
@@ -65,6 +66,8 @@ namespace TrainNotifier.Console.WebApi
                 routeTemplate: "{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            RouteConfig.RegisterRoutes(config.Routes);
 
             _server = new HttpSelfHostServer(config);
             // Start listening 

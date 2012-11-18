@@ -45,7 +45,8 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE OriginStanox = @stanox AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
+                WHERE OriginStanox = @stanox 
+                    AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
                 ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
@@ -53,6 +54,32 @@ namespace TrainNotifier.Service
             // TODO: get more detail
             return tms;
         }
+
+        public IEnumerable<TrainMovement> TrainsCallingAtStation(string stanox)
+        {
+            const string sql = @"
+                SELECT
+                    [LiveTrain].[TrainId] AS Id,
+                    Headcode AS HeadCode,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                INNER JOIN LiveTrainStop ON LiveTrain.Id = LiveTrainStop.TrainId
+                WHERE LiveTrainStop.ReportingStanox = @stanox 
+                    AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
+                ORDER BY OriginDepartTimestamp";
+
+            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
+
+            // TODO: get more detail
+            return tms;
+        }
+
         public IEnumerable<TrainMovement> SearchByHeadcode(string headcode)
         {
             const string sql = @"
@@ -67,7 +94,8 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE Headcode = @headcode AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
+                WHERE Headcode = @headcode 
+                    aAND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
                 ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { headcode });

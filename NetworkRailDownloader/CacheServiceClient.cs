@@ -9,16 +9,6 @@ namespace TrainNotifier.Console.WebSocketServer
     {
         public CacheServiceClient() : base("NetTcpBinding_ICacheService") { }
 
-        public bool TryGetStanox(string stanoxName, out Stanox stanox)
-        {
-            return base.Channel.TryGetStanox(stanoxName, out stanox);
-        }
-
-        public void CacheStation(string stanoxName, string trainId)
-        {
-            base.Channel.CacheStation(stanoxName, trainId);
-        }
-
         public void CacheTrainData(IEnumerable<ITrainData> trainData)
         {
             base.Channel.CacheTrainData(trainData);

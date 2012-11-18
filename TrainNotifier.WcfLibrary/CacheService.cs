@@ -14,8 +14,6 @@ namespace TrainNotifier.WcfLibrary
     {
         private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
 
-        private static readonly ObjectCache _stanoxCache = new MemoryCache("Stanox");
-
         private static CacheItemPolicy GetDefaultStanoxCacheItemPolicy()
         {
             return new CacheItemPolicy
@@ -26,44 +24,17 @@ namespace TrainNotifier.WcfLibrary
 
         private void CacheTrainMovement(TrainMovement trainMovement)
         {
-            CacheStation(trainMovement.SchedOriginStanox, trainMovement.Id);
             _cacheDb.AddActivation(trainMovement);
-        }
-
-        public void CacheStation(string stanoxName, string trainId)
-        {
-            if (string.IsNullOrWhiteSpace(stanoxName) || string.IsNullOrWhiteSpace(trainId))
-                return;
-
-            Stanox stanox;
-            if (!TryGetStanox(stanoxName, out stanox))
-            {
-                stanox = new Stanox(stanoxName);
-                _stanoxCache.Add(stanoxName, stanox, GetDefaultStanoxCacheItemPolicy());
-            }
-            stanox.AddTrainId(trainId);
-        }
-
-        public bool TryGetStanox(string stanoxName, out Stanox stanox)
-        {
-            stanox = _stanoxCache.Get(stanoxName) as Stanox;
-            return stanox != null;
         }
 
         private void CacheTrainStep(TrainMovementStep step)
         {
-            if (_cacheDb.AddMovement(step))
-            {
-                CacheStation(step.Stanox, step.TrainId);
-            }
+            _cacheDb.AddMovement(step);
         }
 
         private void CacheTrainCancellation(CancelledTrainMovementStep step)
         {
-            if (_cacheDb.AddCancellation(step))
-            {
-                CacheStation(step.Stanox, step.TrainId);
-            }
+            _cacheDb.AddCancellation(step);
         }
 
         public void CacheTrainData(IEnumerable<ITrainData> trainData)

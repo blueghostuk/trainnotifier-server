@@ -96,9 +96,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
-    <Compile Include="Controllers\ArchiveController.cs" />
+    <Compile Include="Config\RouteConfig.cs" />
     <Compile Include="Controllers\StanoxController.cs" />
     <Compile Include="Controllers\StationController.cs" />
+    <Compile Include="Controllers\TrainMovementController.cs" />
     <Compile Include="MessageHandlers\CorsHeader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service.cs">
