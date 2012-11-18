@@ -138,12 +138,6 @@ namespace TrainNotifier.Console.WebSocketServer
                         case "unsubtrain":
                             HandleSubTrainCommand(context, args, false);
                             break;
-                        case "stanox":
-                            HandleStanoxCommand(context, "stanox", args);
-                            break;
-                        case "crs":
-                            HandleStanoxCommand(context, "crs", _stanoxRepository.GetStanoxByCrs(args));
-                            break;
                     }
                 }
             };
@@ -163,32 +157,6 @@ namespace TrainNotifier.Console.WebSocketServer
                 {
                     uc.State = UserContextState.None;
                 }
-            }
-        }
-
-        private void HandleStanoxCommand(UserContextEventArgs context, string command, string stanoxName)
-        {
-            CacheServiceClient cacheService = null;
-            try
-            {
-                cacheService = new CacheServiceClient();
-                cacheService.Open();
-                Stanox stanox;
-                if (cacheService.TryGetStanox(stanoxName, out stanox))
-                {
-                    string response = JsonConvert.SerializeObject(new CommandResponse<Stanox>
-                    {
-                        Command = command,
-                        Args = stanoxName,
-                        Response = stanox
-                    });
-                    context.UserContext.Send(response);
-                }
-            }
-            finally
-            {
-                if (cacheService != null)
-                    cacheService.Close();
             }
         }
 
