@@ -208,7 +208,9 @@ namespace TrainNotifier.Common.NMS
             if (textMessage == null)
                 return null;
 
-            Trace.TraceInformation("Recd Msg: {0}", textMessage.NMSTimestamp);
+            Trace.TraceInformation("[{0}] - Recd Msg for {1}", 
+                textMessage.FromDestination,
+                textMessage.NMSTimestamp);
 
             return textMessage.Text;
         }
