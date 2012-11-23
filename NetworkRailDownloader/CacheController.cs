@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
 
@@ -14,112 +14,120 @@ namespace TrainNotifier.Console.WebSocketServer
         private readonly UserManager _userManager;
         private readonly StanoxRepository _stanoxRepository = new StanoxRepository();
 
+        private static readonly object _cacheLock = new object();
+
         public CacheController(NMSWrapper nmsWrapper, WebSocketServerWrapper wssWrapper, UserManager userManager)
         {
             _userManager = userManager;
             nmsWrapper.FeedDataRecieved += (s, f) =>
             {
-                switch (f.Source)
-                {
-                    case Common.Feed.TrainMovement:
-                        ICollection<ITrainData> data = new List<ITrainData>(32);
-                        foreach (var message in f.Data)
+               Task.Run(() =>
+                    {
+                        switch (f.Source)
                         {
-                            switch (byte.Parse((string)message.header.msg_type))
-                            {
-                                // activation
-                                case 1:
-                                    data.Add(CacheActivation(message.body));
-                                    break;
-
-                                // cancellation
-                                case 2:
-                                    data.Add(CacheTrainCancellation((string)message.body.train_id, message.body));
-                                    break;
-
-                                // train movement
-                                case 3:
-                                    data.Add(CacheTrainMovement((string)message.body.train_id, message.body));
-                                    break;
-
-                                // unidentified train
-                                case 4:
-                                    break;
-
-                                // train reinstatement
-                                case 5:
-                                    break;
-
-                                // train change of origin
-                                case 6:
-                                    break;
-
-                                // train change of identity
-                                case 7:
-                                    break;
-
-                                // train change of location
-                                case 8:
-                                    break;
-                            }
-                        }
-                        data = data.Where(d => d != null)
-                            .ToList();
-                        if (data.Any())
-                        {
-                            CacheServiceClient cacheService = null;
-                            try
-                            {
-                                cacheService = new CacheServiceClient();
-                                cacheService.Open();
-                                cacheService.CacheTrainData(data);
-                            }
-                            finally
-                            {
-                                try
+                            case Common.Feed.TrainMovement:
+                                ICollection<ITrainData> data = new List<ITrainData>(32);
+                                foreach (var message in f.Data)
                                 {
-                                    if (cacheService != null)
-                                        cacheService.Close();
+                                    switch (byte.Parse((string)message.header.msg_type))
+                                    {
+                                        // activation
+                                        case 1:
+                                            data.Add(CacheActivation(message.body));
+                                            break;
+
+                                        // cancellation
+                                        case 2:
+                                            data.Add(CacheTrainCancellation((string)message.body.train_id, message.body));
+                                            break;
+
+                                        // train movement
+                                        case 3:
+                                            data.Add(CacheTrainMovement((string)message.body.train_id, message.body));
+                                            break;
+
+                                        // unidentified train
+                                        case 4:
+                                            break;
+
+                                        // train reinstatement
+                                        case 5:
+                                            break;
+
+                                        // train change of origin
+                                        case 6:
+                                            break;
+
+                                        // train change of identity
+                                        case 7:
+                                            break;
+
+                                        // train change of location
+                                        case 8:
+                                            break;
+                                    }
                                 }
-                                catch (CommunicationObjectFaultedException e)
+                                data = data.Where(d => d != null)
+                                    .ToList();
+                                if (data.Any())
                                 {
-                                    Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                    lock (_cacheLock)
+                                    {
+                                        CacheServiceClient cacheService = null;
+                                        try
+                                        {
+                                            cacheService = new CacheServiceClient();
+                                            cacheService.Open();
+                                            cacheService.CacheTrainData(data);
+                                        }
+                                        finally
+                                        {
+                                            try
+                                            {
+                                                if (cacheService != null)
+                                                    cacheService.Close();
+                                            }
+                                            catch (CommunicationObjectFaultedException e)
+                                            {
+                                                Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        break;
-                    case Common.Feed.TrainDescriber:
-                        ICollection<TrainDescriber> tdData = new List<TrainDescriber>(32);
-                        foreach (var message in f.Data)
-                        {
-                            tdData.Add(TrainDescriberMapper.MapFromBody(message));
-                        }
-                        tdData = tdData.Where(d => d != null)
-                            .ToList();
-                        if (tdData.Any())
-                        {
-                            CacheServiceClient cacheService = null;
-                            try
-                            {
-                                cacheService = new CacheServiceClient();
-                                cacheService.Open();
-                                cacheService.CacheTrainDescriberData(tdData);
-                            }
-                            finally
-                            {
-                                try
+                                break;
+                            case Common.Feed.TrainDescriber:
+                                ICollection<TrainDescriber> tdData = new List<TrainDescriber>(32);
+                                foreach (var message in f.Data)
                                 {
-                                    if (cacheService != null)
-                                        cacheService.Close();
+                                    tdData.Add(TrainDescriberMapper.MapFromBody(message));
                                 }
-                                catch (CommunicationObjectFaultedException e)
+                                tdData = tdData.Where(d => d != null)
+                                    .ToList();
+                                if (tdData.Any())
                                 {
-                                    Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                    CacheServiceClient cacheService = null;
+                                    try
+                                    {
+                                        cacheService = new CacheServiceClient();
+                                        cacheService.Open();
+                                        cacheService.CacheTrainDescriberData(tdData);
+                                    }
+                                    finally
+                                    {
+                                        try
+                                        {
+                                            if (cacheService != null)
+                                                cacheService.Close();
+                                        }
+                                        catch (CommunicationObjectFaultedException e)
+                                        {
+                                            Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                        }
+                                    }
                                 }
-                            }
+                                break;
                         }
-                        break;
-                }
+                    });
             };
 
             wssWrapper.OnReceive += (s, context) =>
