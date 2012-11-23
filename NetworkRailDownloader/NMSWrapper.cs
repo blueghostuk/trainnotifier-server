@@ -27,28 +27,32 @@ namespace TrainNotifier.Console.WebSocketServer
         {
             _nmsDownloader.TrainDataRecieved += (src, feedData) =>
             {
-                dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
-
-                switch (feedData.FeedSource)
+                // run this as a task to return to callee quicker
+                Task.Run(() =>
                 {
-                    case Feed.TrainMovement:
+                    dynamic evtData = JsonConvert.DeserializeObject<dynamic>(feedData.Data);
 
-                        Parallel.ForEach(_userManager.ActiveUsers
-                            .Where(u => u.Value.State == UserContextState.SubscribeToFeed), uc => SendData(uc, evtData as IEnumerable<dynamic>));
+                    switch (feedData.FeedSource)
+                    {
+                        case Feed.TrainMovement:
 
-                        Parallel.ForEach(_userManager.ActiveUsers
-                            .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
-                            .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
+                            Parallel.ForEach(_userManager.ActiveUsers
+                                .Where(u => u.Value.State == UserContextState.SubscribeToFeed), uc => SendData(uc, evtData as IEnumerable<dynamic>));
 
-                        break;
-                    case Feed.TrainDescriber:
+                            Parallel.ForEach(_userManager.ActiveUsers
+                                .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
+                                .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
 
-                        break;
-                }
+                            break;
+                        case Feed.TrainDescriber:
 
-                var eh = FeedDataRecieved;
-                if (null != eh)
-                    eh(this, new FeedEventArgs(feedData.FeedSource, evtData));
+                            break;
+                    }
+
+                    var eh = FeedDataRecieved;
+                    if (null != eh)
+                        eh(this, new FeedEventArgs(feedData.FeedSource, evtData));
+                });
             };
 
             return Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
