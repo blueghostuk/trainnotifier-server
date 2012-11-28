@@ -14,7 +14,6 @@ namespace TrainNotifier.ServiceLayer
         private readonly string _connString;
         protected const int _defaultCommandTimeout = 30;
         protected readonly int _commandTimeout;
-        private const string SelectLastInsertId = "SELECT LAST_INSERT_ID();";
 
         protected DbRepository(string connectionStringName = "database")
         {
@@ -47,39 +46,55 @@ namespace TrainNotifier.ServiceLayer
             return connection;
         }
 
-        protected virtual void ExecuteNonQuery(string sql, dynamic parameters)
+        protected virtual void ExecuteNonQuery(string sql, dynamic parameters, DbConnection existingConnection = null)
         {
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            if (existingConnection != null)
             {
-                dbConnection.Execute(sql, (object)parameters);
+                existingConnection.Execute(sql, (object)parameters);
+            }
+            else
+            {
+                using (DbConnection dbConnection = CreateAndOpenConnection())
+                {
+                    dbConnection.Execute(sql, (object)parameters);
+                }
             }
         }
-
-        protected virtual Guid ExecuteInsert(string sql, dynamic parameters)
+        protected virtual Guid ExecuteInsert(string sql, dynamic parameters, DbConnection existingConnection = null)
         {
-            return ExecuteScalar<Guid>(sql, parameters);
+            return ExecuteScalar<Guid>(sql, parameters, existingConnection);
         }
 
-        protected virtual T ExecuteScalar<T>(string sql, dynamic parameters)
+        protected virtual T ExecuteScalar<T>(string sql, dynamic parameters, DbConnection existingConnection = null)
         {
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            if (existingConnection != null)
             {
                 // should be SingleOrDefault - but need to work around db bugs for now
-                return dbConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
+                return existingConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
             }
-        }
-
-        protected virtual IEnumerable<T> Query<T>(string sql, dynamic parameters)
-        {
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            else
             {
-                return dbConnection.Query<T>(sql, (object)parameters);
+                using (DbConnection dbConnection = CreateAndOpenConnection())
+                {
+                    // should be SingleOrDefault - but need to work around db bugs for now
+                    return dbConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
+                }
             }
         }
 
-        protected virtual long? GetId(DbConnection dbConnection, dynamic parameters)
+        protected virtual IEnumerable<T> Query<T>(string sql, dynamic parameters, DbConnection existingConnection = null)
         {
-            return default(long?);
+            if (existingConnection != null)
+            {
+                return existingConnection.Query<T>(sql, (object)parameters);
+            }
+            else
+            {
+                using (DbConnection dbConnection = CreateAndOpenConnection())
+                {
+                    return dbConnection.Query<T>(sql, (object)parameters);
+                }
+            }
         }
 
         public static TransactionScope GetTransactionScope()

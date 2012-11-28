@@ -14,30 +14,7 @@ namespace TrainNotifier.WcfLibrary
         {
             Task.Run(() =>
             {
-                foreach (var train in trainData)
-                {
-                    TrainMovement tm = train as TrainMovement;
-                    if (tm != null)
-                    {
-                        CacheTrainMovement(tm);
-                    }
-                    else
-                    {
-                        CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
-                        if (ctms != null)
-                        {
-                            CacheTrainCancellation(ctms);
-                        }
-                        else
-                        {
-                            TrainMovementStep tms = train as TrainMovementStep;
-                            if (tms != null)
-                            {
-                                CacheTrainStep(tms);
-                            }
-                        }
-                    }
-                }
+                _cacheDb.BatchInsertTrainData(trainData);
             });
         }
 
@@ -45,26 +22,8 @@ namespace TrainNotifier.WcfLibrary
         {
             Task.Run(() =>
             {
-                foreach (var train in trainData)
-                {
-                    _cacheDb.AddTrainDescriber(train);
-                }
+                _cacheDb.BatchInsertTDData(trainData);
             });
-        }
-
-        private void CacheTrainMovement(TrainMovement trainMovement)
-        {
-            _cacheDb.AddActivation(trainMovement);
-        }
-
-        private void CacheTrainStep(TrainMovementStep step)
-        {
-            _cacheDb.AddMovement(step);
-        }
-
-        private void CacheTrainCancellation(CancelledTrainMovementStep step)
-        {
-            _cacheDb.AddCancellation(step);
         }
     }
 }

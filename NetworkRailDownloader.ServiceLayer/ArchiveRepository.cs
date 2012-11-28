@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Caching;
@@ -160,7 +161,7 @@ namespace TrainNotifier.Service
             return null;
         }
 
-        public void AddActivation(TrainMovement tm)
+        public void AddActivation(TrainMovement tm, DbConnection existingConnection = null)
         {
             Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
             const string insertActivation = @"
@@ -200,18 +201,18 @@ namespace TrainNotifier.Service
                 trainUid = tm.TrainUid,
                 wttid = tm.WorkingTTId,
                 state = tm.State
-            });
+            }, existingConnection);
 
             _trainActivationCache.Add(tm.Id, id, _trainActivationCachePolicy);
             tm.UniqueId = id;
         }
 
-        private bool TrainExists(string trainId, out Guid? dbId)
+        private bool TrainExists(string trainId, out Guid? dbId, DbConnection existingConnection = null)
         {
             dbId = _trainActivationCache.Get(trainId) as Guid?;
             if (!dbId.HasValue)
             {
-                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
+                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId }, existingConnection);
                 if (dbId.HasValue)
                 {
                     _trainActivationCache.Add(trainId, dbId.Value, _trainActivationCachePolicy);
@@ -220,11 +221,11 @@ namespace TrainNotifier.Service
             return dbId.HasValue && dbId.Value != Guid.Empty;
         }
 
-        private bool RunningTrainExists(string id, out Guid? dbId)
+        private bool RunningTrainExists(string id, out Guid? dbId, DbConnection existingConnection = null)
         {
             try
             {
-                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress });
+                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress }, existingConnection);
                 return dbId.HasValue && dbId.Value != Guid.Empty;
             }
             catch (InvalidOperationException) { } // TODO: more than one found
@@ -232,15 +233,13 @@ namespace TrainNotifier.Service
             return false;
         }
 
-        public bool AddMovement(TrainMovementStep tms)
+        public bool AddMovement(TrainMovementStep tms, DbConnection existingConnection = null)
         {
-            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            //{
-                Guid? trainId = null;
-                if (TrainExists(tms.TrainId, out trainId))
-                {
-                    Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
-                    const string insertStop = @"
+            Guid? trainId = null;
+            if (TrainExists(tms.TrainId, out trainId, existingConnection))
+            {
+                Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
+                const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainStop]
                                ([TrainId]
                                ,[EventType]
@@ -260,41 +259,37 @@ namespace TrainNotifier.Service
                                ,@line
                                ,@terminated)";
 
-                    ExecuteNonQuery(insertStop, new
-                    {
-                        trainId,
-                        eventType = tms.EventType,
-                        plannedTs = tms.PlannedTime,
-                        actualTs = tms.ActualTimeStamp,
-                        stanox = tms.Stanox,
-                        platform = tms.Platform,
-                        line = tms.Line,
-                        terminated = tms.State == State.Terminated
-                    });
+                ExecuteNonQuery(insertStop, new
+                {
+                    trainId,
+                    eventType = tms.EventType,
+                    plannedTs = tms.PlannedTime,
+                    actualTs = tms.ActualTimeStamp,
+                    stanox = tms.Stanox,
+                    platform = tms.Platform,
+                    line = tms.Line,
+                    terminated = tms.State == State.Terminated
+                }, existingConnection);
 
-                    UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress);
+                UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress, existingConnection);
 
-                    if (tms.State == State.Terminated)
-                    {
-                        _trainActivationCache.Remove(tms.TrainId);
-                    }
-
-                    //ts.Complete();
-                    return true;
+                if (tms.State == State.Terminated)
+                {
+                    _trainActivationCache.Remove(tms.TrainId);
                 }
-            //}
+
+                return true;
+            }
             return false;
         }
 
-        public bool AddCancellation(CancelledTrainMovementStep cm)
+        public bool AddCancellation(CancelledTrainMovementStep cm, DbConnection existingConnection = null)
         {
-            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            //{
-                Guid? trainId = null;
-                if (TrainExists(cm.TrainId, out trainId))
-                {
-                    Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
-                    const string insertStop = @"
+            Guid? trainId = null;
+            if (TrainExists(cm.TrainId, out trainId, existingConnection))
+            {
+                Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
+                const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainCancellation]
                                ([TrainId]
                                ,[CancelledTimestamp]
@@ -308,52 +303,48 @@ namespace TrainNotifier.Service
                                ,@stanox
                                ,@canxType)";
 
-                    ExecuteNonQuery(insertStop, new
-                    {
-                        trainId,
-                        canxTs = cm.CancelledTime,
-                        canxType = cm.CancelledType,
-                        canxReason = cm.CancelledReasonCode,
-                        stanox = cm.Stanox
-                    });
+                ExecuteNonQuery(insertStop, new
+                {
+                    trainId,
+                    canxTs = cm.CancelledTime,
+                    canxType = cm.CancelledType,
+                    canxReason = cm.CancelledReasonCode,
+                    stanox = cm.Stanox
+                }, existingConnection);
 
-                    UpdateTrainState(trainId.Value, TrainState.Cancelled);
+                UpdateTrainState(trainId.Value, TrainState.Cancelled);
 
-                    _trainActivationCache.Remove(cm.TrainId);
+                _trainActivationCache.Remove(cm.TrainId);
 
-                    //ts.Complete();
-                    return true;
-                }
-            //}
+                return true;
+            }
             return false;
         }
 
-        public void UpdateTrainState(Guid trainId, TrainState state)
+        public void UpdateTrainState(Guid trainId, TrainState state, DbConnection existingConnection = null)
         {
             const string updateState = @"
                     UPDATE [natrail].[dbo].[LiveTrain]
                        SET [StateId] = @state
                      WHERE [Id] = @trainId";
 
-            ExecuteNonQuery(updateState, new { state, trainId });
+            ExecuteNonQuery(updateState, new { state, trainId }, existingConnection);
         }
 
-        public void AddTrainDescriber(TrainDescriber td)
+        public void AddTrainDescriber(TrainDescriber td, DbConnection existingConnection = null)
         {
-            //using (TransactionScope ts = new TransactionScope(TransactionScopeOption.Required))
-            //{
-                Guid? trainId = null;
-                if (RunningTrainExists(td.Description, out trainId))
-                {
-                    Trace.TraceInformation("Saving TD to: {0}", trainId.Value);
+            Guid? trainId = null;
+            if (RunningTrainExists(td.Description, out trainId, existingConnection))
+            {
+                Trace.TraceInformation("Saving TD to: {0}", trainId.Value);
 
-                    switch (td.Type)
-                    {
-                        case "CA":
-                            CaTD caVal = td as CaTD;
-                            if (caVal != null)
-                            {
-                                const string casql = @"
+                switch (td.Type)
+                {
+                    case "CA":
+                        CaTD caVal = td as CaTD;
+                        if (caVal != null)
+                        {
+                            const string casql = @"
                                     INSERT INTO [natrail].[dbo].[LiveTrainBerth]
                                                ([TrainId]
                                                ,[MessageType]
@@ -368,22 +359,22 @@ namespace TrainNotifier.Service
                                                ,@area
                                                ,@from
                                                ,@to)";
-                                ExecuteNonQuery(casql, new
-                                {
-                                    trainId = trainId.Value,
-                                    type = caVal.Type,
-                                    ts = caVal.Time,
-                                    area = caVal.AreaId,
-                                    from = caVal.From,
-                                    to = caVal.To
-                                });
-                            }
-                            break;
-                        case "CB":
-                            CbTD cbVal = td as CbTD;
-                            if (cbVal != null)
+                            ExecuteNonQuery(casql, new
                             {
-                                const string cbsql = @"
+                                trainId = trainId.Value,
+                                type = caVal.Type,
+                                ts = caVal.Time,
+                                area = caVal.AreaId,
+                                from = caVal.From,
+                                to = caVal.To
+                            }, existingConnection);
+                        }
+                        break;
+                    case "CB":
+                        CbTD cbVal = td as CbTD;
+                        if (cbVal != null)
+                        {
+                            const string cbsql = @"
                                     INSERT INTO [natrail].[dbo].[LiveTrainBerth]
                                                ([TrainId]
                                                ,[MessageType]
@@ -396,21 +387,21 @@ namespace TrainNotifier.Service
                                                ,@ts
                                                ,@area
                                                ,@from)";
-                                ExecuteNonQuery(cbsql, new
-                                {
-                                    trainId = trainId.Value,
-                                    type = cbVal.Type,
-                                    ts = cbVal.Time,
-                                    area = cbVal.AreaId,
-                                    from = cbVal.From
-                                });
-                            }
-                            break;
-                        case "CC":
-                            CcTD ccVal = td as CcTD;
-                            if (ccVal != null)
+                            ExecuteNonQuery(cbsql, new
                             {
-                                const string ccsql = @"
+                                trainId = trainId.Value,
+                                type = cbVal.Type,
+                                ts = cbVal.Time,
+                                area = cbVal.AreaId,
+                                from = cbVal.From
+                            }, existingConnection);
+                        }
+                        break;
+                    case "CC":
+                        CcTD ccVal = td as CcTD;
+                        if (ccVal != null)
+                        {
+                            const string ccsql = @"
                                     INSERT INTO [natrail].[dbo].[LiveTrainBerth]
                                                ([TrainId]
                                                ,[MessageType]
@@ -423,22 +414,62 @@ namespace TrainNotifier.Service
                                                ,@ts
                                                ,@area
                                                ,@to)";
-                                ExecuteNonQuery(ccsql, new
-                                {
-                                    trainId = trainId.Value,
-                                    type = ccVal.Type,
-                                    ts = ccVal.Time,
-                                    area = ccVal.AreaId,
-                                    to = ccVal.To
-                                });
+                            ExecuteNonQuery(ccsql, new
+                            {
+                                trainId = trainId.Value,
+                                type = ccVal.Type,
+                                ts = ccVal.Time,
+                                area = ccVal.AreaId,
+                                to = ccVal.To
+                            }, existingConnection);
+                        }
+                        break;
+                    //case "CT":
+                    //default:
+                }
+            }
+        }
+
+        public void BatchInsertTrainData(IEnumerable<ITrainData> trainData)
+        {
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                foreach (var train in trainData)
+                {
+                    TrainMovement tm = train as TrainMovement;
+                    if (tm != null)
+                    {
+                        AddActivation(tm, dbConnection);
+                    }
+                    else
+                    {
+                        CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
+                        if (ctms != null)
+                        {
+                            AddCancellation(ctms, dbConnection);
+                        }
+                        else
+                        {
+                            TrainMovementStep tms = train as TrainMovementStep;
+                            if (tms != null)
+                            {
+                                AddMovement(tms, dbConnection);
                             }
-                            break;
-                        //case "CT":
-                        //default:
+                        }
                     }
                 }
-                //ts.Complete();
-            //}
+            }
+        }
+
+        public void BatchInsertTDData(IEnumerable<TrainDescriber> trainData)
+        {
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                foreach (var train in trainData)
+                {
+                    AddTrainDescriber(train, dbConnection);
+                }
+            }
         }
     }
 }
