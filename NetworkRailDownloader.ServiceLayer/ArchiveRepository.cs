@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Transactions;
+using System.Runtime.Caching;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
 
@@ -10,6 +10,12 @@ namespace TrainNotifier.Service
 {
     public class ArchiveRepository : DbRepository
     {
+        private static readonly ObjectCache _trainActivationCache = MemoryCache.Default;
+        private static readonly CacheItemPolicy _trainActivationCachePolicy = new CacheItemPolicy
+        {
+            SlidingExpiration = TimeSpan.FromHours(12)
+        };
+
         public ArchiveRepository()
             : base("archive")
         { }
@@ -159,29 +165,30 @@ namespace TrainNotifier.Service
             Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
             const string insertActivation = @"
                 INSERT INTO [natrail].[dbo].[LiveTrain]
-                           ([TrainId]
-                           ,[Headcode]
-                           ,[CreationTimestamp]
-                           ,[OriginDepartTimestamp]
-                           ,[TrainServiceCode]
-                           ,[Toc]
-                           ,[TrainUid]
-                           ,[OriginStanox]
-                           ,[SchedWttId]
-                           ,[StateId])
-                     VALUES
-                           (@trainId
-                           ,@headcode
-                           ,@activationDate
-                           ,@OriginTime
-                           ,@ServiceCode
-                           ,@tocId
-                           ,@trainUid
-                           ,@Origin
-                           ,@wttid
-                           ,@state)";
+                    ([TrainId]
+                    ,[Headcode]
+                    ,[CreationTimestamp]
+                    ,[OriginDepartTimestamp]
+                    ,[TrainServiceCode]
+                    ,[Toc]
+                    ,[TrainUid]
+                    ,[OriginStanox]
+                    ,[SchedWttId]
+                    ,[StateId])
+                OUTPUT [inserted].[Id]
+                VALUES
+                    (@trainId
+                    ,@headcode
+                    ,@activationDate
+                    ,@OriginTime
+                    ,@ServiceCode
+                    ,@tocId
+                    ,@trainUid
+                    ,@Origin
+                    ,@wttid
+                    ,@state)";
 
-            ExecuteNonQuery(insertActivation, new
+            Guid id = ExecuteInsert(insertActivation, new
             {
                 trainId = tm.Id,
                 headcode = tm.Id.Substring(2, 4),
@@ -194,11 +201,22 @@ namespace TrainNotifier.Service
                 wttid = tm.WorkingTTId,
                 state = tm.State
             });
+
+            _trainActivationCache.Add(tm.Id, id, _trainActivationCachePolicy);
+            tm.UniqueId = id;
         }
 
         private bool TrainExists(string trainId, out Guid? dbId)
         {
-            dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
+            dbId = _trainActivationCache.Get(trainId) as Guid?;
+            if (!dbId.HasValue)
+            {
+                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE TrainId = @trainId", new { trainId });
+                if (dbId.HasValue)
+                {
+                    _trainActivationCache.Add(trainId, dbId.Value, _trainActivationCachePolicy);
+                }
+            }
             return dbId.HasValue && dbId.Value != Guid.Empty;
         }
 
@@ -256,6 +274,11 @@ namespace TrainNotifier.Service
 
                     UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress);
 
+                    if (tms.State == State.Terminated)
+                    {
+                        _trainActivationCache.Remove(tms.TrainId);
+                    }
+
                     //ts.Complete();
                     return true;
                 }
@@ -295,6 +318,8 @@ namespace TrainNotifier.Service
                     });
 
                     UpdateTrainState(trainId.Value, TrainState.Cancelled);
+
+                    _trainActivationCache.Remove(cm.TrainId);
 
                     //ts.Complete();
                     return true;
