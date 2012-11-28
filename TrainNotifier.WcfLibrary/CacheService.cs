@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.Runtime.Caching;
-using System.Transactions;
+﻿using System.Collections.Generic;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
@@ -13,14 +8,6 @@ namespace TrainNotifier.WcfLibrary
     public class CacheService : ICacheService
     {
         private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
-
-        private static CacheItemPolicy GetDefaultStanoxCacheItemPolicy()
-        {
-            return new CacheItemPolicy
-            {
-                AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(double.Parse(ConfigurationManager.AppSettings["CacheExpiryDaysStanox"]))
-            };
-        }
 
         private void CacheTrainMovement(TrainMovement trainMovement)
         {

@@ -55,11 +55,17 @@ namespace TrainNotifier.ServiceLayer
             }
         }
 
+        protected virtual Guid ExecuteInsert(string sql, dynamic parameters)
+        {
+            return ExecuteScalar<Guid>(sql, parameters);
+        }
+
         protected virtual T ExecuteScalar<T>(string sql, dynamic parameters)
         {
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<T>(sql, (object)parameters).SingleOrDefault();
+                // should be SingleOrDefault - but need to work around db bugs for now
+                return dbConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
             }
         }
 
