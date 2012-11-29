@@ -11,7 +11,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
     {
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
-        [CachingActionFilterAttribute(86400)]
+        [CachingActionFilterAttribute(604800)]
         public IEnumerable<Stanox> Get()
         {
             IEnumerable<dynamic> results = _tiplocRepo.Get();
@@ -20,7 +20,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 .Cast<Stanox>();
         }
 
-        [CachingActionFilterAttribute(86400)]
+        [CachingActionFilterAttribute(604800)]
         public Stanox Get(string id)
         {
             dynamic result = _tiplocRepo.GetByStanox(id);
@@ -33,7 +33,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
             return null;
         }
 
-        [CachingActionFilterAttribute(86400)]
+        [CachingActionFilterAttribute(604800)]
         public Stanox GetByCrs(string crsCode)
         {
             dynamic result = _tiplocRepo.GetByCRSCode(crsCode);
