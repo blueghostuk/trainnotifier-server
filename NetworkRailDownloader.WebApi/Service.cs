@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Configuration;
 using System.Configuration.Install;
+using System.Diagnostics;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Web.Http;
@@ -52,6 +53,13 @@ namespace TrainNotifier.Console.WebApi
             InitializeComponent();
 
             TraceHelper.SetupTrace();
+
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
+                TraceHelper.FlushLog();
+                ExitCode = -1;
+            };
         }
 
         protected override void OnStart(string[] args)
