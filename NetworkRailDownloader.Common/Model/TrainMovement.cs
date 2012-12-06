@@ -87,6 +87,8 @@ namespace TrainNotifier.Common.Model
         InProgress = 3,
         [EnumMember()]
         Terminated = 4,
+        [EnumMember()]
+        Unknown = 5
     }
 
     public static class TrainMovementMapper
