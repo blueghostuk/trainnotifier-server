@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Caching;
+using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.ServiceLayer;
 
@@ -20,6 +21,26 @@ namespace TrainNotifier.Service
         public ArchiveRepository()
             : base("archive")
         { }
+
+        /// <summary>
+        /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
+        /// </summary>
+        public Task PreLoadActivations()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                const string sql = @"SELECT Id, TrainId FROM LiveTrain WHERE StateId IN @activeStates AND OriginDepartTimestamp >= (GETDATE() - 0.5)";
+
+                var activeTrains = Query<dynamic>(sql, new { activeStates = new[] { TrainState.Activated, TrainState.InProgress } });
+
+                Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
+
+                foreach (var activeTrain in activeTrains)
+                {
+                    _trainActivationCache.Add(activeTrain.TrainId, activeTrain.Id, _trainActivationCachePolicy);
+                }
+            });
+        }
 
         public IEnumerable<dynamic> SearchByWttId(string wttId)
         {
