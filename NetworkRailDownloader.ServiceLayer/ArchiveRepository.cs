@@ -149,7 +149,7 @@ namespace TrainNotifier.Service
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
                 WHERE TrainId = @trainId
-                ORDER BY SchedWttId";
+                ORDER BY OriginDepartTimestamp DESC";
 
             IEnumerable<TrainMovement> movements = Query<TrainMovement>(sql, new { trainId });
             foreach(TrainMovement tm in movements)
