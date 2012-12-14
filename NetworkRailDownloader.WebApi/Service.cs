@@ -69,12 +69,6 @@ namespace TrainNotifier.Console.WebApi
 
             config.MessageHandlers.Add(new CorsHeader());
 
-            config.Routes.MapHttpRoute(
-                name: "DefaultApi",
-                routeTemplate: "{controller}/{id}",
-                defaults: new { id = RouteParameter.Optional }
-            );
-
             RouteConfig.RegisterRoutes(config.Routes);
 
             _server = new HttpSelfHostServer(config);

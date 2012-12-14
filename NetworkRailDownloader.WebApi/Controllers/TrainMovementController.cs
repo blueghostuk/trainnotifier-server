@@ -13,9 +13,15 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly ArchiveRepository _archiveRepo = new ArchiveRepository();
 
         [HttpGet]
-        public TrainMovement Get(string id)
+        public IEnumerable<TrainMovement> GetById(string id)
         {
             return _archiveRepo.GetTrainMovementById(id);
+        }
+
+        [HttpGet]
+        public TrainMovement GetWithUid(string id, string uid)
+        {
+            return _archiveRepo.GetTrainMovementById(id, uid);
         }
 
         [HttpGet]
