@@ -133,7 +133,7 @@ namespace TrainNotifier.Service
             return tms;
         }
 
-        public TrainMovement GetTrainMovementById(string trainId)
+        public IEnumerable<TrainMovement> GetTrainMovementById(string trainId)
         {
             const string sql = @"
                 SELECT TOP 1
@@ -151,7 +151,53 @@ namespace TrainNotifier.Service
                 WHERE TrainId = @trainId
                 ORDER BY SchedWttId";
 
-            TrainMovement tm = ExecuteScalar<TrainMovement>(sql, new { trainId });
+            IEnumerable<TrainMovement> movements = Query<TrainMovement>(sql, new { trainId });
+            foreach(TrainMovement tm in movements)
+            {
+                const string tmsSql = @"
+                    SELECT
+                        EventType,
+                        PlannedTimestamp AS PlannedTime,
+                        ActualTimestamp AS ActualTimeStamp,
+                        ReportingStanox AS Stanox,
+                        Platform AS Platform,
+                        Line AS Line,
+                        TrainTerminated AS Terminated
+                    FROM LiveTrainStop
+                    WHERE TrainId = @trainId";
+
+                IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId })
+                    .ToList();
+                foreach (var tms in tmSteps)
+                {
+                    if (tms.Terminated)
+                        tms.State = State.Terminated;
+                }
+
+                tm.Steps = tmSteps;
+
+                yield return tm;
+            }
+        }
+
+        public TrainMovement GetTrainMovementById(string trainId, string uid)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    Id AS UniqueId,
+                    TrainId AS Id,
+                    Headcode AS HeadCode,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
+                FROM LiveTrain
+                WHERE TrainId = @trainId AND TrainUid = @uid";
+
+            TrainMovement tm = ExecuteScalar<TrainMovement>(sql, new { trainId, uid });
             if (tm != null)
             {
                 const string tmsSql = @"
