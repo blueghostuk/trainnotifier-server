@@ -559,7 +559,7 @@ namespace TrainNotifier.Service
                 }
 
                 // only update once per train
-                foreach (var groupByTrain in trainMovements.GroupBy(tm => tm.DatabaseId))
+                foreach (var groupByTrain in trainMovements.Where(tm => tm.DatabaseId.HasValue).GroupBy(tm => tm.DatabaseId.Value))
                 {
                     UpdateTrainState(groupByTrain.Key, groupByTrain.Any(tm => tm.State == State.Terminated) ?
                         TrainState.Terminated : TrainState.InProgress, dbConnection);
