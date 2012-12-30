@@ -105,41 +105,49 @@ namespace TrainNotifier.Common.NMS
 
         private void GetTrainMovementData(IConnection connection, CancellationToken ct)
         {
-            using (ISession session = connection.CreateSession())
+            string trainMovementTopic = ConfigurationManager.AppSettings["TrainMovementName"];
+            if (!string.IsNullOrEmpty(trainMovementTopic))
             {
-                ITopic topic = session.GetTopic("TRAIN_MVT_ALL_TOC");
-                using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
+                using (ISession session = connection.CreateSession())
                 {
-                    Trace.TraceInformation("Created consumer to {0}", topic);
-                    // dont check expiry
-                    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    if (messageConsumer != null)
+                    ITopic topic = session.GetTopic(trainMovementTopic /*"TRAIN_MVT_ALL_TOC"*/);
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
                     {
-                        messageConsumer.CheckExpiry = false;
-                    }
+                        Trace.TraceInformation("Created consumer to {0}", topic);
+                        // dont check expiry
+                        MessageConsumer messageConsumer = consumer as MessageConsumer;
+                        if (messageConsumer != null)
+                        {
+                            messageConsumer.CheckExpiry = false;
+                        }
 
-                    consumer.Listener += new MessageListener(this.tmConsumer_Listener);
-                    ct.WaitHandle.WaitOne();
+                        consumer.Listener += new MessageListener(this.tmConsumer_Listener);
+                        ct.WaitHandle.WaitOne();
+                    }
                 }
             }
         }
         private void GetTrainDescriberData(IConnection connection, CancellationToken ct)
         {
-            using (ISession session = connection.CreateSession())
+            string trainDescriberTopic = ConfigurationManager.AppSettings["TrainDescriberName"];
+            if (!string.IsNullOrEmpty(trainDescriberTopic))
             {
-                ITopic topic = session.GetTopic("TD_LNW_WMC_SIG_AREA"/*"TD_ALL_SIG_AREA"*/);
-                using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
+                using (ISession session = connection.CreateSession())
                 {
-                    Trace.TraceInformation("Created consumer to {0}", topic);
-                    // dont check expiry
-                    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    if (messageConsumer != null)
+                    ITopic topic = session.GetTopic(trainDescriberTopic/*"TD_LNW_WMC_SIG_AREA"*/);
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
                     {
-                        messageConsumer.CheckExpiry = false;
-                    }
+                        Trace.TraceInformation("Created consumer to {0}", topic);
+                        // dont check expiry
+                        MessageConsumer messageConsumer = consumer as MessageConsumer;
+                        if (messageConsumer != null)
+                        {
+                            messageConsumer.CheckExpiry = false;
+                        }
 
-                    consumer.Listener += new MessageListener(this.tdConsumer_Listener);
-                    ct.WaitHandle.WaitOne();
+                        consumer.Listener += new MessageListener(this.tdConsumer_Listener);
+                        ct.WaitHandle.WaitOne();
+                    }
                 }
             }
         }
