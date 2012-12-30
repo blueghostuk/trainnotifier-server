@@ -7,7 +7,7 @@ namespace TrainNotifier.Common.Model
     public class TrainMovementStep : ITrainData
     {
         [IgnoreDataMember]
-        public Guid DatabaseId { get; set; }
+        public Guid? DatabaseId { get; set; }
 
         [DataMember]
         public string TrainId { get; set; }
