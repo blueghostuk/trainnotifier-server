@@ -13,7 +13,7 @@ namespace TrainNotifier.Console.WebSocketServer
     internal sealed class NMSWrapper
     {
         private readonly UserManager _userManager;
-        private readonly IDownloader _nmsDownloader;
+        private readonly INMSConnector _nmsDownloader;
 
         public event EventHandler<FeedEventArgs> FeedDataRecieved;
 

@@ -13,7 +13,7 @@ using TrainNotifier.Common;
 
 namespace TrainNotifier.Common.NMS
 {
-    public sealed class NMSConnector : IDownloader
+    public sealed class NMSConnector : INMSConnector
     {
         public event EventHandler<FeedEvent> TrainDataRecieved;
 
