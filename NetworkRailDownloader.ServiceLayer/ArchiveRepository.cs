@@ -35,6 +35,8 @@ namespace TrainNotifier.Service
 
                 Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
 
+                Trace.Flush();
+
                 foreach (var activeTrain in activeTrains)
                 {
                     _trainActivationCache.Add(activeTrain.TrainId, activeTrain.Id, _trainActivationCachePolicy);
