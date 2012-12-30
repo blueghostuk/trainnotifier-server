@@ -29,9 +29,9 @@ namespace TrainNotifier.Service
         {
             return Task.Factory.StartNew(() =>
             {
-                const string sql = @"SELECT Id, TrainId FROM LiveTrain WHERE StateId IN @activeStates AND OriginDepartTimestamp >= (GETDATE() - 0.5)";
+                const string sql = @"SELECT Id, TrainId FROM LiveTrain WHERE Activated = 1 AND Cancelled = 0 AND Terminated = 0 AND OriginDepartTimestamp >= (GETDATE() - 0.5)";
 
-                var activeTrains = Query<dynamic>(sql, new { activeStates = new[] { TrainState.Activated, TrainState.InProgress } });
+                var activeTrains = Query<dynamic>(sql);
 
                 Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
 
@@ -244,7 +244,9 @@ namespace TrainNotifier.Service
                     ,[TrainUid]
                     ,[OriginStanox]
                     ,[SchedWttId]
-                    ,[StateId])
+                    ,[Activated]
+                    ,[Cancelled]
+                    ,[Terminated])
                 OUTPUT [inserted].[Id]
                 VALUES
                     (@trainId
@@ -256,7 +258,9 @@ namespace TrainNotifier.Service
                     ,@trainUid
                     ,@Origin
                     ,@wttid
-                    ,@state)";
+                    ,1
+                    ,0
+                    ,0)";
 
             Guid id = ExecuteInsert(insertActivation, new
             {
@@ -269,7 +273,6 @@ namespace TrainNotifier.Service
                 tocId = tm.TocId,
                 trainUid = tm.TrainUid,
                 wttid = tm.WorkingTTId,
-                state = tm.State
             }, existingConnection);
 
             _trainActivationCache.Add(tm.Id, id, _trainActivationCachePolicy);
@@ -294,7 +297,7 @@ namespace TrainNotifier.Service
         {
             try
             {
-                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND StateId = @state", new { id, state = TrainState.InProgress }, existingConnection);
+                dbId = ExecuteScalar<Guid?>("SELECT Id FROM LiveTrain WHERE Headcode = @id AND Activated = 1 AND Cancelled = 0 AND Terminated = 0", null, existingConnection);
                 return dbId.HasValue && dbId.Value != Guid.Empty;
             }
             catch (InvalidOperationException) { } // TODO: more than one found
@@ -307,6 +310,7 @@ namespace TrainNotifier.Service
             Guid? trainId = null;
             if (TrainExists(tms.TrainId, out trainId, existingConnection))
             {
+                tms.DatabaseId = trainId.Value;
                 Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
                 const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainStop]
@@ -339,8 +343,6 @@ namespace TrainNotifier.Service
                     line = tms.Line,
                     terminated = tms.State == State.Terminated
                 }, existingConnection);
-
-                UpdateTrainState(trainId.Value, tms.State == State.Terminated ? TrainState.Terminated : TrainState.InProgress, existingConnection);
 
                 if (tms.State == State.Terminated)
                 {
@@ -392,12 +394,37 @@ namespace TrainNotifier.Service
 
         public void UpdateTrainState(Guid trainId, TrainState state, DbConnection existingConnection = null)
         {
-            const string updateState = @"
+            switch (state)
+            {
+                case TrainState.Activated:
+                const string activateSql = @"
                     UPDATE [natrail].[dbo].[LiveTrain]
-                       SET [StateId] = @state
+                       SET Activated = 1
                      WHERE [Id] = @trainId";
 
-            ExecuteNonQuery(updateState, new { state, trainId }, existingConnection);
+                ExecuteNonQuery(activateSql, new { trainId }, existingConnection);
+                break;
+
+                case TrainState.Cancelled:
+                const string cancelSql = @"
+                    UPDATE [natrail].[dbo].[LiveTrain]
+                       SET Cancelled = 1
+                     WHERE [Id] = @trainId";
+
+                ExecuteNonQuery(cancelSql, new { trainId }, existingConnection);
+                break;
+
+                case TrainState.Terminated:
+                const string termSql = @"
+                    UPDATE [natrail].[dbo].[LiveTrain]
+                       SET Terminated = 1
+                     WHERE [Id] = @trainId";
+
+                ExecuteNonQuery(termSql, new { trainId }, existingConnection);
+                break;
+
+                    // in progress - dont need to do anything
+            }            
         }
 
         public void AddTrainDescriber(TrainDescriber td, DbConnection existingConnection = null)
@@ -503,6 +530,8 @@ namespace TrainNotifier.Service
         {
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
+                ICollection<TrainMovementStep> trainMovements = new List<TrainMovementStep>();
+
                 foreach (var train in trainData)
                 {
                     TrainMovement tm = train as TrainMovement;
@@ -523,9 +552,17 @@ namespace TrainNotifier.Service
                             if (tms != null)
                             {
                                 AddMovement(tms, dbConnection);
+                                trainMovements.Add(tms);
                             }
                         }
                     }
+                }
+
+                // only update once per train
+                foreach (var groupByTrain in trainMovements.GroupBy(tm => tm.DatabaseId))
+                {
+                    UpdateTrainState(groupByTrain.Key, groupByTrain.Any(tm => tm.State == State.Terminated) ?
+                        TrainState.Terminated : TrainState.InProgress, dbConnection);
                 }
             }
         }
