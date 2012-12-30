@@ -10,7 +10,7 @@ namespace TrainNotifier.WcfLibrary
     {
         private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
 
-        public CacheService()
+        static CacheService()
         {
             _cacheDb.PreLoadActivations();
         }
