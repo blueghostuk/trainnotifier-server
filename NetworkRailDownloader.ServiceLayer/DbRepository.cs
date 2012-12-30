@@ -46,7 +46,7 @@ namespace TrainNotifier.ServiceLayer
             return connection;
         }
 
-        protected virtual void ExecuteNonQuery(string sql, dynamic parameters, DbConnection existingConnection = null)
+        protected virtual void ExecuteNonQuery(string sql, dynamic parameters = null, DbConnection existingConnection = null)
         {
             if (existingConnection != null)
             {
@@ -60,12 +60,12 @@ namespace TrainNotifier.ServiceLayer
                 }
             }
         }
-        protected virtual Guid ExecuteInsert(string sql, dynamic parameters, DbConnection existingConnection = null)
+        protected virtual Guid ExecuteInsert(string sql, dynamic parameters = null, DbConnection existingConnection = null)
         {
             return ExecuteScalar<Guid>(sql, parameters, existingConnection);
         }
 
-        protected virtual T ExecuteScalar<T>(string sql, dynamic parameters, DbConnection existingConnection = null)
+        protected virtual T ExecuteScalar<T>(string sql, dynamic parameters = null, DbConnection existingConnection = null)
         {
             if (existingConnection != null)
             {
@@ -82,7 +82,7 @@ namespace TrainNotifier.ServiceLayer
             }
         }
 
-        protected virtual IEnumerable<T> Query<T>(string sql, dynamic parameters, DbConnection existingConnection = null)
+        protected virtual IEnumerable<T> Query<T>(string sql, dynamic parameters = null, DbConnection existingConnection = null)
         {
             if (existingConnection != null)
             {
