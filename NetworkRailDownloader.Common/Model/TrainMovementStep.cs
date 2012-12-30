@@ -6,6 +6,9 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public class TrainMovementStep : ITrainData
     {
+        [IgnoreDataMember]
+        public Guid DatabaseId { get; set; }
+
         [DataMember]
         public string TrainId { get; set; }
 
