@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TrainNotifier.Common
 {
-    public interface IDownloader
+    public interface INMSConnector
     {
         event EventHandler<FeedEvent> TrainDataRecieved;
-
-        void DownloadSchedule(string filePath, Toc toc = Toc.All, ScheduleType schedule = ScheduleType.Full, DayOfWeek? day = null);
 
         void SubscribeToFeed(Feed feed);
 
