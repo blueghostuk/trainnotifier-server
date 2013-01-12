@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -24,10 +25,13 @@ namespace TrainNotifier.ScheduleLibrary
                     using (MemoryStream memoryStream = new MemoryStream())
                     {
                         int count;
+                        int counter = 0;
                         do
                         {
+                            Trace.WriteLine(string.Format("Downloading bytes {0}", counter * 4096));
                             count = responseStream.Read(buffer, 0, buffer.Length);
                             memoryStream.Write(buffer, 0, count);
+                            counter++;
                         }
                         while (count != 0);
                         byte[] bytes = memoryStream.ToArray();
