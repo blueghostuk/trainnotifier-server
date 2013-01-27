@@ -48,7 +48,13 @@
   <ItemGroup>
     <Compile Include="IDownloader.cs" />
     <Compile Include="Model\CommandResponse.cs" />
+    <Compile Include="Model\Enumerations.cs" />
     <Compile Include="Model\ITrainData.cs" />
+    <Compile Include="Model\RecordField.cs" />
+    <Compile Include="Model\Schedule\AtocCode.cs" />
+    <Compile Include="Model\Schedule\ScheduleStop.cs" />
+    <Compile Include="Model\Schedule\ScheduleTrain.cs" />
+    <Compile Include="Model\Schedule\Tiploc.cs" />
     <Compile Include="Model\Stanox.cs" />
     <Compile Include="Model\TrainDescriber.cs" />
     <Compile Include="Model\TrainMovement.cs" />
@@ -60,9 +66,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Model\Schedule\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
