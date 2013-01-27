@@ -13,6 +13,8 @@ namespace TrainNotifier.Common.Model.Schedule
         [DataMember]
         public Guid ScheduleId { get; set; }
         [DataMember]
+        public string TiplocCode { get; set; }
+        [DataMember]
         public byte StopNumber { get; set; }
         [DataMember]
         public TimeSpan? Arrival { get; set; }

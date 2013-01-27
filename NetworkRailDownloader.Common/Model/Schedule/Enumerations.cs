@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TrainNotifier.Common.Model
+namespace TrainNotifier.Common.Model.Schedule
 {
     public enum TransactionType
     {
@@ -15,6 +16,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class TransactionTypeField : EnumField<TransactionType?>
     {
+        public static readonly TransactionTypeField Default = new TransactionTypeField();
+
+        public static TransactionType? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public TransactionTypeField()
             : base(1, new Dictionary<string, TransactionType?>
             {
@@ -35,6 +44,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class BankHolidayRunningField : EnumField<BankHolidayRunning?>
     {
+        public static readonly BankHolidayRunningField Default = new BankHolidayRunningField();
+
+        public static BankHolidayRunning? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public BankHolidayRunningField()
             : base(1, new Dictionary<string, BankHolidayRunning?>
             {
@@ -44,22 +61,41 @@ namespace TrainNotifier.Common.Model
             }, defaultValue: BankHolidayRunning.Runs) { }
     }
 
+    [DataContract]
     public enum Status
     {
-        Bus,
+        [EnumMember()]
+        Bus = 1,
+        [EnumMember()]
         Freight,
+        [EnumMember()]
         PassengerAndParcels,
+        [EnumMember()]
         Ship,
+        [EnumMember()]
         Trip,
+        [EnumMember()]
         STPPassengerAndParcels,
+        [EnumMember()]
         STPFreight,
+        [EnumMember()]
         STPTrip,
+        [EnumMember()]
         STPShip,
+        [EnumMember()]
         STPBus
     }
 
     public sealed class StatusField : EnumField<Status?>
     {
+        public static readonly StatusField Default = new StatusField();
+
+        public static Status? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public StatusField()
             : base(1, new Dictionary<string, Status?>
             {
@@ -135,6 +171,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class TrainCategoryField : EnumField<TrainCategory?>
     {
+        public static readonly TrainCategoryField Default = new TrainCategoryField();
+
+        public static TrainCategory? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public TrainCategoryField()
             : base(2, new Dictionary<string, TrainCategory?>
             {
@@ -210,6 +254,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class PowerTypeField : EnumField<PowerType?>
     {
+        public static readonly PowerTypeField Default = new PowerTypeField();
+
+        public static PowerType? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public PowerTypeField()
             : base(3, new Dictionary<string, PowerType?>
             {
@@ -244,6 +296,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class OperatingCharacteristicsField : EnumField<OperatingCharacteristics?>
     {
+        public static readonly OperatingCharacteristicsField Default = new OperatingCharacteristicsField();
+
+        public static OperatingCharacteristics? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public OperatingCharacteristicsField()
             : base(1, new Dictionary<string, OperatingCharacteristics?>
             {
@@ -271,6 +331,14 @@ namespace TrainNotifier.Common.Model
 
     public class TrainClassField : EnumField<TrainClass?>
     {
+        public static readonly TrainClassField Default = new TrainClassField();
+
+        public static TrainClass? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public TrainClassField()
             : base(1, new Dictionary<string, TrainClass?>{
                 { "B", TrainClass.FirstAndStandard },
@@ -281,6 +349,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class SleepersField : EnumField<TrainClass?>
     {
+        public static readonly SleepersField Default = new SleepersField();
+
+        public static TrainClass? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public SleepersField()
             : base(1, new Dictionary<string, TrainClass?>{
                 { "B", TrainClass.FirstAndStandard },
@@ -299,6 +375,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class ReservationsField : EnumField<Reservations?>
     {
+        public static readonly ReservationsField Default = new ReservationsField();
+
+        public static Reservations? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public ReservationsField()
             : base(1, new Dictionary<string, Reservations?>{
                 { "A", Reservations.SeatCompulsory },
@@ -321,6 +405,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class CateringField : EnumField<Catering?>
     {
+        public static readonly CateringField Default = new CateringField();
+
+        public static Catering? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public CateringField()
             : base(1, new Dictionary<string, Catering?>{
                 { "C", Catering.BuffetService },
@@ -341,6 +433,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class ServiceBrandingField : EnumField<ServiceBranding?>
     {
+        public static readonly ServiceBrandingField Default = new ServiceBrandingField();
+
+        public static ServiceBranding? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public ServiceBrandingField()
             : base(1, new Dictionary<string, ServiceBranding?>{
                 { "E", ServiceBranding.Eurostar },
@@ -348,20 +448,108 @@ namespace TrainNotifier.Common.Model
             }) { }
     }
 
+
+    [DataContract]
+    public sealed class Schedule
+    {
+        [DataMember]
+        public bool Monday { get; set; }
+        [DataMember]
+        public bool Tuesday { get; set; }
+        [DataMember]
+        public bool Wednesday { get; set; }
+        [DataMember]
+        public bool Thursday { get; set; }
+        [DataMember]
+        public bool Friday { get; set; }
+        [DataMember]
+        public bool Saturday { get; set; }
+        [DataMember]
+        public bool Sunday { get; set; }
+        [DataMember]
+        public bool BankHoliday { get; set; }
+
+        public bool RunsOnDay(DayOfWeek day)
+        {
+            switch (day)
+            {
+                case DayOfWeek.Monday:
+                    return Monday;
+                case DayOfWeek.Tuesday:
+                    return Tuesday;
+                case DayOfWeek.Wednesday:
+                    return Wednesday;
+                case DayOfWeek.Thursday:
+                    return Thursday;
+                case DayOfWeek.Friday:
+                    return Friday;
+                case DayOfWeek.Saturday:
+                    return Saturday;
+                case DayOfWeek.Sunday:
+                    return Sunday;
+                default:
+                    return false;
+            }
+        }
+
+    }
+
+    public sealed class ScheduleField : RecordField<Schedule>
+    {
+        public static readonly ScheduleField Default = new ScheduleField();
+
+        public static Schedule ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public ScheduleField()
+            : base(7) { }
+
+        public override void ParseString(string data)
+        {
+            Value = new Schedule
+            {
+                Monday = DayOfWeekField.Monday.ParseDataString(data[0].ToString()).HasValue,
+                Tuesday = DayOfWeekField.Tuesday.ParseDataString(data[1].ToString()).HasValue,
+                Wednesday = DayOfWeekField.Wednesday.ParseDataString(data[2].ToString()).HasValue,
+                Thursday = DayOfWeekField.Thursday.ParseDataString(data[3].ToString()).HasValue,
+                Friday = DayOfWeekField.Friday.ParseDataString(data[4].ToString()).HasValue,
+                Saturday = DayOfWeekField.Saturday.ParseDataString(data[5].ToString()).HasValue,
+                Sunday = DayOfWeekField.Sunday.ParseDataString(data[6].ToString()).HasValue
+            };
+        }
+
+    }
+
+    [DataContract]
     public enum STPIndicator
     {
-        CancellationOfPermanentSchedule,
-        NewSchedule,
+        [EnumMember()]
+        Cancellation = 1,
+        [EnumMember()]
+        STP,
+        [EnumMember()]
         Overlay,
+        [EnumMember()]
         Permanent
     }
 
     public sealed class STPIndicatorField : EnumField<STPIndicator?>
     {
+        public static readonly STPIndicatorField Default = new STPIndicatorField();
+
+        public static STPIndicator? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public STPIndicatorField()
             : base(1, new Dictionary<string, STPIndicator?>{
-                { "C", STPIndicator.CancellationOfPermanentSchedule },
-                { "N", STPIndicator.NewSchedule },
+                { "C", STPIndicator.Cancellation },
+                { "N", STPIndicator.STP },
                 { "O", STPIndicator.Overlay },
                 { "P", STPIndicator.Permanent }
             }) { }
@@ -372,6 +560,14 @@ namespace TrainNotifier.Common.Model
     /// </remarks>
     public sealed class EngineeringAllowanceField : RecordField<TimeSpan?>
     {
+        public static readonly EngineeringAllowanceField Default = new EngineeringAllowanceField();
+
+        public static TimeSpan? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public EngineeringAllowanceField()
             : base(2)
         { }
@@ -403,6 +599,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class PathingTimeField : RecordField<TimeSpan?>
     {
+        public static readonly PathingTimeField Default = new PathingTimeField();
+
+        public static TimeSpan? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public PathingTimeField()
             : base(2)
         { }
@@ -474,6 +678,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class ActivityField : EnumField<Activity?>
     {
+        public static readonly ActivityField Default = new ActivityField();
+
+        public static Activity? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public ActivityField()
             : base(2, new Dictionary<string, Activity?>{
                 { "A", Activity.StopsOrShuntsForOtherTrainsToPass },
@@ -521,6 +733,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class ATSCodeField : EnumField<ATSCode?>
     {
+        public static readonly ATSCodeField Default = new ATSCodeField();
+
+        public static ATSCode? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public ATSCodeField()
             : base(1, new Dictionary<string, ATSCode?>
             {
@@ -538,6 +758,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class AssociationCategoryField : EnumField<AssociationCategory?>
     {
+        public static readonly AssociationCategoryField Default = new AssociationCategoryField();
+
+        public static AssociationCategory? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public AssociationCategoryField()
             : base(2, new Dictionary<string, AssociationCategory?>
             {
@@ -556,6 +784,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class AssociationDateIndicatorField : EnumField<AssociationDateIndicator?>
     {
+        public static readonly AssociationDateIndicatorField Default = new AssociationDateIndicatorField();
+
+        public static AssociationDateIndicator? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public AssociationDateIndicatorField()
             : base(1, new Dictionary<string, AssociationDateIndicator?>
             {
@@ -573,6 +809,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class AssociationTypeField : EnumField<AssociationType?>
     {
+        public static readonly AssociationTypeField Default = new AssociationTypeField();
+
+        public static AssociationType? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public AssociationTypeField()
             : base(1, new Dictionary<string, AssociationType?>
             {
@@ -592,6 +836,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class CateTypeField : EnumField<CateType?>
     {
+        public static readonly CateTypeField Default = new CateTypeField();
+
+        public static CateType? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public CateTypeField()
             : base(1, new Dictionary<string, CateType?>{
                 { "0", CateType.NotInterchange },

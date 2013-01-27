@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TrainNotifier.Common.Model
+namespace TrainNotifier.Common.Model.Schedule
 {
     public class IgnoredField
     {
@@ -38,6 +38,7 @@ namespace TrainNotifier.Common.Model
             return Value.ToString();
         }
     }
+
     public sealed class CharField : RecordField<char>
     {
         public CharField()
@@ -51,6 +52,14 @@ namespace TrainNotifier.Common.Model
 
     public class StringField : RecordField<string>
     {
+        public static readonly StringField Default = new StringField(0);
+
+        public static string ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         private readonly bool _trimValue;
 
         public StringField(byte fieldLength, bool trimValue = true)
@@ -61,7 +70,9 @@ namespace TrainNotifier.Common.Model
 
         public override void ParseString(string data)
         {
-            if (_trimValue)
+            if (string.IsNullOrEmpty(data))
+                Value = null;
+            else if (_trimValue)
                 Value = data.Trim();
             else
                 Value = data;
@@ -70,6 +81,14 @@ namespace TrainNotifier.Common.Model
 
     public class ByteField : RecordField<byte?>
     {
+        public static readonly ByteField Default = new ByteField(0);
+
+        public static byte? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         private readonly byte? _defaultValue;
 
         public ByteField(byte fieldLength, byte? defaultValue = null)
@@ -105,6 +124,12 @@ namespace TrainNotifier.Common.Model
 
         public override void ParseString(string data)
         {
+            if (string.IsNullOrEmpty(data))
+            {
+                Value = _defaultValue;
+                return;
+            }
+
             if (_trimData)
                 data = data.Trim();
 
@@ -121,7 +146,7 @@ namespace TrainNotifier.Common.Model
         private readonly string _format;
         private readonly bool _lastCharHalf;
 
-        protected DateTimeBaseField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
+        protected DateTimeBaseField(byte fieldLength = 11, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength)
         {
             _format = format;
@@ -130,7 +155,7 @@ namespace TrainNotifier.Common.Model
 
         public override void ParseString(string data)
         {
-            if (data.Trim() == Constants.OngoingEndDate)
+            if (string.IsNullOrEmpty(data) || data.Trim() == Constants.OngoingEndDate)
             {
                 HandleInvalidValue();
                 return;
@@ -150,7 +175,7 @@ namespace TrainNotifier.Common.Model
             {
                 if (_lastCharHalf)
                 {
-                    if (data.Skip(FieldLength - 1).Take(1).First().Equals(Constants.HalfMinute))
+                    if (data.Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
                     {
                         SetValue(dt.Add(Constants.HalfMinuteAmount));
                         return;
@@ -166,9 +191,17 @@ namespace TrainNotifier.Common.Model
         protected abstract void SetValue(DateTime d);
     }
 
-    public sealed class NullableDateTimeField : DateTimeBaseField<DateTime?>
+    public class NullableDateTimeField : DateTimeBaseField<DateTime?>
     {
-        public NullableDateTimeField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
+        public static readonly NullableDateTimeField Default = new NullableDateTimeField();
+
+        public static DateTime? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public NullableDateTimeField(byte fieldLength = 11, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength, format, lastCharHalf) { }
 
         protected override void HandleInvalidValue()
@@ -182,9 +215,31 @@ namespace TrainNotifier.Common.Model
         }
     }
 
-    public sealed class DateTimeField : DateTimeBaseField<DateTime>
+    public class NullableDateField : NullableDateTimeField
     {
-        public DateTimeField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
+        public static readonly NullableDateField Default = new NullableDateField();
+
+        public static DateTime? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public NullableDateField()
+            : base(10, lastCharHalf: false) { }
+    }
+
+    public class DateTimeField : DateTimeBaseField<DateTime>
+    {
+        public static readonly DateTimeField Default = new DateTimeField();
+
+        public static DateTime ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public DateTimeField(byte fieldLength = 11, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength, format, lastCharHalf) { }
 
         protected override void HandleInvalidValue()
@@ -198,8 +253,30 @@ namespace TrainNotifier.Common.Model
         }
     }
 
+    public class DateField : DateTimeField
+    {
+        public static readonly DateField Default = new DateField();
+
+        public static DateTime ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public DateField()
+            : base(10, lastCharHalf: false) { }
+    }
+
     public sealed class TimeSpanField : RecordField<TimeSpan?>
     {
+        public static readonly TimeSpanField Default = new TimeSpanField();
+
+        public static TimeSpan? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         private readonly string _format;
         private readonly bool _lastCharHalf;
 
@@ -212,6 +289,12 @@ namespace TrainNotifier.Common.Model
 
         public override void ParseString(string data)
         {
+            if (string.IsNullOrEmpty(data))
+            {
+                Value = null;
+                return;
+            }
+
             string dataToParse = _lastCharHalf ?
                 new string(data.Take(FieldLength - 1).ToArray()) :
                 data;
@@ -226,7 +309,7 @@ namespace TrainNotifier.Common.Model
             {
                 if (_lastCharHalf)
                 {
-                    if (data.Skip(FieldLength - 1).Take(1).First().Equals(Constants.HalfMinute))
+                    if (data.Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
                     {
                         Value = ts.Add(Constants.HalfMinuteAmount);
                         return;
@@ -240,6 +323,14 @@ namespace TrainNotifier.Common.Model
 
     public sealed class DayOfWeekField : RecordField<DayOfWeek?>
     {
+        public static readonly DayOfWeekField Monday = new DayOfWeekField(DayOfWeek.Monday);
+        public static readonly DayOfWeekField Tuesday = new DayOfWeekField(DayOfWeek.Tuesday);
+        public static readonly DayOfWeekField Wednesday = new DayOfWeekField(DayOfWeek.Wednesday);
+        public static readonly DayOfWeekField Thursday = new DayOfWeekField(DayOfWeek.Thursday);
+        public static readonly DayOfWeekField Friday = new DayOfWeekField(DayOfWeek.Friday);
+        public static readonly DayOfWeekField Saturday = new DayOfWeekField(DayOfWeek.Saturday);
+        public static readonly DayOfWeekField Sunday = new DayOfWeekField(DayOfWeek.Sunday);
+
         private readonly DayOfWeek _value;
 
         public DayOfWeekField(DayOfWeek value)
@@ -248,9 +339,19 @@ namespace TrainNotifier.Common.Model
             _value = value;
         }
 
+        public DayOfWeek? ParseDataString(string data)
+        {
+            ParseString(data);
+            return Value;
+        }
+
         public override void ParseString(string data)
         {
-            if (data == "1")
+            if (string.IsNullOrEmpty(data))
+            {
+                Value = null;
+            }
+            else if (data == "1")
             {
                 Value = _value;
             }

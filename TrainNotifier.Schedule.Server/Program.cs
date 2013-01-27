@@ -42,7 +42,7 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-                                ScheduleTrain train = ScheduleService.ParseJson(rowData.JsonScheduleV1);
+                                ScheduleTrain train = ScheduleService.ParseJsonTrain(rowData.JsonScheduleV1);
                             }
                         }
                         catch { }
