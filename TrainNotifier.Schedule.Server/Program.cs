@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.ScheduleLibrary;
 
 namespace TrainNotifier.Schedule.Server
@@ -41,7 +42,7 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-
+                                ScheduleTrain train = ScheduleService.ParseJson(rowData.JsonScheduleV1);
                             }
                         }
                         catch { }

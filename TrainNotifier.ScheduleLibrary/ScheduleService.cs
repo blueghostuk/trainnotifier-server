@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using TrainNotifier.Common;
+using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.ScheduleLibrary
 {
@@ -39,6 +40,18 @@ namespace TrainNotifier.ScheduleLibrary
                     }
                 }
             }
+        }
+
+        public static ScheduleTrain ParseJson(dynamic s)
+        {
+            return new ScheduleTrain
+            {
+                TrainUid = s.CIF_train_uid,
+                //StartDate = DateTime.Parse(s.schedule_start_date),
+                //EndDate = string.IsNullOrEmpty(s.schedule_end_date) ? default(DateTime?) : DateTime.Parse(s.schedule_end_date),
+                //AtocCode = new AtocCode { Code = s.atoc_code },
+                //Status = s.train_status.Equals("P") ? ScheduleStatus.Permanent : s.train_status.Equals("
+            };
         }
     }
 }
