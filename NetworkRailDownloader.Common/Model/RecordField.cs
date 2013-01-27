@@ -121,7 +121,7 @@ namespace TrainNotifier.Common.Model
         private readonly string _format;
         private readonly bool _lastCharHalf;
 
-        protected DateTimeBaseField(byte fieldLength = 7, string format = "yyMMdd", bool lastCharHalf = true)
+        protected DateTimeBaseField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength)
         {
             _format = format;
@@ -168,7 +168,7 @@ namespace TrainNotifier.Common.Model
 
     public sealed class NullableDateTimeField : DateTimeBaseField<DateTime?>
     {
-        public NullableDateTimeField(byte fieldLength = 7, string format = "yyMMdd", bool lastCharHalf = true)
+        public NullableDateTimeField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength, format, lastCharHalf) { }
 
         protected override void HandleInvalidValue()
@@ -184,7 +184,7 @@ namespace TrainNotifier.Common.Model
 
     public sealed class DateTimeField : DateTimeBaseField<DateTime>
     {
-        public DateTimeField(byte fieldLength = 7, string format = "yyMMdd", bool lastCharHalf = true)
+        public DateTimeField(byte fieldLength = 10, string format = "yyyy-MM-dd", bool lastCharHalf = true)
             : base(fieldLength, format, lastCharHalf) { }
 
         protected override void HandleInvalidValue()
