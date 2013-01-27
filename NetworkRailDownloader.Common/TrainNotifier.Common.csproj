@@ -48,9 +48,9 @@
   <ItemGroup>
     <Compile Include="IDownloader.cs" />
     <Compile Include="Model\CommandResponse.cs" />
-    <Compile Include="Model\Enumerations.cs" />
+    <Compile Include="Model\Schedule\Enumerations.cs" />
     <Compile Include="Model\ITrainData.cs" />
-    <Compile Include="Model\RecordField.cs" />
+    <Compile Include="Model\Schedule\RecordField.cs" />
     <Compile Include="Model\Schedule\AtocCode.cs" />
     <Compile Include="Model\Schedule\ScheduleStop.cs" />
     <Compile Include="Model\Schedule\ScheduleTrain.cs" />
