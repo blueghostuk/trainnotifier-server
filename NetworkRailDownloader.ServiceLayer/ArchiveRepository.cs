@@ -18,10 +18,6 @@ namespace TrainNotifier.Service
             SlidingExpiration = TimeSpan.FromHours(12)
         };
 
-        public ArchiveRepository()
-            : base("archive")
-        { }
-
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
         /// </summary>

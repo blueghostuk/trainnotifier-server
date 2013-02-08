@@ -15,7 +15,7 @@ namespace TrainNotifier.ServiceLayer
         protected const int _defaultCommandTimeout = 30;
         protected readonly int _commandTimeout;
 
-        protected DbRepository(string connectionStringName = "database")
+        protected DbRepository(string connectionStringName = "archive")
         {
             _connString = ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString;
             _dbFactory = DbProviderFactories.GetFactory(ConfigurationManager.ConnectionStrings[connectionStringName].ProviderName);

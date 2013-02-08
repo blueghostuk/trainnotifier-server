@@ -12,7 +12,6 @@ namespace TrainNotifier.Console.WebSocketServer
     internal sealed class CacheController : IDisposable
     {
         private readonly UserManager _userManager;
-        private readonly StanoxRepository _stanoxRepository = new StanoxRepository();
 
         private static readonly object _cacheLock = new object();
 
