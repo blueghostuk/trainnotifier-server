@@ -355,6 +355,7 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 Value = _value;
             }
+
             else
             {
                 Value = null;
