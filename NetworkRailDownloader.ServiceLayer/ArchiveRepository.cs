@@ -193,7 +193,8 @@ namespace TrainNotifier.Service
                     OriginStanox AS SchedOriginStanox,
                     SchedWttId AS WorkingTTId
                 FROM LiveTrain
-                WHERE TrainId = @trainId AND TrainUid = @uid";
+                WHERE TrainId = @trainId AND TrainUid = @uid
+                ORDER BY [OriginDepartTimestamp] DESC"; // get latest occurance
 
             TrainMovement tm = ExecuteScalar<TrainMovement>(sql, new { trainId, uid });
             if (tm != null)
