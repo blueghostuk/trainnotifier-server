@@ -55,6 +55,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -87,6 +88,10 @@
     <ProjectReference Include="..\NetworkRailDownloader.Common\TrainNotifier.Common.csproj">
       <Project>{55f15444-39a6-4b55-aa31-ced7a996de47}</Project>
       <Name>TrainNotifier.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj">
+      <Project>{5aae47c1-e8a0-456d-86ca-c92b0c68f27c}</Project>
+      <Name>TrainNotifier.Service</Name>
     </ProjectReference>
     <ProjectReference Include="..\TrainNotifier.ScheduleLibrary\TrainNotifier.ScheduleLibrary.csproj">
       <Project>{3131b7dd-21a0-4cb2-9d60-aeb841f04976}</Project>

@@ -6,7 +6,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Transactions;
 
-namespace TrainNotifier.ServiceLayer
+namespace TrainNotifier.Service
 {
     public abstract class DbRepository
     {
@@ -101,6 +101,12 @@ namespace TrainNotifier.ServiceLayer
         {
             return new TransactionScope(TransactionScopeOption.Required,
                                 new TransactionOptions() { IsolationLevel = IsolationLevel.RepeatableRead });
+        }
+
+        public static TransactionScope GetTransactionScope(TimeSpan timeout)
+        {
+            return new TransactionScope(TransactionScopeOption.Required,
+                                new TransactionOptions() { IsolationLevel = IsolationLevel.RepeatableRead, Timeout = timeout });
         }
     }
 }

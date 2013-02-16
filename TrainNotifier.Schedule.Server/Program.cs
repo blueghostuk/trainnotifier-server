@@ -1,13 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using TrainNotifier.Common;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.ScheduleLibrary;
+using TrainNotifier.Service;
 
 namespace TrainNotifier.Schedule.Server
 {
@@ -15,23 +15,44 @@ namespace TrainNotifier.Schedule.Server
     {
         static void Main(string[] args)
         {
+            TraceHelper.SetupTrace();
+            bool force = args.Length > 0;
+            bool delete = true;
+            var tiprep = new TiplocRepository();
+            var tiplocs = tiprep.GetTiplocs().ToList();
+            var schedrep = new ScheduleRepository();
+
             string tempDir = Path.GetTempPath();
-            string gzFile = Path.Combine(tempDir, string.Format("{0:ddmmyyyy}.gz", DateTime.UtcNow));
-            string jsonFile = Path.Combine(tempDir, string.Format("{0:ddmmyyyy}.json", DateTime.UtcNow));
+            string gzFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.gz", DateTime.UtcNow));
+            string jsonFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.json", DateTime.UtcNow));
             try
             {
-                ScheduleService.DownloadSchedule(gzFile);
-                using (FileStream originalFileStream = File.OpenRead(gzFile))
+                if (force || !File.Exists(gzFile))
                 {
-                    using (FileStream decompressedFileStream = File.Create(jsonFile))
+                    ScheduleService.DownloadSchedule(gzFile);
+                }
+                else
+                {
+                    Trace.TraceInformation("File {0} already exists", gzFile);
+                }
+                if (force || !File.Exists(jsonFile))
+                {
+                    using (FileStream originalFileStream = File.OpenRead(gzFile))
                     {
-                        using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                        using (FileStream decompressedFileStream = File.Create(jsonFile))
                         {
-                            Console.WriteLine("Decompressing {0} to {1}", gzFile, jsonFile);
-                            decompressionStream.CopyTo(decompressedFileStream);
-                            Console.WriteLine("Decompressed: {0}", jsonFile);
+                            using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
+                            {
+                                Trace.TraceInformation("Decompressing {0} to {1}", gzFile, jsonFile);
+                                decompressionStream.CopyTo(decompressedFileStream);
+                                Trace.TraceInformation("Decompressed: {0}", jsonFile);
+                            }
                         }
                     }
+                }
+                else
+                {
+                    Trace.TraceInformation("File {0} already exists", jsonFile);
                 }
                 if (File.Exists(jsonFile))
                 {
@@ -42,17 +63,27 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-                                ScheduleTrain train = ScheduleService.ParseJsonTrain(rowData.JsonScheduleV1);
+                                ScheduleTrain train = ScheduleService.ParseJsonTrain(rowData.JsonScheduleV1, tiplocs);
+                                schedrep.InsertSchedule(train);
+                                Trace.TraceInformation("Inserted Train UID {0}, Indicator {1}", train.TrainUid, train.STPIndicator);
                             }
                         }
-                        catch { }
+                        catch (Exception e)
+                        {
+                            Trace.TraceError(e.ToString());
+                            delete = false;
+                            throw;
+                        }
                     }
                 }
             }
             finally
             {
-                File.Delete(gzFile);
-                File.Delete(jsonFile);
+                if (delete)
+                {
+                    File.Delete(gzFile);
+                    File.Delete(jsonFile);
+                }
             }
         }
     }
