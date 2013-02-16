@@ -5,7 +5,7 @@ using System.Linq;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
-using TrainNotifier.ServiceLayer;
+using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.WebSocketServer
 {

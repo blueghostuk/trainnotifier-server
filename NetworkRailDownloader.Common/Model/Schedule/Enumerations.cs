@@ -860,4 +860,29 @@ namespace TrainNotifier.Common.Model.Schedule
         public const char HalfMinute = 'H';
         public static readonly TimeSpan HalfMinuteAmount = TimeSpan.FromMinutes(0.5);
     }
+
+    public enum StopType
+    {
+        Origin,
+        Intermediate,
+        Terminate
+    }
+
+    public sealed class StopTypeField : EnumField<StopType>
+    {
+        public static readonly StopTypeField Default = new StopTypeField();
+
+        public static StopType? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public StopTypeField()
+            : base(2, new Dictionary<string, StopType>{
+                { "LO", StopType.Origin },
+                { "LI", StopType.Intermediate },
+                { "LT", StopType.Terminate }
+            }, defaultValue: StopType.Intermediate) { }
+    }
 }

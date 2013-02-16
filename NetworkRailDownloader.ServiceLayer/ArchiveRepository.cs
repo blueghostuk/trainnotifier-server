@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
-using TrainNotifier.ServiceLayer;
 
 namespace TrainNotifier.Service
 {

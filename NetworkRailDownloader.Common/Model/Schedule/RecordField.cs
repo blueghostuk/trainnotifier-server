@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
@@ -52,7 +50,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public class StringField : RecordField<string>
     {
-        public static readonly StringField Default = new StringField(0);
+        private static readonly StringField Default = new StringField(0);
 
         public static string ParseDataString(string data)
         {
@@ -79,9 +77,25 @@ namespace TrainNotifier.Common.Model.Schedule
         }
     }
 
+    public sealed class AtocCodeField : StringField
+    {
+        private static readonly AtocCodeField Default = new AtocCodeField();
+
+        public static AtocCode ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return new AtocCode { Code = Default.Value };
+        }
+
+        public AtocCodeField() : base(2)
+        {
+
+        }
+    }
+
     public class ByteField : RecordField<byte?>
     {
-        public static readonly ByteField Default = new ByteField(0);
+        private static readonly ByteField Default = new ByteField(0);
 
         public static byte? ParseDataString(string data)
         {
@@ -193,7 +207,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public class NullableDateTimeField : DateTimeBaseField<DateTime?>
     {
-        public static readonly NullableDateTimeField Default = new NullableDateTimeField();
+        private static readonly NullableDateTimeField Default = new NullableDateTimeField();
 
         public static DateTime? ParseDataString(string data)
         {
@@ -217,7 +231,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public class NullableDateField : NullableDateTimeField
     {
-        public static readonly NullableDateField Default = new NullableDateField();
+        private static readonly NullableDateField Default = new NullableDateField();
 
         public static DateTime? ParseDataString(string data)
         {
@@ -231,7 +245,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public class DateTimeField : DateTimeBaseField<DateTime>
     {
-        public static readonly DateTimeField Default = new DateTimeField();
+        private static readonly DateTimeField Default = new DateTimeField();
 
         public static DateTime ParseDataString(string data)
         {
@@ -255,7 +269,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public class DateField : DateTimeField
     {
-        public static readonly DateField Default = new DateField();
+        private static readonly DateField Default = new DateField();
 
         public static DateTime ParseDataString(string data)
         {
@@ -269,7 +283,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public sealed class TimeSpanField : RecordField<TimeSpan?>
     {
-        public static readonly TimeSpanField Default = new TimeSpanField();
+        private static readonly TimeSpanField Default = new TimeSpanField();
 
         public static TimeSpan? ParseDataString(string data)
         {

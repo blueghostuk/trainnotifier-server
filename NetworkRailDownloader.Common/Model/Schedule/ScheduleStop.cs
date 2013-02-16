@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
@@ -13,7 +9,7 @@ namespace TrainNotifier.Common.Model.Schedule
         [DataMember]
         public Guid ScheduleId { get; set; }
         [DataMember]
-        public string TiplocCode { get; set; }
+        public TiplocCode Tiploc { get; set; }
         [DataMember]
         public byte StopNumber { get; set; }
         [DataMember]

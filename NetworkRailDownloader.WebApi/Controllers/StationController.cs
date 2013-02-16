@@ -3,7 +3,7 @@ using System.Linq;
 using System.Web.Http;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Console.WebApi.ViewModels;
-using TrainNotifier.ServiceLayer;
+using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {

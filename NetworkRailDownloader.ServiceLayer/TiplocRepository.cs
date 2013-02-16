@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using TrainNotifier.Common.Model.Schedule;
 
-namespace TrainNotifier.ServiceLayer
+namespace TrainNotifier.Service
 {
     public class TiplocRepository : DbRepository
     {
@@ -20,6 +22,33 @@ namespace TrainNotifier.ServiceLayer
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]";
 
             return Query<dynamic>(sql, null);
+        }
+
+        public IEnumerable<TiplocCode> GetTiplocs()
+        {
+            const string sql = @"
+                SELECT 
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox]
+                FROM [Tiploc]";
+
+            return Query<TiplocCode>(sql, null);
+        }
+
+        public short InsertTiploc(string tiploc)
+        {
+            const string sql = @"
+                 INSERT INTO [natrail].[dbo].[Tiploc]
+                       ([Tiploc])
+                 OUTPUT [inserted].[TiplocId]
+                 VALUES
+                       (@tiploc)";
+
+            return ExecuteScalar<short>(sql, new { tiploc });
         }
 
         public dynamic GetByStanox(string stanox)
