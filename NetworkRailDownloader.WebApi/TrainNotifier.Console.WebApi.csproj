@@ -106,7 +106,6 @@
       <DependentUpon>Service.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Stanox.cs" />
-    <Compile Include="ViewModels\WttIdSearchResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
