@@ -40,21 +40,25 @@ namespace TrainNotifier.Service
             });
         }
 
-        public IEnumerable<dynamic> SearchByWttId(string wttId)
+        public IEnumerable<TrainMovement> SearchByWttId(string wttId)
         {
             const string sql = @"
                 SELECT
-                    TrainId,
-                    Headcode,
-                    OriginDepartTimestamp,
-                    OriginStanox,
-                    SchedWttId
+                    TrainId AS Id,
+                    Headcode AS HeadCode,
+                    CreationTimestamp AS Activated,
+                    OriginDepartTimestamp AS SchedOriginDeparture,
+                    TrainServiceCode AS ServiceCode,
+                    Toc AS TocId,
+                    TrainUid AS TrainUid,
+                    OriginStanox AS SchedOriginStanox,
+                    SchedWttId AS WorkingTTId
                 FROM LiveTrain
                 WHERE SchedWttId LIKE @wttId";
 
             wttId += "%";
 
-            return Query<dynamic>(sql, new { wttId });
+            return Query<TrainMovement>(sql, new { wttId });
         }
 
         public IEnumerable<TrainMovement> SearchByOrigin(string stanox)

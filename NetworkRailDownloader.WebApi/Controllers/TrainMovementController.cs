@@ -47,17 +47,9 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<WttIdSearchResult> WithWttId(string wttId)
+        public IEnumerable<TrainMovement> WithWttId(string wttId)
         {
-            return _archiveRepo.SearchByWttId(wttId)
-                .Select(r => new WttIdSearchResult
-                {
-                    TrainId = r.TrainId,
-                    HeadCode = r.Headcode,
-                    WttId = r.SchedWttId,
-                    From = r.OriginStanox,
-                    Depart = r.OriginDepartTimestamp
-                });
+            return _archiveRepo.SearchByWttId(wttId);
         }
     }
 }
