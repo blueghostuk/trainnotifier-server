@@ -16,7 +16,8 @@ namespace TrainNotifier.Schedule.Server
         static void Main(string[] args)
         {
             TraceHelper.SetupTrace();
-            bool force = args.Length > 0;
+            var options = new Options();
+            CommandLine.CommandLineParser.Default.ParseArguments(args, options);
             bool delete = true;
             var tiprep = new TiplocRepository();
             var tiplocs = tiprep.GetTiplocs().ToList();
@@ -27,15 +28,15 @@ namespace TrainNotifier.Schedule.Server
             string jsonFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.json", DateTime.UtcNow));
             try
             {
-                if (force || !File.Exists(gzFile))
+                if (options.Force || !File.Exists(gzFile))
                 {
-                    ScheduleService.DownloadSchedule(gzFile);
+                    ScheduleService.DownloadSchedule(gzFile, options.Toc, options.ScheduleType, options.Day.HasValue ? options.Day.Value : DateTime.Today.DayOfWeek);
                 }
                 else
                 {
                     Trace.TraceInformation("File {0} already exists", gzFile);
                 }
-                if (force || !File.Exists(jsonFile))
+                if (options.Force || !File.Exists(jsonFile))
                 {
                     using (FileStream originalFileStream = File.OpenRead(gzFile))
                     {
