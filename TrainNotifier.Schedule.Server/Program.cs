@@ -30,7 +30,13 @@ namespace TrainNotifier.Schedule.Server
             {
                 if (options.Force || !File.Exists(gzFile))
                 {
-                    ScheduleService.DownloadSchedule(gzFile, options.Toc, options.ScheduleType, options.Day.HasValue ? options.Day.Value : DateTime.Today.DayOfWeek);
+                    ScheduleService.DownloadSchedule(gzFile,
+                        // defaults to all
+                        options.Toc, 
+                        // defaults to daily
+                        options.ScheduleType,
+                        // defaults to previous day (e.g. on monday download sunday - http://nrodwiki.rockshore.net/index.php/Schedule)
+                        options.Day.HasValue ? options.Day.Value : DateTime.Today.AddDays(-1).DayOfWeek);
                 }
                 else
                 {
