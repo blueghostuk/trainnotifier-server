@@ -307,7 +307,7 @@ namespace TrainNotifier.Service
                     date
                 });
 
-                if (scheduleId.HasValue)
+                if (scheduleId.HasValue && scheduleId != Guid.Empty)
                 {
                     const string updateSql = @"
                         UPDATE [LiveTrain]
