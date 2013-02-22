@@ -16,5 +16,8 @@ namespace TrainNotifier.Schedule.Server
 
         [Option("f", "force", DefaultValue = false)]
         public bool Force { get; set; }
+
+        [Option("n", "delete", DefaultValue = false)]
+        public bool Delete { get; set; }
     }
 }

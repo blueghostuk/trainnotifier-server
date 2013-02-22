@@ -121,7 +121,6 @@ namespace TrainNotifier.Common.Model.Schedule
         }
     }
 
-
     public class EnumField<T> : RecordField<T>
     {
         private readonly IDictionary<string, T> _converters;

@@ -71,8 +71,17 @@ namespace TrainNotifier.Schedule.Server
                             if (rowData.JsonScheduleV1 != null)
                             {
                                 ScheduleTrain train = ScheduleService.ParseJsonTrain(rowData.JsonScheduleV1, tiplocs);
-                                schedrep.InsertSchedule(train);
-                                Trace.TraceInformation("Inserted Train UID {0}, Indicator {1}", train.TrainUid, train.STPIndicator);
+                                switch (train.TransactionType)
+                                {
+                                    case TransactionType.Create:
+                                        schedrep.InsertSchedule(train);
+                                        Trace.TraceInformation("Inserted Train UID {0}, Indicator {1}", train.TrainUid, train.STPIndicator);
+                                        break;
+                                    case TransactionType.Delete:
+                                        schedrep.DeleteSchedule(train);
+                                        Trace.TraceInformation("Deleted Train UID {0}, Indicator {1}, Date {2:dd/MM/yyyy}", train.TrainUid, train.STPIndicator, train.StartDate);
+                                        break;
+                                }
                             }
                         }
                         catch (Exception e)
@@ -86,7 +95,7 @@ namespace TrainNotifier.Schedule.Server
             }
             finally
             {
-                if (delete)
+                if (options.Delete && delete)
                 {
                     File.Delete(gzFile);
                     File.Delete(jsonFile);

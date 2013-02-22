@@ -9,28 +9,26 @@ namespace TrainNotifier.Common.Model.Schedule
 {
     public enum TransactionType
     {
-        New,
-        Delete,
-        Revise
+        Create,
+        Delete
     }
 
-    public sealed class TransactionTypeField : EnumField<TransactionType?>
+    public sealed class TransactionTypeField : EnumField<TransactionType>
     {
         public static readonly TransactionTypeField Default = new TransactionTypeField();
 
-        public static TransactionType? ParseDataString(string data)
+        public static TransactionType ParseDataString(string data)
         {
             Default.ParseString(data);
             return Default.Value;
         }
 
         public TransactionTypeField()
-            : base(1, new Dictionary<string, TransactionType?>
+            : base(0, new Dictionary<string, TransactionType>
             {
-                { "N", TransactionType.New },
-                { "D", TransactionType.Delete },
-                { "R", TransactionType.Revise },
-            }) { }
+                { "Create", TransactionType.Create },
+                { "Delete", TransactionType.Delete },
+            }, defaultValue : TransactionType.Create) { }
     }
 
     public enum BankHolidayRunning

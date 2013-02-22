@@ -10,7 +10,7 @@ namespace TrainNotifier.Common
         private static readonly RollingFileTraceListener _rollingFileTraceListener = new RollingFileTraceListener
         {
             ConvertWriteToEvent = true,
-            Template = "{DateTime:HH':'mm':'ssZ} [{Thread}] {EventType}: {Message}{Data}"
+            Template = "{DateTime:HH':'mm':'ssZ}: {Message}{Data}"
         };
 
         public static void FlushLog()
@@ -31,7 +31,7 @@ namespace TrainNotifier.Common
 
             Trace.Listeners.Add(new ColoredConsoleTraceListener
             {
-                Template = "{DateTime:HH':'mm':'ssZ} [{Thread}] {EventType}: {Message}{Data}"
+                Template = "{DateTime:HH':'mm':'ssZ}: {Message}{Data}"
             });
             Trace.Listeners.Add(_rollingFileTraceListener);
         }

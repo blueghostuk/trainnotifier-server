@@ -49,24 +49,30 @@ namespace TrainNotifier.ScheduleLibrary
         public static ScheduleTrain ParseJsonTrain(dynamic s, ICollection<TiplocCode> tiplocs)
         {
             var t = new ScheduleTrain();
+            t.TransactionType = TransactionTypeField.ParseDataString(DynamicValueToString(s.transaction_type));
             t.TrainUid = StringField.ParseDataString(DynamicValueToString(s.CIF_train_uid));
             t.StartDate = DateField.ParseDataString(DynamicValueToString(s.schedule_start_date));
-            t.EndDate = NullableDateField.ParseDataString(DynamicValueToString(s.schedule_end_date));
-            t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.atoc_code));
-            t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
             t.STPIndicator = STPIndicatorField.ParseDataString(DynamicValueToString(s.CIF_stp_indicator));
-            t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
-            t.Stops = ParseJsonStops(s.schedule_segment.schedule_location, tiplocs);
-            if (t.Stops.Any())
+            switch (t.TransactionType)
             {
-                t.Origin = t.Stops
-                    .Where(st => st.Origin)
-                    .Select(st => st.Tiploc)
-                    .FirstOrDefault();
-                t.Destination = t.Stops
-                    .Where(st => st.Terminate)
-                    .Select(st => st.Tiploc)
-                    .FirstOrDefault();
+                case TransactionType.Create:
+                    t.EndDate = NullableDateField.ParseDataString(DynamicValueToString(s.schedule_end_date));
+                    t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.atoc_code));
+                    t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
+                    t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
+                    t.Stops = ParseJsonStops(s.schedule_segment.schedule_location, tiplocs);
+                    if (t.Stops.Any())
+                    {
+                        t.Origin = t.Stops
+                            .Where(st => st.Origin)
+                            .Select(st => st.Tiploc)
+                            .FirstOrDefault();
+                        t.Destination = t.Stops
+                            .Where(st => st.Terminate)
+                            .Select(st => st.Tiploc)
+                            .FirstOrDefault();
+                    }
+                    break;
             }
 
             return t;

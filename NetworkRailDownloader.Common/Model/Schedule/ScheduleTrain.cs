@@ -16,8 +16,6 @@ namespace TrainNotifier.Common.Model.Schedule
         [DataMember]
         public DateTime? EndDate { get; set; }
         [DataMember]
-        public bool Active { get; set; }
-        [DataMember]
         public AtocCode AtocCode { get; set; }
         [DataMember]
         public Schedule Schedule { get; set; }
@@ -29,6 +27,9 @@ namespace TrainNotifier.Common.Model.Schedule
         public TiplocCode Origin { get; set; }
         [DataMember]
         public TiplocCode Destination { get; set; }
+
+        [IgnoreDataMember]
+        public TransactionType TransactionType { get; set; }
 
         [DataMember]
         public IEnumerable<ScheduleStop> Stops { get; set; }
