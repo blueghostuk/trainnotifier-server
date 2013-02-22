@@ -30,7 +30,6 @@ namespace TrainNotifier.Service
                        ([TrainUid]
                        ,[StartDate]
                        ,[EndDate]
-                       ,[Active]
                        ,[AtocCode]
                        ,[RunsMonday]
                        ,[RunsTuesday]
@@ -49,7 +48,6 @@ namespace TrainNotifier.Service
                        (@TrainUid
                        ,@StartDate
                        ,@EndDate
-                       ,@Active
                        ,@Code
                        ,@Monday
                        ,@Tuesday
@@ -69,7 +67,6 @@ namespace TrainNotifier.Service
                     train.TrainUid,
                     train.StartDate,
                     train.EndDate,
-                    train.Active,
                     train.AtocCode.Code,
                     train.Schedule.Monday,
                     train.Schedule.Tuesday,
@@ -155,6 +152,23 @@ namespace TrainNotifier.Service
                     stop.Terminate
                 });
             }
+        }
+
+        public void DeleteSchedule(ScheduleTrain train)
+        {
+            const string sql = @"
+                UPDATE [natrail].[dbo].[ScheduleTrain]
+                SET [Deleted] = 1
+                WHERE [TrainUid] = @TrainUid
+                    AND [StartDate] = @StartDate
+                    AND [STPIndicatorId] = @STPIndicator";
+
+            ExecuteNonQuery(sql, new
+            {
+                train.TrainUid,
+                train.StartDate,
+                train.STPIndicator
+            });
         }
     }
 }
