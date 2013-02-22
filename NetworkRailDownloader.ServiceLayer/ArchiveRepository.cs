@@ -277,6 +277,56 @@ namespace TrainNotifier.Service
 
             _trainActivationCache.Add(tm.Id, id, _trainActivationCachePolicy);
             tm.UniqueId = id;
+
+            SetLiveTrainSchedule(tm);
+        }
+
+        private void SetLiveTrainSchedule(TrainMovement tm)
+        {
+            Task.Run(() =>
+            {
+                if (!tm.SchedOriginDeparture.HasValue)
+                    return;
+
+                const string sql = @"
+                    SELECT TOP 1 [ScheduleId]
+                    FROM [ScheduleTrain]
+                    WHERE 
+                            [TrainUid] = @TrainUid
+                        AND @date >= [StartDate]
+                        AND @date <= [EndDate]
+                        {0}
+                        AND [Deleted] = 0
+                    ORDER BY [STPIndicatorId]";
+
+                var date = tm.SchedOriginDeparture.Value.Date;
+
+                Guid? scheduleId = ExecuteScalar<Guid>(string.Format(sql, GetDatePartSql(date)), new
+                {
+                    tm.TrainUid,
+                    date
+                });
+
+                if (scheduleId.HasValue)
+                {
+                    const string updateSql = @"
+                        UPDATE [LiveTrain]
+                        SET [ScheduleTrain] = @scheduleId
+                        WHERE [Id] = @UniqueId";
+
+                    ExecuteNonQuery(updateSql, new
+                    {
+                        scheduleId,
+                        tm.UniqueId
+                    });
+                }
+            });
+        }
+
+        private static string GetDatePartSql(DateTime date)
+        {
+            const string sql = "AND [Runs{0}] = 1";
+            return string.Format(sql, date.DayOfWeek.ToString());
         }
 
         private bool TrainExists(string trainId, out Guid? dbId, DbConnection existingConnection = null)
