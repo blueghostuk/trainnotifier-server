@@ -7,7 +7,7 @@ namespace TrainNotifier.Common.Model.Schedule
     [DataContract]
     public sealed class ScheduleTrain
     {
-        [DataMember]
+        [IgnoreDataMember]
         public Guid ScheduleId { get; set; }
         [DataMember]
         public string TrainUid { get; set; }

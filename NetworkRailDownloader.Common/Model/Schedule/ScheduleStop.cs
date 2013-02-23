@@ -6,7 +6,7 @@ namespace TrainNotifier.Common.Model.Schedule
     [DataContract]
     public class ScheduleStop
     {
-        [DataMember]
+        [IgnoreDataMember]
         public Guid ScheduleId { get; set; }
         [DataMember]
         public TiplocCode Tiploc { get; set; }
