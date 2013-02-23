@@ -60,7 +60,7 @@ namespace TrainNotifier.Common.Model.Schedule
     }
 
     [DataContract]
-    public enum Status
+    public enum Status : byte
     {
         [EnumMember()]
         Bus = 1,
@@ -522,7 +522,7 @@ namespace TrainNotifier.Common.Model.Schedule
     }
 
     [DataContract]
-    public enum STPIndicator
+    public enum STPIndicator : byte
     {
         [EnumMember()]
         Cancellation = 1,
