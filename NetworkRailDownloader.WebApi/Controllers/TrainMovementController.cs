@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
@@ -11,6 +12,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
     public class TrainMovementController : ApiController
     {
         private static readonly ArchiveRepository _archiveRepo = new ArchiveRepository();
+        private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         [HttpGet]
         public IEnumerable<TrainMovement> GetById(string id)
@@ -26,9 +28,9 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<TrainMovement> StartingAtStation(string stanox)
+        public IEnumerable<OriginTrainMovement> StartingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
-            return _archiveRepo.SearchByOrigin(stanox);
+            return _tmRepo.StartingAt(stanox, startDate, endDate);
         }
 
         [HttpGet]
