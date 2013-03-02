@@ -52,6 +52,7 @@
     <Compile Include="ScheduleRepository.cs" />
     <Compile Include="TiplocRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TrainMovementRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

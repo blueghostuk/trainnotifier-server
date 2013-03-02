@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace TrainNotifier.Common.Model
 {
     [DataContract]
-    public sealed class TrainMovement : ITrainData
+    public class TrainMovement : ITrainData
     {
         private ICollection<TrainMovementStep> _steps;
         private bool _activated,
