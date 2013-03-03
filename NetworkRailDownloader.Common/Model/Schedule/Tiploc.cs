@@ -1,9 +1,10 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
     [DataContract]
-    public sealed class TiplocCode
+    public class TiplocCode
     {
         [IgnoreDataMember]
         public short TiplocId { get; set; }
@@ -17,5 +18,24 @@ namespace TrainNotifier.Common.Model.Schedule
         public string Stanox { get; set; }
         [DataMember]
         public string CRS { get; set; }
+    }
+
+    [DataContract]
+    public sealed class ScheduleTiploc : TiplocCode
+    {
+        [DataMember]
+        public string Platform { get; set; }
+
+        [DataMember]
+        public TimeSpan? Departure { get; set; }
+
+        [DataMember]
+        public TimeSpan? PublicDeparture { get; set; }
+
+        [DataMember]
+        public TimeSpan? Arrival { get; set; }
+
+        [DataMember]
+        public TimeSpan? PublicArrival { get; set; }
     }
 }

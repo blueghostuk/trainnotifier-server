@@ -26,10 +26,6 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
                     ,[LiveTrain].[SchedWttId] AS WorkingTTId
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[OriginStop].[Departure] AS OriginDeparture
-                    ,[OriginStop].[PublicDeparture] AS OriginPublicDeparture
-                    ,[DestinationStop].[Arrival] AS DestinationArrival
-                    ,[DestinationStop].[PublicArrival] AS DestinationPublicArrival
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
                     ,[OriginTiploc].[TiplocId]
@@ -38,12 +34,18 @@ namespace TrainNotifier.Service
                     ,[OriginTiploc].[Description]
                     ,[OriginTiploc].[Stanox]
                     ,[OriginTiploc].[CRS]
+                    ,[OriginStop].[Platform]
+                    ,[OriginStop].[Departure]
+                    ,[OriginStop].[PublicDeparture]
                     ,[DestTiploc].[TiplocId]
                     ,[DestTiploc].[Tiploc]
                     ,[DestTiploc].[Nalco]
                     ,[DestTiploc].[Description]
                     ,[DestTiploc].[Stanox]
                     ,[DestTiploc].[CRS]
+                    ,[DestinationStop].[Platform]
+                    ,[DestinationStop].[Arrival]
+                    ,[DestinationStop].[PublicArrival]
                 FROM [LiveTrain]
                 LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
@@ -61,7 +63,7 @@ namespace TrainNotifier.Service
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
                 // should be SingleOrDefault - but need to work around db bugs for now
-                return dbConnection.Query<OriginTrainMovement, AtocCode, TiplocCode, TiplocCode, OriginTrainMovement>(
+                return dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
                     sql,
                     (tm, ac, ot, dt) =>
                     {
