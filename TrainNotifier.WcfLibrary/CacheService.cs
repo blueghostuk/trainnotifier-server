@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
 
@@ -9,6 +10,7 @@ namespace TrainNotifier.WcfLibrary
     public class CacheService : ICacheService
     {
         private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
+        private static readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
 
         static CacheService()
         {
@@ -28,6 +30,14 @@ namespace TrainNotifier.WcfLibrary
             Task.Run(() =>
             {
                 _cacheDb.BatchInsertTDData(trainData);
+            });
+        }
+
+        public void CacheVSTPSchedule(ScheduleTrain train)
+        {
+            Task.Run(() =>
+            {
+                _scheduleRepository.InsertSchedule(train);
             });
         }
     }

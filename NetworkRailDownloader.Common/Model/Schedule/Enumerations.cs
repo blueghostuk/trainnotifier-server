@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
+    [DataContract]
     public enum TransactionType
     {
+        [EnumMember()]
         Create,
+        [EnumMember()]
         Delete
     }
 

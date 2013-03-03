@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Services;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -17,6 +18,11 @@ namespace TrainNotifier.Console.WebSocketServer
         public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
         {
             base.Channel.CacheTrainDescriberData(trainData);
+        }
+
+        public void CacheVSTPSchedule(ScheduleTrain train)
+        {
+            base.Channel.CacheVSTPSchedule(train);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace TrainNotifier.Common.NMS
                 .CreateConnection(ConfigurationManager.AppSettings["Username"], ConfigurationManager.AppSettings["Password"]);
         }
 
-        public void SubscribeToFeed(Feed feed)
+        public void SubscribeToFeeds()
         {
             try
             {
@@ -39,24 +39,24 @@ namespace TrainNotifier.Common.NMS
             {
                 Trace.TraceError("Exception: {0}", nmsE);
                 TraceHelper.FlushLog();
-                ResubscribeMechanism(feed);
+                ResubscribeMechanism();
             }
             catch (RetryException re)
             {
                 Trace.TraceError("Exception: {0}", re);
-                ResubscribeMechanism(feed);
+                ResubscribeMechanism();
             }
             catch (AggregateException ae)
             {
                 Trace.TraceError("Exception: {0}", ae);
-                ResubscribeMechanism(feed);
+                ResubscribeMechanism();
             }
         }
 
         private byte _retries = 0;
         private readonly byte MaxRetries = 5;
     
-        private void ResubscribeMechanism(Feed feed)
+        private void ResubscribeMechanism()
         {
             if (_retries > MaxRetries)
             {
@@ -67,7 +67,7 @@ namespace TrainNotifier.Common.NMS
             Trace.TraceError("Retry attempt no {0} in {1}", _retries, retryTs);
             Thread.Sleep(TimeSpan.FromSeconds(5 * _retries));
             _retries++;
-            SubscribeToFeed(feed);
+            SubscribeToFeeds();
         }
 
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -89,8 +89,9 @@ namespace TrainNotifier.Common.NMS
 
                     Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
                     Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+                    Task vstpDataTask = Task.Factory.StartNew(() => GetVSTPData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-                    Task.WaitAll(new[] { tmDataTask, tdDataTask }, _cancellationTokenSource.Token);
+                    Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask }, _cancellationTokenSource.Token);
                     if (!cm.QuitOk)
                     {
                         Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
@@ -99,6 +100,31 @@ namespace TrainNotifier.Common.NMS
                     }
                     _cancellationTokenSource.Cancel();
                     Trace.TraceInformation("Closing connection to: {0}", connection);
+                }
+            }
+        }
+
+        private void GetVSTPData(IConnection connection, CancellationToken ct)
+        {
+            string vstpTopic = ConfigurationManager.AppSettings["VSTPFeedName"];
+            if (!string.IsNullOrEmpty(vstpTopic))
+            {
+                using (ISession session = connection.CreateSession())
+                {
+                    ITopic topic = session.GetTopic(vstpTopic);
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
+                    {
+                        Trace.TraceInformation("Created consumer to {0}", topic);
+                        // dont check expiry
+                        MessageConsumer messageConsumer = consumer as MessageConsumer;
+                        if (messageConsumer != null)
+                        {
+                            messageConsumer.CheckExpiry = false;
+                        }
+
+                        consumer.Listener += vstpConsumer_Listener;
+                        ct.WaitHandle.WaitOne();
+                    }
                 }
             }
         }
@@ -127,6 +153,7 @@ namespace TrainNotifier.Common.NMS
                 }
             }
         }
+
         private void GetTrainDescriberData(IConnection connection, CancellationToken ct)
         {
             string trainDescriberTopic = ConfigurationManager.AppSettings["TrainDescriberName"];
@@ -178,6 +205,15 @@ namespace TrainNotifier.Common.NMS
             if (!string.IsNullOrEmpty(text))
             {
                 RaiseDataRecd(Feed.TrainDescriber, text);
+            }
+        }
+
+        private void vstpConsumer_Listener(IMessage message)
+        {
+            string text = ParseData(message);
+            if (!string.IsNullOrEmpty(text))
+            {
+                RaiseDataRecd(Feed.VSTP, text);
             }
         }
 

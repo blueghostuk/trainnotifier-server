@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using TrainNotifier.Common;
+using TrainNotifier.Common.Exceptions;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.ScheduleLibrary;
 using TrainNotifier.Service;
@@ -70,17 +72,19 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-                                ScheduleTrain train = ScheduleService.ParseJsonTrain(rowData.JsonScheduleV1, tiplocs);
-                                switch (train.TransactionType)
+                                try
                                 {
-                                    case TransactionType.Create:
-                                        schedrep.InsertSchedule(train);
-                                        Trace.TraceInformation("Inserted Train UID {0}, Indicator {1}", train.TrainUid, train.STPIndicator);
-                                        break;
-                                    case TransactionType.Delete:
-                                        schedrep.DeleteSchedule(train);
-                                        Trace.TraceInformation("Deleted Train UID {0}, Indicator {1}, Date {2:dd/MM/yyyy}", train.TrainUid, train.STPIndicator, train.StartDate);
-                                        break;
+                                    AddSchedule(tiplocs, schedrep, rowData);
+                                }
+                                catch (TiplocNotFoundException tnfe)
+                                {
+                                    TiplocCode t = new TiplocCode
+                                    {
+                                        Tiploc = tnfe.Code
+                                    };
+                                    t.TiplocId = tiprep.InsertTiploc(t.Tiploc);
+                                    tiplocs.Add(t);
+                                    AddSchedule(tiplocs, schedrep, rowData);
                                 }
                             }
                         }
@@ -100,6 +104,22 @@ namespace TrainNotifier.Schedule.Server
                     File.Delete(gzFile);
                     File.Delete(jsonFile);
                 }
+            }
+        }
+
+        private static void AddSchedule(IEnumerable<TiplocCode> tiplocs, ScheduleRepository schedrep, dynamic rowData)
+        {
+            ScheduleTrain train = ScheduleTrainMapper.ParseJsonTrain(rowData.JsonScheduleV1, tiplocs);
+            switch (train.TransactionType)
+            {
+                case TransactionType.Create:
+                    schedrep.InsertSchedule(train);
+                    Trace.TraceInformation("Inserted Train UID {0}, Indicator {1}", train.TrainUid, train.STPIndicator);
+                    break;
+                case TransactionType.Delete:
+                    schedrep.DeleteSchedule(train);
+                    Trace.TraceInformation("Deleted Train UID {0}, Indicator {1}, Date {2:dd/MM/yyyy}", train.TrainUid, train.STPIndicator, train.StartDate);
+                    break;
             }
         }
     }
