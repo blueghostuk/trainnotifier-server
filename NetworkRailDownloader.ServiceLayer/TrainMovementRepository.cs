@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using System.Linq;
 
 namespace TrainNotifier.Service
 {
@@ -110,8 +111,8 @@ namespace TrainNotifier.Service
                     ,[OriginTiploc].[Stanox]
                     ,[OriginTiploc].[CRS]
 					,[ScheduleTrainStop].[Platform]
-					,[ScheduleTrainStop].[Arrival] AS [Departure]
-					,[ScheduleTrainStop].[PublicArrival]  AS [PublicDeparture]
+					,[ScheduleTrainStop].[Arrival]
+					,[ScheduleTrainStop].[PublicArrival]
                     ,[DestTiploc].[TiplocId]
                     ,[DestTiploc].[Tiploc]
                     ,[DestTiploc].[Nalco]
@@ -119,8 +120,8 @@ namespace TrainNotifier.Service
                     ,[DestTiploc].[Stanox]
                     ,[DestTiploc].[CRS]
 					,[ScheduleTrainStop].[Platform]
-					,[ScheduleTrainStop].[Departure] AS [Arrival]
-					,[ScheduleTrainStop].[PublicDeparture]  AS [PublicArrival]
+					,[ScheduleTrainStop].[Departure]
+					,[ScheduleTrainStop].[PublicDeparture]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
                 INNER JOIN [ScheduleTrain] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
@@ -130,8 +131,8 @@ namespace TrainNotifier.Service
                 INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
                 WHERE    [Tiploc].[Stanox] = @stanox 
                      AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate
-                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
+                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
+                // ORDER BY [ScheduleTrainStop].[Arrival], [ScheduleTrainStop].[Departure], [ScheduleTrainStop].[Pass], [OriginTiploc].[Description]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
@@ -151,8 +152,9 @@ namespace TrainNotifier.Service
                         startDate,
                         endDate
                     },
-                    splitOn: "Code,TiplocId,TiplocId");
-
+                    splitOn: "Code,TiplocId,TiplocId")
+                    .ToList()
+                    .OrderBy(t => t.Origin.Arrival ?? t.Destination.Departure ?? t.Origin.PublicArrival ?? t.Destination.PublicDeparture ?? t.Pass);
             }
         }
     }
