@@ -82,5 +82,78 @@ namespace TrainNotifier.Service
 
             }
         }
+
+        public IEnumerable<CallingAtTrainMovement> CallingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
+
+            const string sql = @"
+                SELECT
+		            [LiveTrain].[TrainId] AS Id
+                    ,[LiveTrain].[Headcode] AS HeadCode
+                    ,[LiveTrain].[CreationTimestamp] AS Activated
+                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
+                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
+                    ,[LiveTrain].[Toc] AS TocId
+                    ,[LiveTrain].[TrainUid] AS TrainUid
+                    ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
+                    ,[LiveTrain].[SchedWttId] AS WorkingTTId
+                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
+					,[ScheduleTrainStop].[Pass]
+                    ,[AtocCode].[AtocCode] AS [Code]
+                    ,[AtocCode].[Name]
+                    ,[OriginTiploc].[TiplocId]
+                    ,[OriginTiploc].[Tiploc]
+                    ,[OriginTiploc].[Nalco]
+                    ,[OriginTiploc].[Description]
+                    ,[OriginTiploc].[Stanox]
+                    ,[OriginTiploc].[CRS]
+					,[ScheduleTrainStop].[Platform]
+					,[ScheduleTrainStop].[Arrival] AS [Departure]
+					,[ScheduleTrainStop].[PublicArrival]  AS [PublicDeparture]
+                    ,[DestTiploc].[TiplocId]
+                    ,[DestTiploc].[Tiploc]
+                    ,[DestTiploc].[Nalco]
+                    ,[DestTiploc].[Description]
+                    ,[DestTiploc].[Stanox]
+                    ,[DestTiploc].[CRS]
+					,[ScheduleTrainStop].[Platform]
+					,[ScheduleTrainStop].[Departure] AS [Arrival]
+					,[ScheduleTrainStop].[PublicDeparture]  AS [PublicArrival]
+                FROM [ScheduleTrainStop]
+                INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
+                INNER JOIN [ScheduleTrain] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
+                INNER JOIN [LiveTrain] ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
+                INNER JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
+                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
+                INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
+                WHERE    [Tiploc].[Stanox] = @stanox 
+                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
+                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate
+                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                // should be SingleOrDefault - but need to work around db bugs for now
+                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtTrainMovement>(
+                    sql,
+                    (tm, ac, ot, dt) =>
+                    {
+                        tm.AtocCode = ac;
+                        tm.Origin = ot;
+                        tm.Destination = dt;
+                        return tm;
+                    },
+                    new
+                    {
+                        stanox,
+                        startDate,
+                        endDate
+                    },
+                    splitOn: "Code,TiplocId,TiplocId");
+
+            }
+        }
     }
 }
