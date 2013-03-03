@@ -6,7 +6,7 @@ namespace TrainNotifier.Common
     {
         event EventHandler<FeedEvent> TrainDataRecieved;
 
-        void SubscribeToFeed(Feed feed);
+        void SubscribeToFeeds();
 
         void Quit();
     }
@@ -27,6 +27,7 @@ namespace TrainNotifier.Common
     {
         TrainMovement,
         TrainDescriber,
+        VSTP
     }
 
     public enum ScheduleType

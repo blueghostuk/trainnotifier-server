@@ -55,7 +55,7 @@ namespace TrainNotifier.Console.WebSocketServer
                 });
             };
 
-            return Task.Run(() => _nmsDownloader.SubscribeToFeed(Feed.TrainMovement));
+            return Task.Run(() => _nmsDownloader.SubscribeToFeeds());
         }
 
         public void Stop()

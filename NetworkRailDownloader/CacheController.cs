@@ -4,7 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using TrainNotifier.Common.Exceptions;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.Model.VSTP;
 using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -12,11 +15,16 @@ namespace TrainNotifier.Console.WebSocketServer
     internal sealed class CacheController : IDisposable
     {
         private readonly UserManager _userManager;
+        private readonly TiplocRepository _tiplocRepository = new TiplocRepository();
+        private readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
+        private readonly ICollection<TiplocCode> _tiplocs;
 
         private static readonly object _cacheLock = new object();
 
         public CacheController(NMSWrapper nmsWrapper, WebSocketServerWrapper wssWrapper, UserManager userManager)
         {
+            _tiplocs = _tiplocRepository.GetTiplocs().ToList();
+
             _userManager = userManager;
             nmsWrapper.FeedDataRecieved += (s, f) =>
             {
@@ -124,6 +132,58 @@ namespace TrainNotifier.Console.WebSocketServer
                                         }
                                     }
                                 }
+                                break;
+
+                            case Common.Feed.VSTP:
+
+                                ScheduleTrain train = null;
+                                try
+                                {
+                                    train = VSTPMapper.ParseJsonVSTP(f, _tiplocs);
+                                }
+                                catch (TiplocNotFoundException tnfe)
+                                {
+                                    TiplocCode tc = new TiplocCode
+                                    {
+                                        Tiploc = tnfe.Code
+                                    };
+                                    tc.TiplocId = _tiplocRepository.InsertTiploc(tc.Tiploc);
+
+                                    _tiplocs.Add(tc);
+
+                                    try
+                                    {
+                                        train = VSTPMapper.ParseJsonVSTP(f, _tiplocs);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Trace.TraceError("Could not VSTP: {0}", e);
+                                    }
+                                }
+
+                                if (train != null)
+                                {
+                                    CacheServiceClient cacheService = null;
+                                    try
+                                    {
+                                        cacheService = new CacheServiceClient();
+                                        cacheService.Open();
+                                        cacheService.CacheVSTPSchedule(train);
+                                    }
+                                    finally
+                                    {
+                                        try
+                                        {
+                                            if (cacheService != null)
+                                                cacheService.Close();
+                                        }
+                                        catch (CommunicationObjectFaultedException e)
+                                        {
+                                            Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                        }
+                                    }
+                                }
+
                                 break;
                         }
                     });
