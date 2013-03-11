@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
-using System.Linq;
 
 namespace TrainNotifier.Service
 {
@@ -63,7 +63,6 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                // should be SingleOrDefault - but need to work around db bugs for now
                 return dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
                     sql,
                     (tm, ac, ot, dt) =>
@@ -132,11 +131,9 @@ namespace TrainNotifier.Service
                 WHERE    [Tiploc].[Stanox] = @stanox 
                      AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                      AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
-                // ORDER BY [ScheduleTrainStop].[Arrival], [ScheduleTrainStop].[Departure], [ScheduleTrainStop].[Pass], [OriginTiploc].[Description]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                // should be SingleOrDefault - but need to work around db bugs for now
                 return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtTrainMovement>(
                     sql,
                     (tm, ac, ot, dt) =>
