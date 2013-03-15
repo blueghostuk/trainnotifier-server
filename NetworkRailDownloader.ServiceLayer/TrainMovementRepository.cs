@@ -47,7 +47,12 @@ namespace TrainNotifier.Service
                     ,[DestinationStop].[Platform]
                     ,[DestinationStop].[Arrival]
                     ,[DestinationStop].[PublicArrival]
+                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[LiveTrainCancellation].[Type]
                 FROM [LiveTrain]
+                LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
                 LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
@@ -63,13 +68,14 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
+                return dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, Cancellation, OriginTrainMovement>(
                     sql,
-                    (tm, ac, ot, dt) =>
+                    (tm, ac, ot, dt, c) =>
                     {
                         tm.AtocCode = ac;
                         tm.Origin = ot;
                         tm.Destination = dt;
+                        tm.Cancellation = c;
                         return tm;
                     },
                     new
@@ -78,7 +84,7 @@ namespace TrainNotifier.Service
                         startDate,
                         endDate
                     },
-                    splitOn: "Code,TiplocId,TiplocId");
+                    splitOn: "Code,TiplocId,TiplocId,CancelledStanox");
 
             }
         }
