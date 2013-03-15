@@ -9,7 +9,7 @@ using TrainNotifier.Common.Model;
 
 namespace TrainNotifier.Service
 {
-    public class ArchiveRepository : DbRepository
+    public class LiveTrainRepository : DbRepository
     {
         private static readonly ObjectCache _trainActivationCache = MemoryCache.Default;
         private static readonly CacheItemPolicy _trainActivationCachePolicy = new CacheItemPolicy

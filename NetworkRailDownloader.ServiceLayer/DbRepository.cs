@@ -15,21 +15,14 @@ namespace TrainNotifier.Service
         protected const int _defaultCommandTimeout = 30;
         protected readonly int _commandTimeout;
 
-        protected DbRepository(string connectionStringName = "archive")
+        protected DbRepository(string connectionStringName = "archive", int? defaultCommandTimeout = null)
         {
             _connString = ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString;
             _dbFactory = DbProviderFactories.GetFactory(ConfigurationManager.ConnectionStrings[connectionStringName].ProviderName);
 
             DbConnectionStringBuilder connBuilder = _dbFactory.CreateConnectionStringBuilder();
             connBuilder.ConnectionString = _connString;
-            if (connBuilder.ContainsKey("DefaultCommandTimeout"))
-            {
-                _commandTimeout = Convert.ToInt32(connBuilder["DefaultCommandTimeout"]);
-            }
-            else
-            {
-                _commandTimeout = _defaultCommandTimeout;
-            }
+            _commandTimeout = defaultCommandTimeout ?? _defaultCommandTimeout;
         }
 
         protected DbConnection CreateConnection()
@@ -56,7 +49,7 @@ namespace TrainNotifier.Service
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    dbConnection.Execute(sql, (object)parameters);
+                    dbConnection.Execute(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
                 }
             }
         }
@@ -70,14 +63,14 @@ namespace TrainNotifier.Service
             if (existingConnection != null)
             {
                 // should be SingleOrDefault - but need to work around db bugs for now
-                return existingConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
+                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout).FirstOrDefault();
             }
             else
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
                     // should be SingleOrDefault - but need to work around db bugs for now
-                    return dbConnection.Query<T>(sql, (object)parameters).FirstOrDefault();
+                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout).FirstOrDefault();
                 }
             }
         }
@@ -86,13 +79,13 @@ namespace TrainNotifier.Service
         {
             if (existingConnection != null)
             {
-                return existingConnection.Query<T>(sql, (object)parameters);
+                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
             }
             else
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    return dbConnection.Query<T>(sql, (object)parameters);
+                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
                 }
             }
         }

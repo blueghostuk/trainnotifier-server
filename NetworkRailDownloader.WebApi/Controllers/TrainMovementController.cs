@@ -11,7 +11,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class TrainMovementController : ApiController
     {
-        private static readonly ArchiveRepository _archiveRepo = new ArchiveRepository();
+        private static readonly LiveTrainRepository _archiveRepo = new LiveTrainRepository();
         private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         [HttpGet]
