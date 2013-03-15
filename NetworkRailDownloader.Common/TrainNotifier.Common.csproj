@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Exceptions\TiplocNotFoundException.cs" />
     <Compile Include="IDownloader.cs" />
+    <Compile Include="Model\Cancellation.cs" />
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\ExtendedTrainMovement.cs" />
     <Compile Include="Model\Schedule\Enumerations.cs" />

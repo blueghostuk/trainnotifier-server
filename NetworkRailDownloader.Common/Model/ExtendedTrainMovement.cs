@@ -15,6 +15,8 @@ namespace TrainNotifier.Common.Model
         public Guid? ScheduleId { get; set; }
         [DataMember]
         public AtocCode AtocCode { get; set; }
+        [DataMember]
+        public Cancellation Cancellation { get; set; }
     }
 
     [DataContract]
