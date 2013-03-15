@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Archive\TrainStopArchive.cs" />
     <Compile Include="Exceptions\TiplocNotFoundException.cs" />
     <Compile Include="IDownloader.cs" />
     <Compile Include="Model\Cancellation.cs" />

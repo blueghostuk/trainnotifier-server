@@ -9,7 +9,7 @@ namespace TrainNotifier.WcfLibrary
 {
     public class CacheService : ICacheService
     {
-        private static readonly ArchiveRepository _cacheDb = new ArchiveRepository();
+        private static readonly LiveTrainRepository _cacheDb = new LiveTrainRepository();
         private static readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
 
         static CacheService()
