@@ -286,8 +286,12 @@ namespace TrainNotifier.Service
             Task.Run(() =>
             {
                 if (!tm.SchedOriginDeparture.HasValue)
+                {
+                    Trace.TraceInformation("Activation '{0}' has no departure date, cannot assign schedume", tm.TrainId);
                     return;
+                }
 
+                Trace.TraceInformation("Associating Schedule for activation {0} with departure date {1:dd/MM/yy}", tm.TrainId, tm.SchedOriginDeparture.Value);
                 const string sql = @"
                     SELECT TOP 1 [ScheduleId]
                     FROM [ScheduleTrain]
@@ -309,6 +313,7 @@ namespace TrainNotifier.Service
 
                 if (scheduleId.HasValue && scheduleId != Guid.Empty)
                 {
+                    Trace.TraceInformation("Associating Schedule '{0}' for activation '{1}'", scheduleId, tm.TrainId);
                     const string updateSql = @"
                         UPDATE [LiveTrain]
                         SET [ScheduleTrain] = @scheduleId
@@ -319,6 +324,10 @@ namespace TrainNotifier.Service
                         scheduleId,
                         tm.UniqueId
                     });
+                }
+                else
+                {
+                    Trace.TraceWarning("Could not find matching schedule for activation: {0}", tm.TrainId);
                 }
             });
         }
