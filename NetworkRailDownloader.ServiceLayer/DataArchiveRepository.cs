@@ -10,7 +10,7 @@ namespace TrainNotifier.Service
     public class DataArchiveRepository : DbRepository
     {
         public DataArchiveRepository()
-            : base(defaultCommandTimeout: (int)TimeSpan.FromMinutes(5).TotalSeconds)
+            : base(defaultCommandTimeout: 0)
         { }
 
         public IEnumerable<Guid> GetTrainsToArchive(DateTime olderThan, uint limit = 10)

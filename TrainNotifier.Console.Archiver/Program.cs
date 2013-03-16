@@ -16,26 +16,35 @@ namespace TrainNotifier.Console.Archiver
         {
             TraceHelper.SetupTrace();
 
-            IEnumerable<Guid> trains = Enumerable.Empty<Guid>();
-            DataArchiveRepository dar = new DataArchiveRepository();
-            DateTime period = DateTime.UtcNow.AddDays(-1 * Convert.ToInt32(ConfigurationManager.AppSettings["archiveDays"]));
-            uint amount = Convert.ToUInt32(ConfigurationManager.AppSettings["trainsPerRun"]);
-            do
+            try
             {
-                trains = dar.GetTrainsToArchive(period, amount);
-                if (trains.Any())
+                IEnumerable<Guid> trains = Enumerable.Empty<Guid>();
+                DataArchiveRepository dar = new DataArchiveRepository();
+                DateTime period = DateTime.UtcNow.AddDays(-1 * Convert.ToInt32(ConfigurationManager.AppSettings["archiveDays"]));
+                uint amount = Convert.ToUInt32(ConfigurationManager.AppSettings["trainsPerRun"]);
+                do
                 {
-                    Trace.TraceInformation("Got {0} Trains to archive", trains.Count());
-                    foreach (var train in trains)
+                    trains = dar.GetTrainsToArchive(period, amount);
+                    if (trains.Any())
                     {
-                        Trace.TraceInformation("Getting train movements for train id {0}", train);
-                        var tms = dar.GetTrainMovements(train);
-                        Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train);
-                        dar.ArchiveTrainMovement(train, tms);
-                        Trace.TraceInformation("Archived train id {0}", train);
+                        Trace.TraceInformation("Got {0} Trains to archive", trains.Count());
+                        foreach (var train in trains)
+                        {
+                            Trace.TraceInformation("Getting train movements for train id {0}", train);
+                            var tms = dar.GetTrainMovements(train);
+                            Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train);
+                            dar.ArchiveTrainMovement(train, tms);
+                            Trace.TraceInformation("Archived train id {0}", train);
+                        }
                     }
-                }
-            } while (trains.Any());
+                } while (trains.Any());
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(e.ToString());
+                Trace.Flush();
+                throw;
+            }
 
             Trace.TraceInformation("Completed Archive");
         }

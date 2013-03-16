@@ -49,7 +49,7 @@ namespace TrainNotifier.Service
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    dbConnection.Execute(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
+                    dbConnection.Execute(sql, (object)parameters, commandTimeout: _commandTimeout);
                 }
             }
         }
@@ -63,14 +63,14 @@ namespace TrainNotifier.Service
             if (existingConnection != null)
             {
                 // should be SingleOrDefault - but need to work around db bugs for now
-                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout).FirstOrDefault();
+                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _commandTimeout).FirstOrDefault();
             }
             else
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
                     // should be SingleOrDefault - but need to work around db bugs for now
-                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout).FirstOrDefault();
+                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _commandTimeout).FirstOrDefault();
                 }
             }
         }
@@ -79,13 +79,13 @@ namespace TrainNotifier.Service
         {
             if (existingConnection != null)
             {
-                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
+                return existingConnection.Query<T>(sql, (object)parameters, commandTimeout: _commandTimeout);
             }
             else
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _defaultCommandTimeout);
+                    return dbConnection.Query<T>(sql, (object)parameters, commandTimeout: _commandTimeout);
                 }
             }
         }
