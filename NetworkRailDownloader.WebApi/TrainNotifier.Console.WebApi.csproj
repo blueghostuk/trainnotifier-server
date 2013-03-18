@@ -94,6 +94,7 @@
   <ItemGroup>
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
     <Compile Include="Config\RouteConfig.cs" />
+    <Compile Include="Controllers\CancellationsController.cs" />
     <Compile Include="Controllers\ScheduleController.cs" />
     <Compile Include="Controllers\StanoxController.cs" />
     <Compile Include="Controllers\StationController.cs" />
