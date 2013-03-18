@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Model
 {
@@ -17,5 +18,15 @@ namespace TrainNotifier.Common.Model
 
         [DataMember]
         public string Type { get; set; }
+    }
+
+    [DataMember]
+    public class ExtendedCancellation : Cancellation
+    {
+        [DataMember]
+        public TiplocCode CancelledAt { get; set; }
+
+        [DataMember]
+        public ScheduleTrain Schedule { get; set; }
     }
 }

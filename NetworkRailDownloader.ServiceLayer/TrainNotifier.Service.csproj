@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CancellationRepository.cs" />
     <Compile Include="DataArchiveRepository.cs" />
     <Compile Include="LiveTrainRepository.cs" />
     <Compile Include="DbRepository.cs" />
