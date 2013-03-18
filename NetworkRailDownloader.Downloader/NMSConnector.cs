@@ -112,7 +112,7 @@ namespace TrainNotifier.Common.NMS
                 using (ISession session = connection.CreateSession())
                 {
                     ITopic topic = session.GetTopic(vstpTopic);
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "vstp"))
                     {
                         Trace.TraceInformation("Created consumer to {0}", topic);
                         // dont check expiry
