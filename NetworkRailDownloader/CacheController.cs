@@ -139,26 +139,15 @@ namespace TrainNotifier.Console.WebSocketServer
                                 ScheduleTrain train = null;
                                 try
                                 {
-                                    train = VSTPMapper.ParseJsonVSTP(f, _tiplocs);
+                                    train = VSTPMapper.ParseJsonVSTP(f.Data, _tiplocs);
                                 }
                                 catch (TiplocNotFoundException tnfe)
                                 {
-                                    TiplocCode tc = new TiplocCode
-                                    {
-                                        Tiploc = tnfe.Code
-                                    };
-                                    tc.TiplocId = _tiplocRepository.InsertTiploc(tc.Tiploc);
-
-                                    _tiplocs.Add(tc);
-
-                                    try
-                                    {
-                                        train = VSTPMapper.ParseJsonVSTP(f, _tiplocs);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        Trace.TraceError("Could not VSTP: {0}", e);
-                                    }
+                                    Trace.TraceError("Could not add VSTP: {0}", tnfe);
+                                }
+                                catch (Exception e)
+                                {
+                                    Trace.TraceError("Could not add VSTP: {0}", e);
                                 }
 
                                 if (train != null)
