@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Web.Http;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Console.WebApi.ActionFilters;
-using TrainNotifier.Console.WebApi.ViewModels;
 using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.WebApi.Controllers
@@ -12,53 +11,21 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
         [CachingActionFilterAttribute(604800)]
-        public IEnumerable<Stanox> Get()
+        public IEnumerable<StationTiploc> Get()
         {
-            IEnumerable<dynamic> results = _tiplocRepo.Get();
-
-            return results.Select(r => MapStanox(r))
-                .Cast<Stanox>();
+            return _tiplocRepo.Get();
         }
 
         [CachingActionFilterAttribute(604800)]
-        public Stanox Get(string id)
+        public StationTiploc Get(string id)
         {
-            dynamic result = _tiplocRepo.GetByStanox(id);
-
-            if (result != null)
-            {
-                return MapStanox(result);
-            }
-
-            return null;
+            return _tiplocRepo.GetByStanox(id);
         }
 
         [CachingActionFilterAttribute(604800)]
-        public Stanox GetByCrs(string crsCode)
+        public StationTiploc GetByCrs(string crsCode)
         {
-            dynamic result = _tiplocRepo.GetByCRSCode(crsCode);
-
-            if (result != null)
-            {
-                return MapStanox(result);
-            }
-
-            return null;
-        }
-
-        private static Stanox MapStanox(dynamic result)
-        {
-            return new Stanox
-            {
-                Name = result.Stanox,
-                Tiploc = result.Tiploc,
-                Nalco = result.Nalco,
-                Description = result.Description,
-                CRS = result.CRS,
-                StationName = result.StationName,
-                Lat = result.lat,
-                Lon = result.lon
-            };
+            return _tiplocRepo.GetByCRSCode(crsCode);
         }
     }
 }

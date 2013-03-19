@@ -1,27 +1,29 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
 {
     public class TiplocRepository : DbRepository
     {
-        public dynamic Get()
+        public IEnumerable<StationTiploc> Get()
         {
             const string sql = @"
                 SELECT 
+                    [Tiploc].[TiplocId],
                     [Tiploc].[Tiploc],
                     [Tiploc].[Nalco],
                     [Tiploc].[Description],
                     [Tiploc].[CRS],
-                    [Station].[StationName],
                     [Tiploc].[Stanox],
-                    [Station].[Location].[Lat] AS [lat],
-                    [Station].[Location].[Long] AS [lon]
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
                 FROM [Tiploc]
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]";
 
-            return Query<dynamic>(sql, null);
+            return Query<StationTiploc>(sql, null);
         }
 
         public IEnumerable<TiplocCode> GetTiplocs()
@@ -51,64 +53,67 @@ namespace TrainNotifier.Service
             return ExecuteScalar<short>(sql, new { tiploc });
         }
 
-        public dynamic GetByStanox(string stanox)
+        public StationTiploc GetByStanox(string stanox)
         {
             const string sql = @"
                 SELECT 
+                    [Tiploc].[TiplocId],
                     [Tiploc].[Tiploc],
                     [Tiploc].[Nalco],
                     [Tiploc].[Description],
                     [Tiploc].[CRS],
-                    [Station].[StationName],
                     [Tiploc].[Stanox],
-                    [Station].[Location].[Lat] AS [lat],
-                    [Station].[Location].[Long] AS [lon]
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
                 FROM [Tiploc]
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
                 WHERE [Tiploc].[Stanox] = @stanox";
 
             // TODO: what if more than 1?
-            return Query<dynamic>(sql, new { stanox }).FirstOrDefault();
+            return Query<StationTiploc>(sql, new { stanox }).FirstOrDefault();
         }
 
-        public dynamic GetByStationName(string stationName)
+        public StationTiploc GetByStationName(string stationName)
         {
             const string sql = @"
                 SELECT 
+                    [Tiploc].[TiplocId],
                     [Tiploc].[Tiploc],
                     [Tiploc].[Nalco],
                     [Tiploc].[Description],
                     [Tiploc].[CRS],
-                    [Station].[StationName],
                     [Tiploc].[Stanox],
-                    [Station].[Location].[Lat] AS [lat],
-                    [Station].[Location].[Long] AS [lon]
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
                 FROM [Tiploc]
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
                 WHERE [Station].[StationName] = @stationName";
 
             // TODO: what if more than 1?
-            return Query<dynamic>(sql, new { stationName }).FirstOrDefault();
+            return Query<StationTiploc>(sql, new { stationName }).FirstOrDefault();
         }
 
-        public dynamic GetByCRSCode(string crsCode)
+        public StationTiploc GetByCRSCode(string crsCode)
         {
             const string sql = @"
                 SELECT 
+                    [Tiploc].[TiplocId],
                     [Tiploc].[Tiploc],
                     [Tiploc].[Nalco],
                     [Tiploc].[Description],
                     [Tiploc].[CRS],
-                    [Station].[StationName],
                     [Tiploc].[Stanox],
-                    [Station].[Location].[Lat] AS [lat],
-                    [Station].[Location].[Long] AS [lon]
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
                 FROM [Tiploc]
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
                 WHERE [Tiploc].[CRS] = @crsCode";
 
             // TODO: what if more than 1?
-            return Query<dynamic>(sql, new { crsCode }).FirstOrDefault();
+            return Query<StationTiploc>(sql, new { crsCode }).FirstOrDefault();
         }
     }
 }

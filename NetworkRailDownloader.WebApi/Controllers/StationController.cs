@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Console.WebApi.ActionFilters;
-using TrainNotifier.Console.WebApi.ViewModels;
 using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.WebApi.Controllers
@@ -12,44 +12,18 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
         [CachingActionFilterAttribute(604800)]
-        public IEnumerable<Stanox> Get()
+        public IEnumerable<StationTiploc> Get()
         {
-            IEnumerable<dynamic> results = _tiplocRepo.Get();
+            IEnumerable<StationTiploc> results = _tiplocRepo.Get();
 
             return results
-                .Where(r => !string.IsNullOrEmpty(r.StationName))
-                //.Select(r => r.StationName + " (" + r.CRS + ")")
-                //.Cast<string>();
-                .Select(r => MapStanox(r))
-                .Cast<Stanox>();
+                .Where(r => !string.IsNullOrEmpty(r.StationName));
         }
 
         [CachingActionFilterAttribute(604800)]
-        public Stanox Get(string id)
+        public StationTiploc Get(string id)
         {
-            dynamic result = _tiplocRepo.GetByStationName(id);
-
-            if (result != null)
-            {
-                return MapStanox(result);
-            }
-
-            return null;
-        }
-
-        private static Stanox MapStanox(dynamic result)
-        {
-            return new Stanox
-            {
-                Name = result.Stanox,
-                Tiploc = result.Tiploc,
-                Nalco = result.Nalco,
-                Description = result.Description,
-                CRS = result.CRS,
-                StationName = result.StationName,
-                Lat = result.lat,
-                Lon = result.lon
-            };
+            return _tiplocRepo.GetByStationName(id);
         }
     }
 }
