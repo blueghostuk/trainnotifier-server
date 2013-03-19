@@ -10,6 +10,8 @@ namespace TrainNotifier.Service
 {
     public class TrainMovementRepository : DbRepository
     {
+        private readonly TiplocRepository _tiplocRepository = new TiplocRepository();
+
         public IEnumerable<OriginTrainMovement> StartingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
@@ -94,6 +96,12 @@ namespace TrainNotifier.Service
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.AddDays(1);
 
+            // get tiploc id to improve query
+            StationTiploc tiploc = _tiplocRepository.GetByStanox(stanox);
+
+            if (tiploc == null)
+                return Enumerable.Empty<CallingAtTrainMovement>();
+
             const string sql = @"
                 SELECT
 		            [LiveTrain].[TrainId] AS Id
@@ -134,7 +142,7 @@ namespace TrainNotifier.Service
                 INNER JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                WHERE    [Tiploc].[Stanox] = @stanox 
+                WHERE    [Tiploc].[TiplocId] = @tiplocId 
                      AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                      AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
 
@@ -151,7 +159,7 @@ namespace TrainNotifier.Service
                     },
                     new
                     {
-                        stanox,
+                        tiplocId = tiploc.TiplocId,
                         startDate,
                         endDate
                     },
