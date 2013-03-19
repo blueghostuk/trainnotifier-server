@@ -20,7 +20,7 @@ namespace TrainNotifier.Common.Model
         public string Type { get; set; }
     }
 
-    [DataMember]
+    [DataContract]
     public class ExtendedCancellation : Cancellation
     {
         [DataMember]
