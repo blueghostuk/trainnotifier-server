@@ -37,7 +37,7 @@ namespace TrainNotifier.WcfLibrary
         {
             Task.Run(() =>
             {
-                _scheduleRepository.InsertSchedule(train);
+                _scheduleRepository.InsertSchedule(train, ScheduleSource.VSTP);
             });
         }
     }
