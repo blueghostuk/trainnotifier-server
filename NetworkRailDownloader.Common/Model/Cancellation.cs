@@ -25,8 +25,5 @@ namespace TrainNotifier.Common.Model
     {
         [DataMember]
         public TiplocCode CancelledAt { get; set; }
-
-        [DataMember]
-        public ScheduleTrain Schedule { get; set; }
     }
 }

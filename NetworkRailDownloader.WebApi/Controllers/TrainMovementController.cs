@@ -9,19 +9,19 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class TrainMovementController : ApiController
     {
-        private static readonly LiveTrainRepository _archiveRepo = new LiveTrainRepository();
+        private static readonly LiveTrainRepository _liveTrainRepo = new LiveTrainRepository();
         private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         [HttpGet]
         public IEnumerable<TrainMovement> GetById(string id)
         {
-            return _archiveRepo.GetTrainMovementById(id);
+            return _liveTrainRepo.GetTrainMovementById(id);
         }
 
         [HttpGet]
-        public TrainMovement GetWithUid(string id, string uid)
+        public ExtendedTrainMovement GetWithUid(string id, string uid)
         {
-            return _archiveRepo.GetTrainMovementById(id, uid);
+            return _liveTrainRepo.GetTrainMovementById(id, uid);
         }
 
         [HttpGet]
@@ -46,14 +46,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
         [CachingActionFilterAttribute(120)]
         public IEnumerable<TrainMovement> WithHeadcode(string headcode)
         {
-            return _archiveRepo.SearchByHeadcode(headcode);
+            return _liveTrainRepo.SearchByHeadcode(headcode);
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
         public IEnumerable<TrainMovement> WithWttId(string wttId)
         {
-            return _archiveRepo.SearchByWttId(wttId);
+            return _liveTrainRepo.SearchByWttId(wttId);
         }
     }
 }
