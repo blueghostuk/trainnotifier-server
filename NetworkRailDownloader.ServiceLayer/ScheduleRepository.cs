@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Dapper;
+using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using TrainNotifier.Common.Model.Schedule;
-using Dapper;
-using System.Data.Common;
 
 namespace TrainNotifier.Service
 {
@@ -23,7 +23,7 @@ namespace TrainNotifier.Service
             ExecuteNonQuery(sql, new { code, name });
         }
 
-        public void InsertSchedule(ScheduleTrain train)
+        public void InsertSchedule(ScheduleTrain train, ScheduleSource source = ScheduleSource.CIF)
         {
             using (var ts = GetTransactionScope())
             {
@@ -44,7 +44,8 @@ namespace TrainNotifier.Service
                        ,[STPIndicatorId]
                        ,[ScheduleStatusId]
                        ,[OriginStopTiplocId]
-                       ,[DestinationStopTiplocId])
+                       ,[DestinationStopTiplocId]
+                       ,[Source])
                     OUTPUT [inserted].[ScheduleId]
                     VALUES
                        (@TrainUid
@@ -62,7 +63,8 @@ namespace TrainNotifier.Service
                        ,@STPIndicator
                        ,@Status
                        ,@OriginTiplocId
-                       ,@DestinationTiplocId)";
+                       ,@DestinationTiplocId
+                       ,@Source)";
 
                 Guid id = ExecuteInsert(sql, new
                 {
@@ -81,7 +83,8 @@ namespace TrainNotifier.Service
                     train.STPIndicator,
                     train.Status,
                     OriginTiplocId = train.Origin != null ? new short?(train.Origin.TiplocId) : default(short?),
-                    DestinationTiplocId = train.Destination != null ? new short?(train.Destination.TiplocId) : default(short?)
+                    DestinationTiplocId = train.Destination != null ? new short?(train.Destination.TiplocId) : default(short?),
+                    Source = source
                 });
 
                 InsertScheduleStops(id, train.Stops);

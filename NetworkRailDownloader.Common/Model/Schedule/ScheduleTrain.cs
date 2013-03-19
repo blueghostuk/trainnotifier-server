@@ -35,4 +35,13 @@ namespace TrainNotifier.Common.Model.Schedule
         public IEnumerable<ScheduleStop> Stops { get; set; }
     }
 
+    [DataContract]
+    public enum ScheduleSource : byte
+    {
+        [EnumMember]
+        CIF = 0,
+        [EnumMember]
+        VSTP = 1
+    }
+
 }
