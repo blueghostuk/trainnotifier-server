@@ -135,10 +135,15 @@ namespace TrainNotifier.Service
 					,[ScheduleTrainStop].[Platform]
 					,[ScheduleTrainStop].[Departure]
 					,[ScheduleTrainStop].[PublicDeparture]
+                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[LiveTrainCancellation].[Type]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
                 INNER JOIN [ScheduleTrain] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
                 INNER JOIN [LiveTrain] ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
+                LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
                 INNER JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
@@ -148,13 +153,14 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtTrainMovement>(
+                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc,Cancellation, CallingAtTrainMovement>(
                     sql,
-                    (tm, ac, ot, dt) =>
+                    (tm, ac, ot, dt, c) =>
                     {
                         tm.AtocCode = ac;
                         tm.Origin = ot;
                         tm.Destination = dt;
+                        tm.Cancellation = c;
                         return tm;
                     },
                     new
@@ -163,7 +169,7 @@ namespace TrainNotifier.Service
                         startDate,
                         endDate
                     },
-                    splitOn: "Code,TiplocId,TiplocId")
+                    splitOn: "Code,TiplocId,TiplocId,CancelledStanox")
                     .ToList()
                     .OrderBy(t => t.Origin.Arrival ?? t.Destination.Departure ?? t.Origin.PublicArrival ?? t.Destination.PublicDeparture ?? t.Pass);
             }
