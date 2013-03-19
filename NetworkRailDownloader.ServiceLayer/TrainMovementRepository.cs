@@ -153,7 +153,7 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc,Cancellation, CallingAtTrainMovement>(
+                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, Cancellation, CallingAtTrainMovement>(
                     sql,
                     (tm, ac, ot, dt, c) =>
                     {

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.ServiceModel;
+using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Model
 {
@@ -129,6 +131,13 @@ namespace TrainNotifier.Common.Model
         {
             _steps.Add(step);
         }
+    }
+
+    [DataContract]
+    public class ExtendedTrainMovement : TrainMovement
+    {
+        [DataMember]
+        public ExtendedCancellation Cancellation { get; set; }
     }
 
     [DataContract]
