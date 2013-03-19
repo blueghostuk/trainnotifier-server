@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Essential.Diagnostics">
-      <HintPath>..\NetworkRailDownloader\packages\Essential.Diagnostics.1.1.20103.0\lib\Essential.Diagnostics.dll</HintPath>
+      <HintPath>..\packages\Essential.Diagnostics.1.1.20103.0\lib\Essential.Diagnostics.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
