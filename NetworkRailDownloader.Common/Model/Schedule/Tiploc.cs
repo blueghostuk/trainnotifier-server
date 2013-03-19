@@ -6,7 +6,7 @@ namespace TrainNotifier.Common.Model.Schedule
     [DataContract]
     public class TiplocCode
     {
-        [IgnoreDataMember]
+        [DataMember]
         public short TiplocId { get; set; }
         [DataMember]
         public string Tiploc { get; set; }
@@ -37,5 +37,28 @@ namespace TrainNotifier.Common.Model.Schedule
 
         [DataMember]
         public TimeSpan? PublicArrival { get; set; }
+    }
+
+    [DataContract]
+    public sealed class StationTiploc : TiplocCode
+    {
+        [DataMember]
+        public string Name
+        {
+            get
+            {
+                return Stanox;
+            }
+            set
+            {
+                Stanox = value;
+            }
+        }
+        [DataMember]
+        public string StationName { get; set; }
+        [DataMember]
+        public double? Lat { get; set; }
+        [DataMember]
+        public double? Lon { get; set; }
     }
 }
