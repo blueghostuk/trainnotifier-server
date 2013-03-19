@@ -8,7 +8,7 @@ namespace TrainNotifier.Common.Model.VSTP
         /// <exception cref="TiplocNotFoundException"></exception>
         public static ScheduleTrain ParseJsonVSTP(dynamic s, ICollection<TiplocCode> tiplocs)
         {
-            return ScheduleTrainMapper.ParseJsonTrain(s.schedule, tiplocs);
+            return ScheduleTrainMapper.ParseJsonVSTPTrain(s.VSTPCIFMsgV1.schedule, tiplocs);
         }
     }
 }
