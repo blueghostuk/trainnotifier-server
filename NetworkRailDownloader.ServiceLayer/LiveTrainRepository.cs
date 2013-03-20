@@ -136,28 +136,56 @@ namespace TrainNotifier.Service
             return tms;
         }
 
-        public IEnumerable<TrainMovement> GetTrainMovementById(string trainId)
+        public IEnumerable<ExtendedTrainMovement> GetTrainMovementById(string trainId)
         {
             const string sql = @"
                 SELECT TOP 1
-                    Id AS UniqueId,
-                    TrainId AS Id,
-                    Headcode AS HeadCode,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                WHERE TrainId = @trainId
-                ORDER BY OriginDepartTimestamp DESC";
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS [Id]
+                    ,[LiveTrain].[Headcode] AS [HeadCode]
+                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
+                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
+                    ,[LiveTrain].[Toc] AS [TocId]
+                    ,[LiveTrain].[TrainUid] AS [TrainUid]
+                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
+                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[LiveTrainCancellation].[Type]
+                    ,[CancelTiploc].[TiplocId]
+                    ,[CancelTiploc].[Tiploc]
+                    ,[CancelTiploc].[Nalco]
+                    ,[CancelTiploc].[Description]
+                    ,[CancelTiploc].[Stanox]
+                    ,[CancelTiploc].[CRS]
+                FROM [LiveTrain]
+                LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
+                LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                WHERE [LiveTrain].[TrainId] = @trainId
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC"; // get latest occurance
 
-            IEnumerable<TrainMovement> movements = Query<TrainMovement>(sql, new { trainId });
-            foreach(TrainMovement tm in movements)
+            using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                const string tmsSql = @"
+                IEnumerable<ExtendedTrainMovement> trains = dbConnection.Query<ExtendedTrainMovement, ExtendedCancellation, TiplocCode, ExtendedTrainMovement>(
+                    sql,
+                    (t, c, s) =>
+                    {
+                        if (c != null)
+                            c.CancelledAt = s;
+                        t.Cancellation = c;
+                        return t;
+                    },
+                    new
+                    {
+                        trainId
+                    },
+                    splitOn: "CancelledStanox,TiplocId");
+
+                foreach (ExtendedTrainMovement tm in trains)
+                {
+                    const string tmsSql = @"
                     SELECT
                         EventType,
                         PlannedTimestamp AS PlannedTime,
@@ -169,17 +197,18 @@ namespace TrainNotifier.Service
                     FROM LiveTrainStop
                     WHERE TrainId = @trainId";
 
-                IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId })
-                    .ToList();
-                foreach (var tms in tmSteps)
-                {
-                    if (tms.Terminated)
-                        tms.State = State.Terminated;
+                    IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId }, dbConnection)
+                        .ToList();
+                    foreach (var tms in tmSteps)
+                    {
+                        if (tms.Terminated)
+                            tms.State = State.Terminated;
+                    }
+
+                    tm.Steps = tmSteps;
+
+                    yield return tm;
                 }
-
-                tm.Steps = tmSteps;
-
-                yield return tm;
             }
         }
 
