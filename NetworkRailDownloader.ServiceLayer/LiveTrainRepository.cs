@@ -22,10 +22,10 @@ namespace TrainNotifier.Service
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
         /// </summary>
-        public Task PreLoadActivations()
+        public void PreLoadActivations()
         {
-            return Task.Factory.StartNew(() =>
-            {
+            //return Task.Factory.StartNew(() =>
+            //{
                 const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Cancelled] = 0 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
                 var activeTrains = Query<dynamic>(sql);
@@ -43,7 +43,7 @@ namespace TrainNotifier.Service
                         StopNumber = 0
                     }, _trainActivationCachePolicy);
                 }
-            });
+            //});
         }
 
         public IEnumerable<TrainMovement> SearchByWttId(string wttId)
@@ -420,14 +420,14 @@ namespace TrainNotifier.Service
         private bool TrainExists(string trainId, out TrainMovementSchedule tm, DbConnection existingConnection = null)
         {
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
-            if (tm == null)
-            {
-                tm = ExecuteScalar<TrainMovementSchedule>("SELECT [Id], [ScheduleTrain] AS [Schedule] FROM [LiveTrain] WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
-                if (tm != null)
-                {
-                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-                }
-            }
+            //if (tm == null)
+            //{
+            //    tm = ExecuteScalar<TrainMovementSchedule>("SELECT [Id], [ScheduleTrain] AS [Schedule] FROM [LiveTrain] WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
+            //    if (tm != null)
+            //    {
+            //        _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
+            //    }
+            //}
             return tm != null && tm.Id != Guid.Empty;
         }
 
