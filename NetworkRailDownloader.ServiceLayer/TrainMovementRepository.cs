@@ -29,6 +29,8 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
                     ,[LiveTrain].[SchedWttId] AS WorkingTTId
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
+                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
+                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
                     ,[OriginTiploc].[TiplocId]
@@ -65,6 +67,12 @@ namespace TrainNotifier.Service
                     AND [OriginStop].[Origin] = 1
                 LEFT JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
                     AND [DestinationStop].[Terminate] = 1
+                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
+					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
+					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
+					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
+					AND [ActualArrival].[EventType] = 'ARRIVAL'
                 WHERE   [LiveTrain].[OriginStanox] = @stanox 
                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate
