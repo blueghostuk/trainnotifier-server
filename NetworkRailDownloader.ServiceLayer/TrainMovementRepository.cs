@@ -124,6 +124,8 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
                     ,[LiveTrain].[SchedWttId] AS WorkingTTId
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
+                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
+                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
 					,[ScheduleTrainStop].[Pass]
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
@@ -159,6 +161,12 @@ namespace TrainNotifier.Service
                 INNER JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
+                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
+					AND [ActualDeparture].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
+					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
+					AND [ActualArrival].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
+					AND [ActualArrival].[EventType] = 'ARRIVAL'
                 WHERE    [Tiploc].[TiplocId] = @tiplocId 
                      AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                      AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
