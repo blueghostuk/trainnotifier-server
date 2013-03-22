@@ -282,6 +282,7 @@ namespace TrainNotifier.Service
                       ,[Tiploc].[Tiploc]
                       ,[Tiploc].[Nalco]
                       ,[Tiploc].[Description]
+                      ,[Tiploc].[Stanox]
                       ,[Tiploc].[CRS]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
