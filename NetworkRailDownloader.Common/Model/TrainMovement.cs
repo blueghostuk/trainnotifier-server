@@ -141,6 +141,19 @@ namespace TrainNotifier.Common.Model
     }
 
     [DataContract]
+    public class TrainMovementSchedule
+    {
+        [DataMember]
+        public Guid Id { get; set; }
+
+        [DataMember]
+        public Guid? Schedule { get; set; }
+
+        [DataMember]
+        public byte StopNumber { get; set; }
+    }
+
+    [DataContract]
     public enum TrainState : short
     {
         [EnumMember()]
