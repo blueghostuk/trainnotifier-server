@@ -17,6 +17,9 @@ namespace TrainNotifier.Common.Model
         public string ReasonCode { get; set; }
 
         [DataMember]
+        public string Description { get; set; }
+
+        [DataMember]
         public string Type { get; set; }
     }
 
