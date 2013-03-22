@@ -155,6 +155,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
                     ,[LiveTrainCancellation].[CancelledTimestamp]
                     ,[LiveTrainCancellation].[ReasonCode]
+                    ,[DelayAttributionCodes].[Description]
                     ,[LiveTrainCancellation].[Type]
                     ,[CancelTiploc].[TiplocId]
                     ,[CancelTiploc].[Tiploc]
@@ -164,6 +165,7 @@ namespace TrainNotifier.Service
                     ,[CancelTiploc].[CRS]
                 FROM [LiveTrain]
                 LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
+                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
                 LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
                 WHERE [LiveTrain].[TrainId] = @trainId
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC"; // get latest occurance
@@ -232,6 +234,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
                     ,[LiveTrainCancellation].[CancelledTimestamp]
                     ,[LiveTrainCancellation].[ReasonCode]
+                    ,[DelayAttributionCodes].[Description]
                     ,[LiveTrainCancellation].[Type]
                     ,[CancelTiploc].[TiplocId]
                     ,[CancelTiploc].[Tiploc]
@@ -241,6 +244,7 @@ namespace TrainNotifier.Service
                     ,[CancelTiploc].[CRS]
                 FROM [LiveTrain]
                 LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
+                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
                 LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
                 WHERE [LiveTrain].[TrainId] = @trainId AND [LiveTrain].[TrainUid] = @trainUid
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC"; // get latest occurance
