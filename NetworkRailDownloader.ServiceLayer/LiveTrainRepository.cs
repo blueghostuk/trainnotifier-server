@@ -517,7 +517,7 @@ namespace TrainNotifier.Service
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
                 WHERE [ScheduleId] = @scheduleId
                 AND [Tiploc].[Stanox] = @stanox
-                AND [ScheduleTrainStop].[StopNumber] > @latestStopNumber";
+                AND [ScheduleTrainStop].[StopNumber] >= @latestStopNumber";
 
             return ExecuteScalar<byte?>(sql, new
             {
