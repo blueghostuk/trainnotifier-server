@@ -343,7 +343,13 @@ namespace TrainNotifier.Service
                 wttid = tm.WorkingTTId,
             }, existingConnection);
 
-            _trainActivationCache.Add(tm.Id, id, _trainActivationCachePolicy);
+            _trainActivationCache.Add(tm.Id, new TrainMovementSchedule
+            {
+                Id = id,
+                Schedule = null,
+                StopNumber = 0
+            }, _trainActivationCachePolicy);
+
             tm.UniqueId = id;
 
             SetLiveTrainSchedule(tm);
@@ -392,6 +398,11 @@ namespace TrainNotifier.Service
                         scheduleId,
                         tm.UniqueId
                     });
+
+                    if (scheduleId.HasValue)
+                    {
+                        ((TrainMovementSchedule)_trainActivationCache[tm.Id]).Schedule = scheduleId.Value;
+                    }
                 }
                 else
                 {
