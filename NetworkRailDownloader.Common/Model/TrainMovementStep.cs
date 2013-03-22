@@ -35,6 +35,9 @@ namespace TrainNotifier.Common.Model
 
         [IgnoreDataMember]
         public bool Terminated { get; set; }
+
+        [DataMember]
+        public byte? ScheduleStopNumber { get; set; }
     }
 
     [DataContract]
