@@ -17,6 +17,10 @@ namespace TrainNotifier.Common.Model
         public AtocCode AtocCode { get; set; }
         [DataMember]
         public Cancellation Cancellation { get; set; }
+        [DataMember]
+        public DateTime? ActualDeparture { get; set; }
+        [DataMember]
+        public DateTime? ActualArrival { get; set; }
     }
 
     [DataContract]
