@@ -24,26 +24,23 @@ namespace TrainNotifier.Service
         /// </summary>
         public void PreLoadActivations()
         {
-            //return Task.Factory.StartNew(() =>
-            //{
-                const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
+            const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
-                var activeTrains = Query<dynamic>(sql);
+            var activeTrains = Query<dynamic>(sql);
 
-                Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
+            Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
 
-                Trace.Flush();
+            Trace.Flush();
 
-                foreach (var activeTrain in activeTrains)
+            foreach (var activeTrain in activeTrains)
+            {
+                _trainActivationCache.Add(activeTrain.TrainId, new TrainMovementSchedule
                 {
-                    _trainActivationCache.Add(activeTrain.TrainId, new TrainMovementSchedule
-                    {
-                        Id = activeTrain.Id,
-                        Schedule = activeTrain.ScheduleTrain,
-                        StopNumber = 0
-                    }, _trainActivationCachePolicy);
-                }
-            //});
+                    Id = activeTrain.Id,
+                    Schedule = activeTrain.ScheduleTrain,
+                    StopNumber = 0
+                }, _trainActivationCachePolicy);
+            }
         }
 
         public IEnumerable<TrainMovement> SearchByWttId(string wttId)
@@ -420,14 +417,14 @@ namespace TrainNotifier.Service
         private bool TrainExists(string trainId, out TrainMovementSchedule tm, DbConnection existingConnection = null)
         {
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
-            //if (tm == null)
-            //{
-            //    tm = ExecuteScalar<TrainMovementSchedule>("SELECT [Id], [ScheduleTrain] AS [Schedule] FROM [LiveTrain] WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
-            //    if (tm != null)
-            //    {
-            //        _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-            //    }
-            //}
+            if (tm == null)
+            {
+                tm = ExecuteScalar<TrainMovementSchedule>("SELECT [Id], [ScheduleTrain] AS [Schedule] FROM [LiveTrain] WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
+                if (tm != null)
+                {
+                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
+                }
+            }
             return tm != null && tm.Id != Guid.Empty;
         }
 
@@ -473,7 +470,7 @@ namespace TrainNotifier.Service
                                ,@stopNumber)";
 
                 byte? stopNumber = null;
-                if (trainId.Schedule.HasValue 
+                if (trainId.Schedule.HasValue
                     && trainId.Schedule != Guid.Empty
                     && !string.IsNullOrEmpty(tms.Stanox))
                 {
