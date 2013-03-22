@@ -26,7 +26,7 @@ namespace TrainNotifier.Service
         {
             //return Task.Factory.StartNew(() =>
             //{
-                const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Cancelled] = 0 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
+                const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
                 var activeTrains = Query<dynamic>(sql);
 
@@ -557,8 +557,6 @@ namespace TrainNotifier.Service
                 }, existingConnection);
 
                 UpdateTrainState(trainId.Id, TrainState.Cancelled);
-
-                _trainActivationCache.Remove(cm.TrainId);
 
                 return true;
             }
