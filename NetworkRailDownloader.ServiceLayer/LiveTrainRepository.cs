@@ -191,16 +191,17 @@ namespace TrainNotifier.Service
                 foreach (ExtendedTrainMovement tm in trains)
                 {
                     const string tmsSql = @"
-                    SELECT
-                        EventType,
-                        PlannedTimestamp AS PlannedTime,
-                        ActualTimestamp AS ActualTimeStamp,
-                        ReportingStanox AS Stanox,
-                        Platform AS Platform,
-                        Line AS Line,
-                        TrainTerminated AS Terminated
-                    FROM LiveTrainStop
-                    WHERE TrainId = @trainId";
+                        SELECT
+                            [EventType]
+                            ,[PlannedTimestamp] AS [PlannedTime]
+                            ,[ActualTimestamp]
+                            ,[ReportingStanox] AS [Stanox]
+                            ,[Platform]
+                            ,[Line] 
+                            ,[TrainTerminated] AS [Terminated]
+                            ,[ScheduleStopNumber]
+                        FROM [LiveTrainStop]
+                        WHERE [TrainId] = @trainId";
 
                     IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId }, dbConnection)
                         .ToList();
@@ -268,16 +269,17 @@ namespace TrainNotifier.Service
                 if (tm != null)
                 {
                     const string tmsSql = @"
-                    SELECT
-                        EventType,
-                        PlannedTimestamp AS PlannedTime,
-                        ActualTimestamp AS ActualTimeStamp,
-                        ReportingStanox AS Stanox,
-                        Platform AS Platform,
-                        Line AS Line,
-                        TrainTerminated AS Terminated
-                    FROM LiveTrainStop
-                    WHERE TrainId = @trainId";
+                        SELECT
+                            [EventType]
+                            ,[PlannedTimestamp] AS [PlannedTime]
+                            ,[ActualTimestamp]
+                            ,[ReportingStanox] AS [Stanox]
+                            ,[Platform]
+                            ,[Line] 
+                            ,[TrainTerminated] AS [Terminated]
+                            ,[ScheduleStopNumber]
+                        FROM [LiveTrainStop]
+                        WHERE [TrainId] = @trainId";
 
                     IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId }, dbConnection)
                         .ToList();
