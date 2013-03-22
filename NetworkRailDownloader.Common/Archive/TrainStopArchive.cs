@@ -20,6 +20,8 @@ namespace TrainNotifier.Common.Archive
         public string L { get; set; }
         [DataMember]
         public bool T { get; set; }
+        [DataMember]
+        public byte? SSN { get; set; }
 
         [IgnoreDataMember]
         public string EventType { get { return E; } set { E = value; } }
@@ -35,5 +37,7 @@ namespace TrainNotifier.Common.Archive
         public string Line { get { return L; } set { L = value; } }
         [IgnoreDataMember]
         public bool TrainTerminated { get { return T; } set { T = value; } }
+        [IgnoreDataMember]
+        public byte? ScheduleStopNumber { get { return SSN; } set { SSN = value; } }
     }
 }

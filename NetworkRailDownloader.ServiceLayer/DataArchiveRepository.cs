@@ -34,6 +34,7 @@ namespace TrainNotifier.Service
                       ,[Platform]
                       ,[Line]
                       ,[TrainTerminated]
+                      ,[ScheduleStopNumber]
                 FROM [dbo].[LiveTrainStop]
                 WHERE [TrainId] = @trainId";
 
