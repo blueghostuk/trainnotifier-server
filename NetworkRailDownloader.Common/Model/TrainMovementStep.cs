@@ -46,7 +46,7 @@ namespace TrainNotifier.Common.Model
         public string NextStanox { get; set; }
 
         [DataMember]
-        public TimeSpan? ExpectedAtNextStatnox { get; set; }
+        public TimeSpan? ExpectedAtNextStanox { get; set; }
     }
 
     [DataContract]
@@ -108,7 +108,7 @@ namespace TrainNotifier.Common.Model
                 string nextReportTime = (string)body.next_report_run_time;
                 if (!string.IsNullOrWhiteSpace(nextReportTime))
                 {
-                    tm.ExpectedAtNextStatnox = TimeSpan.FromMinutes(double.Parse(nextReportTime));
+                    tm.ExpectedAtNextStanox = TimeSpan.FromMinutes(double.Parse(nextReportTime));
                 }
             }
 
