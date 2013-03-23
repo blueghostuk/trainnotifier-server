@@ -38,6 +38,15 @@ namespace TrainNotifier.Common.Model
 
         [DataMember]
         public byte? ScheduleStopNumber { get; set; }
+
+        [DataMember]
+        public bool OffRoute { get; set; }
+
+        [DataMember]
+        public string NextStanox { get; set; }
+
+        [DataMember]
+        public TimeSpan? ExpectedAtNextStatnox { get; set; }
     }
 
     [DataContract]
@@ -93,6 +102,14 @@ namespace TrainNotifier.Common.Model
                 tm.ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp));
                 tm.Platform = (string)body.platform;
                 tm.State = GetState(body);
+                tm.OffRoute = ((string)body.offroute_ind).Equals(bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
+                tm.NextStanox = (string)body.next_report_stanox;
+
+                string nextReportTime = (string)body.next_report_run_time;
+                if (!string.IsNullOrWhiteSpace(nextReportTime))
+                {
+                    tm.ExpectedAtNextStatnox = TimeSpan.FromMinutes(double.Parse(nextReportTime));
+                }
             }
 
             return tm;
