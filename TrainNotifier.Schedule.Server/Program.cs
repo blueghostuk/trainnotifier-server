@@ -1,12 +1,15 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using TrainNotifier.Common;
 using TrainNotifier.Common.Exceptions;
+using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.ScheduleLibrary;
 using TrainNotifier.Service;
@@ -24,6 +27,7 @@ namespace TrainNotifier.Schedule.Server
             var tiprep = new TiplocRepository();
             var tiplocs = tiprep.GetTiplocs().ToList();
             var schedrep = new ScheduleRepository();
+            var aRep = new AssociationRepository();
 
             string tempDir = Path.GetTempPath();
             string gzFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.gz", DateTime.UtcNow));
@@ -72,20 +76,11 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-                                try
-                                {
-                                    AddSchedule(tiplocs, schedrep, rowData);
-                                }
-                                catch (TiplocNotFoundException tnfe)
-                                {
-                                    TiplocCode t = new TiplocCode
-                                    {
-                                        Tiploc = tnfe.Code
-                                    };
-                                    t.TiplocId = tiprep.InsertTiploc(t.Tiploc);
-                                    tiplocs.Add(t);
-                                    AddSchedule(tiplocs, schedrep, rowData);
-                                }
+                                AddSchedule(tiprep, tiplocs, schedrep, rowData);
+                            }
+                            else if (rowData.JsonAssociationV1 != null)
+                            {
+                                AddAssociation(rowData, tiplocs, tiprep, aRep);
                             }
                         }
                         catch (Exception e)
@@ -103,6 +98,68 @@ namespace TrainNotifier.Schedule.Server
                 {
                     File.Delete(gzFile);
                     File.Delete(jsonFile);
+                }
+            }
+        }
+
+        private static void AddAssociation(dynamic rowData, List<TiplocCode> tiplocs, TiplocRepository tipRep, AssociationRepository aRep)
+        {
+            try
+            {
+                Association assoc = AssociationJsonMapper.ParseJsonAssociation(rowData.JsonAssociationV1, tiplocs);
+                switch (assoc.TransactionType)
+                {
+                    case TransactionType.Create:
+                        Trace.TraceInformation("Inserted Association From UID {0} -> {1}, Type {2}, Indicator {3}",
+                            assoc.MainTrainUid, assoc.AssocTrainUid, assoc.AssociationType, assoc.STPIndicator);
+                        break;
+                    case TransactionType.Delete:
+                        Trace.TraceInformation("Delete Association UID {0} For {1}",
+                            assoc.MainTrainUid, assoc.StartDate);
+                        break;
+                }
+                aRep.AddAssociation(assoc);
+            }
+            catch (TiplocNotFoundException tnfe)
+            {
+                TiplocCode t = new TiplocCode
+                {
+                    Tiploc = tnfe.Code
+                };
+                t.TiplocId = tipRep.InsertTiploc(t.Tiploc);
+                tiplocs.Add(t);
+                AddAssociation(rowData, tiplocs, tipRep, aRep);
+            }
+        }
+
+        private static void AddSchedule(TiplocRepository tiprep, List<TiplocCode> tiplocs, ScheduleRepository schedrep, dynamic rowData, int retryCount = 0)
+        {
+            try
+            {
+                AddSchedule(tiplocs, schedrep, rowData);
+            }
+            catch (TiplocNotFoundException tnfe)
+            {
+                TiplocCode t = new TiplocCode
+                {
+                    Tiploc = tnfe.Code
+                };
+                t.TiplocId = tiprep.InsertTiploc(t.Tiploc);
+                tiplocs.Add(t);
+                AddSchedule(tiplocs, schedrep, rowData);
+            }
+            catch (DbException dbe)
+            {
+                Trace.TraceError(dbe.ToString());
+                if (retryCount <= 3)
+                {
+                    Trace.TraceInformation("Retrying");
+                    AddSchedule(tiprep, tiplocs, schedrep, rowData, ++retryCount);
+                }
+                else
+                {
+                    Trace.TraceError("Retry count exceeded");
+                    throw;
                 }
             }
         }
