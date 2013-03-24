@@ -43,27 +43,6 @@ namespace TrainNotifier.Service
             }
         }
 
-        public IEnumerable<TrainMovement> SearchByWttId(string wttId)
-        {
-            const string sql = @"
-                SELECT
-                    TrainId AS Id,
-                    Headcode AS HeadCode,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                WHERE SchedWttId LIKE @wttId";
-
-            wttId += "%";
-
-            return Query<TrainMovement>(sql, new { wttId });
-        }
-
         public IEnumerable<TrainMovement> SearchByOrigin(string stanox)
         {
             const string sql = @"
@@ -109,30 +88,6 @@ namespace TrainNotifier.Service
                 ORDER BY OriginDepartTimestamp";
 
             IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
-
-            // TODO: get more detail
-            return tms;
-        }
-
-        public IEnumerable<TrainMovement> SearchByHeadcode(string headcode)
-        {
-            const string sql = @"
-                SELECT
-                    TrainId AS Id,
-                    Headcode AS HeadCode,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                WHERE Headcode = @headcode 
-                    aAND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
-                ORDER BY OriginDepartTimestamp";
-
-            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { headcode });
 
             // TODO: get more detail
             return tms;
@@ -264,6 +219,88 @@ namespace TrainNotifier.Service
                     {
                         trainId,
                         trainUid
+                    },
+                    splitOn: "CancelledStanox,TiplocId").FirstOrDefault();
+
+                if (tm != null)
+                {
+                    const string tmsSql = @"
+                        SELECT
+                            [EventType]
+                            ,[PlannedTimestamp] AS [PlannedTime]
+                            ,[ActualTimestamp]
+                            ,[ReportingStanox] AS [Stanox]
+                            ,[Platform]
+                            ,[Line] 
+                            ,[TrainTerminated] AS [Terminated]
+                            ,[ScheduleStopNumber]
+                        FROM [LiveTrainStop]
+                        WHERE [TrainId] = @trainId";
+
+                    IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId = tm.UniqueId }, dbConnection)
+                        .ToList();
+                    foreach (var tms in tmSteps)
+                    {
+                        if (tms.Terminated)
+                            tms.State = State.Terminated;
+                    }
+
+                    tm.Steps = tmSteps;
+
+                    return tm;
+                }
+            }
+
+            return null;
+        }
+
+        public ExtendedTrainMovement GetTrainMovementByUid(string trainUid, DateTime date)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS [Id]
+                    ,[LiveTrain].[Headcode] AS [HeadCode]
+                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
+                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
+                    ,[LiveTrain].[Toc] AS [TocId]
+                    ,[LiveTrain].[TrainUid] AS [TrainUid]
+                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
+                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[DelayAttributionCodes].[Description]
+                    ,[LiveTrainCancellation].[Type]
+                    ,[CancelTiploc].[TiplocId]
+                    ,[CancelTiploc].[Tiploc]
+                    ,[CancelTiploc].[Nalco]
+                    ,[CancelTiploc].[Description]
+                    ,[CancelTiploc].[Stanox]
+                    ,[CancelTiploc].[CRS]
+                FROM [LiveTrain]
+                LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
+                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
+                LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                WHERE [LiveTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement, ExtendedCancellation, TiplocCode, ExtendedTrainMovement>(
+                    sql,
+                    (t, c, s) =>
+                    {
+                        if (c != null)
+                            c.CancelledAt = s;
+                        t.Cancellation = c;
+                        return t;
+                    },
+                    new
+                    {
+                        trainUid,
+                        date
                     },
                     splitOn: "CancelledStanox,TiplocId").FirstOrDefault();
 
