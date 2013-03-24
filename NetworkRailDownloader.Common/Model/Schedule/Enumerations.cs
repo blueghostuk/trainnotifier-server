@@ -537,6 +537,42 @@ namespace TrainNotifier.Common.Model.Schedule
         Permanent
     }
 
+    public sealed class TrainAssociationDateField : EnumField<TrainNotifier.Common.Model.AssociationDate>
+    {
+        public static readonly TrainAssociationDateField Default = new TrainAssociationDateField();
+
+        public static TrainNotifier.Common.Model.AssociationDate ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public TrainAssociationDateField()
+            : base(2, new Dictionary<string, TrainNotifier.Common.Model.AssociationDate>{
+                { "S", TrainNotifier.Common.Model.AssociationDate.SameDay },
+                { "P", TrainNotifier.Common.Model.AssociationDate.PreviousDay },
+                { "N", TrainNotifier.Common.Model.AssociationDate.NextDay }
+            }, defaultValue: TrainNotifier.Common.Model.AssociationDate.SameDay) { }
+    }
+
+    public sealed class TrainAssociationTypeField : EnumField<TrainNotifier.Common.Model.AssociationType>
+    {
+        public static readonly TrainAssociationTypeField Default = new TrainAssociationTypeField();
+
+        public static TrainNotifier.Common.Model.AssociationType ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public TrainAssociationTypeField()
+            : base(2, new Dictionary<string, TrainNotifier.Common.Model.AssociationType>{
+                { "NP", TrainNotifier.Common.Model.AssociationType.NextTrain },
+                { "JJ", TrainNotifier.Common.Model.AssociationType.Join },
+                { "VV", TrainNotifier.Common.Model.AssociationType.Split }
+            }, defaultValue: TrainNotifier.Common.Model.AssociationType.NextTrain) { }
+    }
+
     public sealed class STPIndicatorField : EnumField<STPIndicator?>
     {
         public static readonly STPIndicatorField Default = new STPIndicatorField();

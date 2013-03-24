@@ -52,6 +52,8 @@
     <Compile Include="Archive\TrainStopArchive.cs" />
     <Compile Include="Exceptions\TiplocNotFoundException.cs" />
     <Compile Include="IDownloader.cs" />
+    <Compile Include="Model\Association.cs" />
+    <Compile Include="Model\AssociationJsonMapper.cs" />
     <Compile Include="Model\Cancellation.cs" />
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\ExtendedTrainMovement.cs" />
