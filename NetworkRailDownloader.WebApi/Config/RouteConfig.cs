@@ -43,6 +43,11 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "GetWithUid" });
 
             routes.MapHttpRoute(
+                name: "Assoc-ForTrain",
+                routeTemplate: "Association/{trainUid}",
+                defaults: new { controller = "Association", action = "GetForTrain" });
+
+            routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }

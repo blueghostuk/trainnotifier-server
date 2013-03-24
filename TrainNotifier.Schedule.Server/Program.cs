@@ -76,7 +76,7 @@ namespace TrainNotifier.Schedule.Server
                         {
                             if (rowData.JsonScheduleV1 != null)
                             {
-                                AddSchedule(tiprep, tiplocs, schedrep, rowData);
+                                //AddSchedule(tiprep, tiplocs, schedrep, rowData);
                             }
                             else if (rowData.JsonAssociationV1 != null)
                             {
