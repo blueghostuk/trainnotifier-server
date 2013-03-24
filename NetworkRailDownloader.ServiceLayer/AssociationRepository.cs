@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using Dapper;
 
 namespace TrainNotifier.Service
 {
@@ -28,6 +30,7 @@ namespace TrainNotifier.Service
                            ,[LocationTiplocId]
                            ,[AssociationDate]
                            ,[AssociationType]
+                           ,[STPIndicatorId]
                            ,[Deleted])
                     OUTPUT [inserted].[AssociationId]
                      VALUES
@@ -45,6 +48,7 @@ namespace TrainNotifier.Service
                            ,@locationTiplocId
                            ,@associationDate
                            ,@associationType
+                           ,@stpIndicatorId
                            ,@deleted)";
 
             Guid id = ExecuteInsert(sql, new
@@ -63,6 +67,7 @@ namespace TrainNotifier.Service
                 locationTiplocId = a.Location.TiplocId,
                 associationDate = a.DateType,
                 associationType = a.AssociationType,
+                stpIndicatorId = a.STPIndicator,
                 deleted = a.TransactionType == TransactionType.Delete
             });
             a.AssociationId = id;
@@ -72,6 +77,69 @@ namespace TrainNotifier.Service
         private bool? GetBoolean(Schedule s, Func<Schedule, bool> selector)
         {
             return s == null ? default(bool?) : selector(s);
+        }
+
+        public IEnumerable<Association> GetForTrain(string trainUid, DateTime date)
+        {
+            const string sql = @"
+                SELECT [TrainAssociation].[AssociationId]
+                      ,[TrainAssociation].[MainTrainUid]
+                      ,[TrainAssociation].[AssocTrainUid]
+                      ,[TrainAssociation].[StartDate]
+                      ,[TrainAssociation].[EndDate]
+                      ,[TrainAssociation].[AppliesMonday]
+                      ,[TrainAssociation].[AppliesTuesday]
+                      ,[TrainAssociation].[AppliesWednesday]
+                      ,[TrainAssociation].[AppliesThursday]
+                      ,[TrainAssociation].[AppliesFriday]
+                      ,[TrainAssociation].[AppliesSaturday]
+                      ,[TrainAssociation].[AppliesSunday]
+                      ,[TrainAssociation].[LocationTiplocId]
+                      ,[TrainAssociation].[AssociationDate]
+                      ,[TrainAssociation].[AssociationType]
+                      ,[TrainAssociation].[Deleted]
+                      ,[TrainAssociation].[STPIndicatorId]
+                      ,[Tiploc].[TiplocId]
+                      ,[Tiploc].[Tiploc]
+                      ,[Tiploc].[Nalco]
+                      ,[Tiploc].[Description]
+                      ,[Tiploc].[Stanox]
+                      ,[Tiploc].[CRS]
+                  FROM [TrainAssociation]
+                  INNER JOIN [Tiploc] ON [TrainAssociation].[LocationTiplocId] = [Tiploc].[TiplocId]
+                  WHERE ([TrainAssociation].[MainTrainUid] = @trainUid OR [TrainAssociation].[AssocTrainUid] = @trainUid)
+                  AND @date >= [TrainAssociation].[StartDate]
+                  AND @date <= [TrainAssociation].[EndDate]
+                  AND [TrainAssociation].[Applies{0}] = 1";
+
+            IEnumerable<Association> assocs = Enumerable.Empty<Association>();
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                assocs = dbConnection.Query<Association, TiplocCode, Association>(
+                    string.Format(sql, date.DayOfWeek),
+                    (a, l) =>
+                    {
+                        a.Location = l;
+                        return a;
+                    },
+                    new
+                    {
+                        trainUid,
+                        date = date.Date
+                    },
+                    splitOn: "TiplocId").ToList();
+            }
+
+            foreach (var grouping in assocs.GroupBy(a => new { a.MainTrainUid, a.AssocTrainUid }))
+            {
+                if (!grouping.Any(a => a.Deleted && a.StartDate.Date == date.Date))
+                {
+                    if (grouping.Count() == 1)
+                        yield return grouping.ElementAt(0);
+                    else
+                        yield return grouping.OrderBy(a => a.STPIndicator).First();
+                }
+            }
         }
     }
 }

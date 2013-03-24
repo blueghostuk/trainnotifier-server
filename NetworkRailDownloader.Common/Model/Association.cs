@@ -18,15 +18,17 @@ namespace TrainNotifier.Common.Model
         [DataMember]
         public string AssocTrainUid { get; set; }
         [DataMember]
-        public DateTime? StartDate { get; set; }
+        public DateTime StartDate { get; set; }
         [DataMember]
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         [DataMember]
         public AssociationDate DateType { get; set; }
         [DataMember]
         public Schedule.Schedule Schedule { get; set; }
         [DataMember]
-        public STPIndicator STPIndicator { get; set; }
+        public STPIndicator? STPIndicator { get; set; }
+        [IgnoreDataMember]
+        public bool Deleted { get; set; }
         [DataMember]
         public TiplocCode Location { get; set; }
     }
