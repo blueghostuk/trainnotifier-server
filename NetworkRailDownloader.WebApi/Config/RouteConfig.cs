@@ -23,16 +23,6 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "CallingAtStation" });
 
             routes.MapHttpRoute(
-                name: "TM-WithHeadcode",
-                routeTemplate: "TrainMovement/WithHeadcode/{headcode}",
-                defaults: new { controller = "TrainMovement", action = "WithHeadcode" });
-
-            routes.MapHttpRoute(
-                name: "TM-WithWttId",
-                routeTemplate: "TrainMovement/WithWttId/{wttId}",
-                defaults: new { controller = "TrainMovement", action = "WithWttId" });
-
-            routes.MapHttpRoute(
                 name: "TM-ById",
                 routeTemplate: "TrainMovement/{id}",
                 defaults: new { controller = "TrainMovement", action = "GetById" });
@@ -41,6 +31,11 @@ namespace TrainNotifier.Console.WebApi.Config
                 name: "TM-WithUid",
                 routeTemplate: "TrainMovement/{id}/{uid}",
                 defaults: new { controller = "TrainMovement", action = "GetWithUid" });
+
+            routes.MapHttpRoute(
+                name: "TM-ForUid",
+                routeTemplate: "TrainMovement/Uid/{trainUid}/{date}",
+                defaults: new { controller = "TrainMovement", action = "GetForUid" });
 
             routes.MapHttpRoute(
                 name: "Assoc-ForTrain",

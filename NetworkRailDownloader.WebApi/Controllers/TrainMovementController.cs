@@ -26,6 +26,13 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
+        public ExtendedTrainMovement GetForUid(string trainUid, DateTime date)
+        {
+            return _liveTrainRepo.GetTrainMovementByUid(trainUid, date);
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
         public IEnumerable<OriginTrainMovement> StartingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
@@ -40,20 +47,6 @@ namespace TrainNotifier.Console.WebApi.Controllers
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
             return _tmRepo.CallingAt(stanox, startDate, endDate);
-        }
-
-        [HttpGet]
-        [CachingActionFilterAttribute(120)]
-        public IEnumerable<TrainMovement> WithHeadcode(string headcode)
-        {
-            return _liveTrainRepo.SearchByHeadcode(headcode);
-        }
-
-        [HttpGet]
-        [CachingActionFilterAttribute(120)]
-        public IEnumerable<TrainMovement> WithWttId(string wttId)
-        {
-            return _liveTrainRepo.SearchByWttId(wttId);
         }
     }
 }
