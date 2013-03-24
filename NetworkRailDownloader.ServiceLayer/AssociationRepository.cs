@@ -98,7 +98,7 @@ namespace TrainNotifier.Service
                       ,[TrainAssociation].[AssociationDate]
                       ,[TrainAssociation].[AssociationType]
                       ,[TrainAssociation].[Deleted]
-                      ,[TrainAssociation].[STPIndicatorId]
+                      ,[TrainAssociation].[STPIndicatorId] AS [STPIndicator]
                       ,[Tiploc].[TiplocId]
                       ,[Tiploc].[Tiploc]
                       ,[Tiploc].[Nalco]

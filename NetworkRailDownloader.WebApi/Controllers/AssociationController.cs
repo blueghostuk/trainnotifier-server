@@ -4,6 +4,7 @@ using System.Web.Http;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Service;
+using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
@@ -14,7 +15,9 @@ namespace TrainNotifier.Console.WebApi.Controllers
         {
             AssociationRepository ar = new AssociationRepository();
 
-            return ar.GetForTrain(trainUid, date);
+            return ar.GetForTrain(trainUid, date)
+                .OrderBy(a => a.AssociationType)
+                .OrderBy(a => a.MainTrainUid);
         }
     }
 }
