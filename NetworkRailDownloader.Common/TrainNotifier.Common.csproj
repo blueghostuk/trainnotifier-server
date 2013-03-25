@@ -69,6 +69,7 @@
     <Compile Include="Model\TrainDescriber.cs" />
     <Compile Include="Model\TrainMovement.cs" />
     <Compile Include="Model\TrainMovementStep.cs" />
+    <Compile Include="Model\TrainReinstatement.cs" />
     <Compile Include="Model\VSTP\VSTPMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ICacheService.cs" />

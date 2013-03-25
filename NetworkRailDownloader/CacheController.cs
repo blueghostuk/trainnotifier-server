@@ -59,6 +59,7 @@ namespace TrainNotifier.Console.WebSocketServer
 
                                         // train reinstatement
                                         case 5:
+                                            data.Add(CacheTrainReinstatement((string)message.body.train_id, message.body));
                                             break;
 
                                         // train change of origin
@@ -228,6 +229,16 @@ namespace TrainNotifier.Console.WebSocketServer
                 return null;
 
             TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+            step.TrainId = trainId;
+            return step;
+        }
+
+        private TrainReinstatement CacheTrainReinstatement(string trainId, dynamic body)
+        {
+            if (string.IsNullOrWhiteSpace(trainId))
+                return null;
+
+            TrainReinstatement step = TrainReinstatementMapper.MapFromBody(body);
             step.TrainId = trainId;
             return step;
         }

@@ -626,7 +626,7 @@ namespace TrainNotifier.Service
                 if (tiploc != null)
                 {
 
-                    Trace.TraceInformation("Saving Change of Origin to: {0} , {1}", tOrigin.TrainId, tOrigin.Stanox);
+                    Trace.TraceInformation("Saving Change of Origin to: {0} @ {1}", tOrigin.TrainId, tOrigin.Stanox);
 
                     const string insertStop = @"
                         INSERT INTO [LiveTrainChangeOfOrigin]
@@ -646,6 +646,39 @@ namespace TrainNotifier.Service
                         reasonCode = tOrigin.ReasonCode,
                         newTiplocId = tiploc.TiplocId,
                         newDepartureTime = tOrigin.NewDepartureTime
+                    }, existingConnection);
+                }
+            }
+            return false;
+        }
+
+        private bool AddReinstatement(TrainReinstatement tr, DbConnection existingConnection = null)
+        {
+            TrainMovementSchedule trainId = null;
+            if (TrainExists(tr.TrainId, out trainId, existingConnection))
+            {
+                TiplocCode tiploc = _tiplocRepository.GetByStanox(tr.Stanox);
+                if (tiploc != null)
+                {
+
+                    Trace.TraceInformation("Saving Reinstatement of: {0} @ {1}", tr.TrainId, tr.Stanox);
+
+                    const string insertStop = @"
+                        INSERT INTO [LiveTrainReinstatement]
+                           ([TrainId]
+                           ,[PlannedDepartureTime]
+                           ,[NewTiplocId]
+                           ,[ReinstatedTiplocId])
+                        VALUES
+                           (@trainId
+                           ,@plannedDepartureTime
+                           ,@reinstatedTiplocId)";
+
+                    ExecuteNonQuery(insertStop, new
+                    {
+                        trainId = trainId.Id,
+                        plannedDepartureTime = tr.NewDepartureTime,
+                        reinstatedTiplocId = tiploc.TiplocId
                     }, existingConnection);
                 }
             }
@@ -820,6 +853,14 @@ namespace TrainNotifier.Service
                                 if (tOrigin != null)
                                 {
                                     AddChangeOfOrigin(tOrigin);
+                                }
+                                else
+                                {
+                                    TrainReinstatement tr = train as TrainReinstatement;
+                                    if (tr != null)
+                                    {
+                                        AddReinstatement(tr);
+                                    }
                                 }
                             }
                         }
