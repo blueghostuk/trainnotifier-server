@@ -12,6 +12,7 @@ namespace TrainNotifier.Common.Services
     [ServiceKnownType(typeof(TrainMovementStep))]
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainChangeOfOrigin))]
+    [ServiceKnownType(typeof(TrainReinstatement))]
     [ServiceKnownType(typeof(CaTD))]
     [ServiceKnownType(typeof(CbTD))]
     [ServiceKnownType(typeof(CcTD))]
