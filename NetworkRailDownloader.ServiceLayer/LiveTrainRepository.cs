@@ -19,6 +19,8 @@ namespace TrainNotifier.Service
             SlidingExpiration = TimeSpan.FromHours(12)
         };
 
+        private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
+
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
         /// </summary>
@@ -601,6 +603,41 @@ namespace TrainNotifier.Service
             return false;
         }
 
+        private bool AddChangeOfOrigin(TrainChangeOfOrigin tOrigin, DbConnection existingConnection = null)
+        {
+            TrainMovementSchedule trainId = null;
+            if (TrainExists(tOrigin.TrainId, out trainId, existingConnection))
+            {
+                TiplocCode tiploc = _tiplocRepository.GetByStanox(tOrigin.Stanox);
+                if (tiploc != null)
+                {
+
+                    Trace.TraceInformation("Saving Change of Origin to: {0} , {1}", tOrigin.TrainId, tOrigin.Stanox);
+
+                    const string insertStop = @"
+                        INSERT INTO [LiveTrainChangeOfOrigin]
+                           ([TrainId]
+                           ,[ReasonCode]
+                           ,[NewTiplocId]
+                           ,[NewDepartureTime])
+                        VALUES
+                           (@trainId
+                           ,@reasonCode
+                           ,@newTiplocId
+                           ,@newDepartureTime)";
+
+                    ExecuteNonQuery(insertStop, new
+                    {
+                        trainId = trainId.Id,
+                        reasonCode = tOrigin.ReasonCode,
+                        newTiplocId = tiploc.TiplocId,
+                        newDepartureTime = tOrigin.NewDepartureTime
+                    }, existingConnection);
+                }
+            }
+            return false;
+        }
+
         public void UpdateTrainState(Guid trainId, TrainState state, DbConnection existingConnection = null)
         {
             switch (state)
@@ -762,6 +799,14 @@ namespace TrainNotifier.Service
                             {
                                 AddMovement(tms, dbConnection);
                                 trainMovements.Add(tms);
+                            }
+                            else
+                            {
+                                TrainChangeOfOrigin tOrigin = train as TrainChangeOfOrigin;
+                                if (tOrigin != null)
+                                {
+                                    AddChangeOfOrigin(tOrigin);
+                                }
                             }
                         }
                     }

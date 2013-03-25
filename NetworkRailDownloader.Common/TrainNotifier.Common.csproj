@@ -65,6 +65,7 @@
     <Compile Include="Model\Schedule\ScheduleTrain.cs" />
     <Compile Include="Model\Schedule\ScheduleTrainMapper.cs" />
     <Compile Include="Model\Schedule\Tiploc.cs" />
+    <Compile Include="Model\TrainChangeOfOrigin.cs" />
     <Compile Include="Model\TrainDescriber.cs" />
     <Compile Include="Model\TrainMovement.cs" />
     <Compile Include="Model\TrainMovementStep.cs" />

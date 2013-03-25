@@ -8,6 +8,7 @@ namespace TrainNotifier.Common.Model
     [ServiceKnownType(typeof(ExtendedTrainMovement))]
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainMovementStep))]
+    [ServiceKnownType(typeof(TrainChangeOfOrigin))]
     public interface ITrainData
     {
         string TrainId { get; set; }

@@ -63,6 +63,7 @@ namespace TrainNotifier.Console.WebSocketServer
 
                                         // train change of origin
                                         case 6:
+                                            data.Add(CacheChangeOfOrigin((string)message.body.train_id, message.body));
                                             break;
 
                                         // train change of identity
@@ -227,6 +228,16 @@ namespace TrainNotifier.Console.WebSocketServer
                 return null;
 
             TrainMovementStep step = TrainMovementStepMapper.MapFromBody(body);
+            step.TrainId = trainId;
+            return step;
+        }
+
+        private TrainChangeOfOrigin CacheChangeOfOrigin(string trainId, dynamic body)
+        {
+            if (string.IsNullOrWhiteSpace(trainId))
+                return null;
+
+            TrainChangeOfOrigin step = TrainChangeOfOriginMapper.MapFromBody(body);
             step.TrainId = trainId;
             return step;
         }
