@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using TrainNotifier.Common.Model.Schedule;
 
@@ -86,6 +87,11 @@ namespace TrainNotifier.Service
                     DestinationTiplocId = train.Destination != null ? new short?(train.Destination.TiplocId) : default(short?),
                     Source = source
                 });
+                if (source == ScheduleSource.VSTP)
+                {
+                    Trace.TraceInformation("Saving VSTP Schedule for UID: {0} with ID {1}",
+                        train.TrainUid, id);
+                }
 
                 InsertScheduleStops(id, train.Stops);
                 ts.Complete();

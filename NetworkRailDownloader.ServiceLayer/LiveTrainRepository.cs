@@ -26,7 +26,15 @@ namespace TrainNotifier.Service
         /// </summary>
         public void PreLoadActivations()
         {
-            const string sql = @"SELECT [Id], [TrainId], [ScheduleTrain] FROM [LiveTrain] WHERE [Activated] = 1 AND [Terminated] = 0 AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
+            const string sql = @"
+                SELECT 
+                    [Id]
+                    ,[TrainId]
+                    ,[ScheduleTrain]
+                FROM [LiveTrain] 
+                WHERE [Activated] = 1  
+                    AND [Terminated] = 0  
+                    AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
             var activeTrains = Query<dynamic>(sql);
 
@@ -395,9 +403,9 @@ namespace TrainNotifier.Service
             SetLiveTrainSchedule(tm);
         }
 
-        private void SetLiveTrainSchedule(TrainMovement tm)
+        private Task SetLiveTrainSchedule(TrainMovement tm)
         {
-            Task.Run(() =>
+            return Task.Run(() =>
             {
                 if (!tm.SchedOriginDeparture.HasValue)
                 {
@@ -414,7 +422,6 @@ namespace TrainNotifier.Service
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
                         {0}
-                        AND [Deleted] = 0
                     ORDER BY [STPIndicatorId]";
 
                 var date = tm.SchedOriginDeparture.Value.Date;
@@ -462,7 +469,13 @@ namespace TrainNotifier.Service
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
             if (tm == null)
             {
-                tm = ExecuteScalar<TrainMovementSchedule>("SELECT [Id], [ScheduleTrain] AS [Schedule] FROM [LiveTrain] WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
+                tm = ExecuteScalar<TrainMovementSchedule>(@"
+                    SELECT 
+                        [Id]
+                        ,[TrainId]
+                        ,[ScheduleTrain] AS [Schedule]
+                    FROM [LiveTrain] 
+                    WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
                 if (tm != null)
                 {
                     _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
@@ -513,6 +526,7 @@ namespace TrainNotifier.Service
                                ,@stopNumber)";
 
                 byte? stopNumber = null;
+
                 if (trainId.Schedule.HasValue
                     && trainId.Schedule != Guid.Empty
                     && !string.IsNullOrEmpty(tms.Stanox))
