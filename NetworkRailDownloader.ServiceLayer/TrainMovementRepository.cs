@@ -19,7 +19,8 @@ namespace TrainNotifier.Service
 
             const string sql = @"
                 SELECT
-                     [LiveTrain].[TrainId] AS Id
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS Id
                     ,[LiveTrain].[Headcode] AS HeadCode
                     ,[LiveTrain].[CreationTimestamp] AS Activated
                     ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
@@ -51,14 +52,7 @@ namespace TrainNotifier.Service
                     ,[DestinationStop].[Platform]
                     ,[DestinationStop].[Arrival]
                     ,[DestinationStop].[PublicArrival]
-                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
-                    ,[LiveTrainCancellation].[CancelledTimestamp]
-                    ,[LiveTrainCancellation].[ReasonCode]
-                    ,[DelayAttributionCodes].[Description]
-                    ,[LiveTrainCancellation].[Type]
                 FROM [LiveTrain]
-                LEFT JOIN [LiveTrainCancellation] ON [LiveTrain].[Id] = [LiveTrainCancellation].[TrainId]
-                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
                 LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
@@ -80,23 +74,54 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, Cancellation, OriginTrainMovement>(
-                    sql,
-                    (tm, ac, ot, dt, c) =>
+                List<OriginTrainMovement> trains
+                    = dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
+                        sql,
+                        (tm, ac, ot, dt) =>
+                        {
+                            tm.AtocCode = ac;
+                            tm.Origin = ot;
+                            tm.Destination = dt;
+                            return tm;
+                        },
+                        new
+                        {
+                            stanox,
+                            startDate,
+                            endDate
+                        },
+                        splitOn: "Code,TiplocId,TiplocId,CancelledStanox").ToList();
+
+                if (trains.Any())
+                {
+                    var trainIds = trains
+                        .Select(t => t.UniqueId)
+                        .Distinct()
+                        .ToArray();
+
+                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
+                    foreach (var cancellation in cancellations)
                     {
-                        tm.AtocCode = ac;
-                        tm.Origin = ot;
-                        tm.Destination = dt;
-                        tm.Cancellation = c;
-                        return tm;
-                    },
-                    new
+                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
+                        train.Cancellation = cancellation;
+                    }
+
+                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
+                    foreach (var reinstatement in reinstatements)
                     {
-                        stanox,
-                        startDate,
-                        endDate
-                    },
-                    splitOn: "Code,TiplocId,TiplocId,CancelledStanox");
+                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
+                        train.Reinstatement = reinstatement;
+                    }
+
+                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
+                    foreach (var changeOfOrigin in changeOfOrigins)
+                    {
+                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
+                        train.ChangeOfOrigin = changeOfOrigin;
+                    }
+                }
+
+                return trains;
             }
         }
 
@@ -106,7 +131,7 @@ namespace TrainNotifier.Service
                 SELECT
                     [LiveTrainCancellation].[TrainId]
                     ,[LiveTrainCancellation].[CancelledTimestamp]
-                    ,[LiveTrainCancellation].[Stanox]
+                    ,[LiveTrainCancellation].[Stanox] AS [CancelledStanox]
                     ,[LiveTrainCancellation].[ReasonCode]
                     ,[LiveTrainCancellation].[Type]
                     ,[DelayAttributionCodes].[Description]
@@ -129,32 +154,54 @@ namespace TrainNotifier.Service
                 }, new { trainIds }, splitOn: "TiplocId");
         }
 
-        private IEnumerable<TrainReinstatement> GetCancellations(IEnumerable<Guid> trainIds, DbConnection connection)
+        private IEnumerable<Reinstatement> GetReinstatements(IEnumerable<Guid> trainIds, DbConnection connection)
         {
             const string sql = @"
-                SELECT
-                    [LiveTrainCancellation].[TrainId]
-                    ,[LiveTrainCancellation].[CancelledTimestamp]
-                    ,[LiveTrainCancellation].[Stanox]
-                    ,[LiveTrainCancellation].[ReasonCode]
-                    ,[LiveTrainCancellation].[Type]
-                    ,[DelayAttributionCodes].[Description]
-                    ,[CancelTiploc].[TiplocId]
-                    ,[CancelTiploc].[Tiploc]
-                    ,[CancelTiploc].[Nalco]
-                    ,[CancelTiploc].[Description]
-                    ,[CancelTiploc].[Stanox]
-                    ,[CancelTiploc].[CRS]
-                FROM [LiveTrainCancellation]
-                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
-                LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
-                WHERE [LiveTrainCancellation].[TrainId] IN @trainIds";
+                SELECT 
+                    [LiveTrainReinstatement].[TrainId]
+                    ,[LiveTrainReinstatement].[PlannedDepartureTime]
+                    ,[ReinstatementTiploc].[TiplocId]
+                    ,[ReinstatementTiploc].[Tiploc]
+                    ,[ReinstatementTiploc].[Nalco]
+                    ,[ReinstatementTiploc].[Description]
+                    ,[ReinstatementTiploc].[Stanox]
+                    ,[ReinstatementTiploc].[CRS]
+                FROM [LiveTrainReinstatement]
+                INNER JOIN [Tiploc] AS [ReinstatementTiploc] ON [LiveTrainReinstatement].[ReinstatedTiplocId] = [ReinstatementTiploc].[TiplocId]
+                WHERE [LiveTrainReinstatement].[TrainId] IN @trainIds";
 
-            return connection.Query<ExtendedCancellation, TiplocCode, ExtendedCancellation>(sql,
-                (c, t) =>
+            return connection.Query<Reinstatement, TiplocCode, Reinstatement>(sql,
+                (r, t) =>
                 {
-                    c.CancelledAt = t;
-                    return c;
+                    r.NewOrigin = t;
+                    return r;
+                }, new { trainIds }, splitOn: "TiplocId");
+        }
+
+        private IEnumerable<ChangeOfOrigin> GetChangeOfOrigins(IEnumerable<Guid> trainIds, DbConnection connection)
+        {
+            const string sql = @"
+                SELECT 
+                    [LiveTrainChangeOfOrigin].[TrainId]
+                    ,[LiveTrainChangeOfOrigin].[NewDepartureTime]
+                    ,[LiveTrainChangeOfOrigin].[ReasonCode]
+                    ,[ChangeOfOriginDelay].[Description]      
+                    ,[ChangeOfOriginTiploc].[TiplocId]
+                    ,[ChangeOfOriginTiploc].[Tiploc]
+                    ,[ChangeOfOriginTiploc].[Nalco]
+                    ,[ChangeOfOriginTiploc].[Description]
+                    ,[ChangeOfOriginTiploc].[Stanox]
+                    ,[ChangeOfOriginTiploc].[CRS]
+                FROM [LiveTrainChangeOfOrigin]
+                INNER JOIN [Tiploc] AS [ChangeOfOriginTiploc] ON [LiveTrainChangeOfOrigin].[NewTiplocId] = [ChangeOfOriginTiploc].[TiplocId]
+                LEFT JOIN [DelayAttributionCodes] [ChangeOfOriginDelay] ON [LiveTrainChangeOfOrigin].[ReasonCode] = [ChangeOfOriginDelay].[ReasonCode]
+                WHERE [LiveTrainChangeOfOrigin].[TrainId] IN @trainIds";
+
+            return connection.Query<ChangeOfOrigin, TiplocCode, ChangeOfOrigin>(sql,
+                (o, t) =>
+                {
+                    o.NewOrigin = t;
+                    return o;
                 }, new { trainIds }, splitOn: "TiplocId");
         }
 
@@ -230,7 +277,7 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, Cancellation, CallingAtTrainMovement>(
+                return dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, ExtendedCancellation, CallingAtTrainMovement>(
                     sql,
                     (tm, ac, ot, dt, c) =>
                     {

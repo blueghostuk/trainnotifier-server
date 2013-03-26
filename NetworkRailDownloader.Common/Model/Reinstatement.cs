@@ -7,10 +7,13 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public class Reinstatement
     {
+        [IgnoreDataMember]
+        public Guid TrainId { get; set; }
+
         [DataMember]
         public TiplocCode NewOrigin { get; set; }
 
         [DataMember]
-        public DateTime? NewDepartureTime { get; set; }
+        public DateTime PlannedDepartureTime { get; set; }
     }
 }
