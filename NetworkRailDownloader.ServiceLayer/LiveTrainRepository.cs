@@ -176,7 +176,7 @@ namespace TrainNotifier.Service
                     SELECT TOP 1 [ScheduleId]
                     FROM [ScheduleTrain]
                     WHERE 
-                            [TrainUid] = @TrainUid
+                            [TrainUid] = @trainUid
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
                         {0}
@@ -186,7 +186,8 @@ namespace TrainNotifier.Service
 
                 Guid? scheduleId = ExecuteScalar<Guid>(string.Format(sql, GetDatePartSql(date)), new
                 {
-                    tm.TrainUid,
+                    // need to trim as schedule inserted trimmed at present
+                    trainUid = tm.TrainUid.Trim(),
                     date
                 });
 
