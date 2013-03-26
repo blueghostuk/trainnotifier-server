@@ -394,19 +394,22 @@ namespace TrainNotifier.Service
                            ([TrainId]
                            ,[ReasonCode]
                            ,[NewTiplocId]
-                           ,[NewDepartureTime])
+                           ,[NewDepartureTime]
+                           ,[ChangedTime])
                         VALUES
                            (@trainId
                            ,@reasonCode
                            ,@newTiplocId
-                           ,@newDepartureTime)";
+                           ,@newDepartureTime
+                           ,@changedTime)";
 
                     ExecuteNonQuery(insertStop, new
                     {
                         trainId = trainId.Id,
                         reasonCode = tOrigin.ReasonCode,
                         newTiplocId = tiploc.TiplocId,
-                        newDepartureTime = tOrigin.NewDepartureTime
+                        newDepartureTime = tOrigin.NewDepartureTime,
+                        changedTime = tOrigin.ChangedTime
                     }, existingConnection);
                 }
             }
@@ -428,17 +431,20 @@ namespace TrainNotifier.Service
                         INSERT INTO [LiveTrainReinstatement]
                            ([TrainId]
                            ,[PlannedDepartureTime]
-                           ,[ReinstatedTiplocId])
+                           ,[ReinstatedTiplocId]
+                           ,[ReinstatementTime])
                         VALUES
                            (@trainId
                            ,@plannedDepartureTime
-                           ,@reinstatedTiplocId)";
+                           ,@reinstatedTiplocId
+                           ,@reinstatementTime)";
 
                     ExecuteNonQuery(insertStop, new
                     {
                         trainId = trainId.Id,
                         plannedDepartureTime = tr.NewDepartureTime,
-                        reinstatedTiplocId = tiploc.TiplocId
+                        reinstatedTiplocId = tiploc.TiplocId,
+                        reinstatementTime = tr.ReinstatementTime
                     }, existingConnection);
                 }
             }

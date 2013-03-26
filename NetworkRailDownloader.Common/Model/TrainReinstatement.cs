@@ -14,7 +14,10 @@ namespace TrainNotifier.Common.Model
         public string TrainId { get; set; }
 
         [DataMember]
-        public DateTime? NewDepartureTime { get; set; }
+        public DateTime NewDepartureTime { get; set; }
+
+        [DataMember]
+        public DateTime? ReinstatementTime { get; set; }
 
         [DataMember]
         public string Stanox { get; set; }
@@ -26,7 +29,8 @@ namespace TrainNotifier.Common.Model
         {
             TrainReinstatement tr = new TrainReinstatement();
             tr.Stanox = (string)body.loc_stanox;
-            tr.NewDepartureTime = UnixTsToDateTime((string)body.dep_timestamp);
+            tr.NewDepartureTime = UnixTsToDateTime((string)body.dep_timestamp).Value;
+            tr.ReinstatementTime = UnixTsToDateTime((string)body.reinstatement_timestamp);
 
             return tr;
         }

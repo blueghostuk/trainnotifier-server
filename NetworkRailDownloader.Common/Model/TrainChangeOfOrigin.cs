@@ -14,7 +14,10 @@ namespace TrainNotifier.Common.Model
         public string TrainId { get; set; }
 
         [DataMember]
-        public DateTime? NewDepartureTime { get; set; }
+        public DateTime NewDepartureTime { get; set; }
+
+        [DataMember]
+        public DateTime? ChangedTime { get; set; }
 
         [DataMember]
         public string ReasonCode { get; set; }
@@ -29,7 +32,8 @@ namespace TrainNotifier.Common.Model
         {
             TrainChangeOfOrigin change = new TrainChangeOfOrigin();
             change.Stanox = (string)body.loc_stanox;
-            change.NewDepartureTime = UnixTsToDateTime((string)body.dep_timestamp);
+            change.NewDepartureTime = UnixTsToDateTime((string)body.dep_timestamp).Value;
+            change.ChangedTime = UnixTsToDateTime((string)body.coo_timestamp);
             change.ReasonCode = (string)body.reason_code;
 
             return change;
