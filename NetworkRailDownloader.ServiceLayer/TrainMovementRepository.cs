@@ -97,7 +97,6 @@ namespace TrainNotifier.Service
                         endDate
                     },
                     splitOn: "Code,TiplocId,TiplocId,CancelledStanox");
-
             }
         }
 
