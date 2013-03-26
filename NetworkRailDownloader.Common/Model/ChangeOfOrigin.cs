@@ -7,6 +7,9 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public class ChangeOfOrigin
     {
+        [IgnoreDataMember]
+        public Guid TrainId { get; set; }
+
         [DataMember]
         public TiplocCode NewOrigin { get; set; }
 
@@ -17,6 +20,6 @@ namespace TrainNotifier.Common.Model
         public string Description { get; set; }
 
         [DataMember]
-        public DateTime? NewDepartureTime { get; set; }
+        public DateTime NewDepartureTime { get; set; }
     }
 }
