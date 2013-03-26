@@ -55,8 +55,10 @@
     <Compile Include="Model\Association.cs" />
     <Compile Include="Model\AssociationJsonMapper.cs" />
     <Compile Include="Model\Cancellation.cs" />
+    <Compile Include="Model\ChangeOfOrigin.cs" />
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\ExtendedTrainMovement.cs" />
+    <Compile Include="Model\Reinstatement.cs" />
     <Compile Include="Model\Schedule\Enumerations.cs" />
     <Compile Include="Model\ITrainData.cs" />
     <Compile Include="Model\Schedule\RecordField.cs" />
