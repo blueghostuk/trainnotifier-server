@@ -10,7 +10,7 @@ namespace TrainNotifier.Service
 {
     public class TrainMovementRepository : DbRepository
     {
-        private readonly TiplocRepository _tiplocRepository = new TiplocRepository();
+        private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
 
         public IEnumerable<OriginTrainMovement> StartingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
@@ -241,6 +241,148 @@ namespace TrainNotifier.Service
                 return trains
                     .OrderBy(t => t.Origin.Arrival ?? t.Destination.Departure ?? t.Origin.PublicArrival ?? t.Destination.PublicDeparture ?? t.Pass);
             }
+        }
+
+        [Obsolete("Will be removed in future version")]
+        public ExtendedTrainMovement GetTrainMovementById(string trainId)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS [Id]
+                    ,[LiveTrain].[Headcode] AS [HeadCode]
+                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
+                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
+                    ,[LiveTrain].[Toc] AS [TocId]
+                    ,[LiveTrain].[TrainUid] AS [TrainUid]
+                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
+                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                FROM [LiveTrain]
+                WHERE [LiveTrain].[TrainId] = @trainId
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC"; // get latest occurance
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
+                {
+                    trainId
+                }).FirstOrDefault();
+
+                if (tm != null)
+                {
+                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
+                    return tm;
+                }
+                return null;
+            }
+        }
+
+        public ExtendedTrainMovement GetTrainMovementById(string trainId, string trainUid)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS [Id]
+                    ,[LiveTrain].[Headcode] AS [HeadCode]
+                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
+                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
+                    ,[LiveTrain].[Toc] AS [TocId]
+                    ,[LiveTrain].[TrainUid] AS [TrainUid]
+                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
+                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                FROM [LiveTrain]
+                WHERE [LiveTrain].[TrainId] = @trainId AND [LiveTrain].[TrainUid] = @trainUid
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC";
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
+                    {
+                        trainId,
+                        trainUid
+                    }).FirstOrDefault();
+
+                if (tm != null)
+                {
+                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
+                    return tm;
+                }
+            }
+
+            return null;
+        }
+
+        public ExtendedTrainMovement GetTrainMovementById(string trainUid, DateTime date)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    [LiveTrain].[Id] AS [UniqueId]
+                    ,[LiveTrain].[TrainId] AS [Id]
+                    ,[LiveTrain].[Headcode] AS [HeadCode]
+                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
+                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
+                    ,[LiveTrain].[Toc] AS [TocId]
+                    ,[LiveTrain].[TrainUid] AS [TrainUid]
+                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
+                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                FROM [LiveTrain]
+                WHERE [LiveTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
+                {
+                    trainUid,
+                    date
+                }).FirstOrDefault();
+
+                if (tm != null)
+                {
+                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
+                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
+                    return tm;
+                }
+            }
+
+            return null;
+        }
+
+        private IEnumerable<TrainMovementStep> GetTmSteps(Guid trainId, DbConnection dbConnection)
+        {
+            const string tmsSql = @"
+                SELECT
+                    [EventType]
+                    ,[PlannedTimestamp] AS [PlannedTime]
+                    ,[ActualTimestamp]
+                    ,[ReportingStanox] AS [Stanox]
+                    ,[Platform]
+                    ,[Line] 
+                    ,[TrainTerminated] AS [Terminated]
+                    ,[ScheduleStopNumber]
+                FROM [LiveTrainStop]
+                WHERE [TrainId] = @trainId";
+
+            IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId }, dbConnection)
+                .ToList();
+            foreach (var tms in tmSteps)
+            {
+                if (tms.Terminated)
+                    tms.State = State.Terminated;
+            }
+
+            return tmSteps;
         }
 
         private IEnumerable<ExtendedCancellation> GetCancellations(IEnumerable<Guid> trainIds, DbConnection connection)
