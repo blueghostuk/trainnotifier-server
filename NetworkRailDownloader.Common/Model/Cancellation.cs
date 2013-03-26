@@ -7,6 +7,9 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public class Cancellation
     {
+        [IgnoreDataMember]
+        public Guid TrainId { get; set; }
+
         [DataMember]
         public string CancelledStanox { get; set; }
 

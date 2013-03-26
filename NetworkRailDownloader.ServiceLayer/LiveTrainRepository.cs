@@ -34,6 +34,7 @@ namespace TrainNotifier.Service
                 FROM [LiveTrain] 
                 WHERE [Activated] = 1  
                     AND [Terminated] = 0  
+                    AND [Archived] = 0
                     AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
             var activeTrains = Query<dynamic>(sql);
@@ -469,17 +470,20 @@ namespace TrainNotifier.Service
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
             if (tm == null)
             {
-                tm = ExecuteScalar<TrainMovementSchedule>(@"
-                    SELECT 
-                        [Id]
-                        ,[TrainId]
-                        ,[ScheduleTrain] AS [Schedule]
-                    FROM [LiveTrain] 
-                    WHERE [TrainId] = @trainId", new { trainId }, existingConnection);
-                if (tm != null)
-                {
-                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-                }
+//                tm = ExecuteScalar<TrainMovementSchedule>(@"
+//                    SELECT 
+//                        [Id]
+//                        ,[TrainId]
+//                        ,[ScheduleTrain] AS [Schedule]
+//                    FROM [LiveTrain] 
+//                    WHERE [TrainId] = @trainId
+//                        AND [Activated] = 1  
+//                        AND [Terminated] = 0  
+//                        AND [Archived] = 0", new { trainId }, existingConnection);
+//                if (tm != null)
+//                {
+//                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
+//                }
             }
             return tm != null && tm.Id != Guid.Empty;
         }
@@ -667,7 +671,6 @@ namespace TrainNotifier.Service
                         INSERT INTO [LiveTrainReinstatement]
                            ([TrainId]
                            ,[PlannedDepartureTime]
-                           ,[NewTiplocId]
                            ,[ReinstatedTiplocId])
                         VALUES
                            (@trainId

@@ -100,6 +100,64 @@ namespace TrainNotifier.Service
             }
         }
 
+        private IEnumerable<ExtendedCancellation> GetCancellations(IEnumerable<Guid> trainIds, DbConnection connection)
+        {
+            const string sql = @"
+                SELECT
+                    [LiveTrainCancellation].[TrainId]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[Stanox]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[LiveTrainCancellation].[Type]
+                    ,[DelayAttributionCodes].[Description]
+                    ,[CancelTiploc].[TiplocId]
+                    ,[CancelTiploc].[Tiploc]
+                    ,[CancelTiploc].[Nalco]
+                    ,[CancelTiploc].[Description]
+                    ,[CancelTiploc].[Stanox]
+                    ,[CancelTiploc].[CRS]
+                FROM [LiveTrainCancellation]
+                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
+                LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                WHERE [LiveTrainCancellation].[TrainId] IN @trainIds";
+
+            return connection.Query<ExtendedCancellation, TiplocCode, ExtendedCancellation>(sql,
+                (c, t) =>
+                {
+                    c.CancelledAt = t;
+                    return c;
+                }, new { trainIds }, splitOn: "TiplocId");
+        }
+
+        private IEnumerable<TrainReinstatement> GetCancellations(IEnumerable<Guid> trainIds, DbConnection connection)
+        {
+            const string sql = @"
+                SELECT
+                    [LiveTrainCancellation].[TrainId]
+                    ,[LiveTrainCancellation].[CancelledTimestamp]
+                    ,[LiveTrainCancellation].[Stanox]
+                    ,[LiveTrainCancellation].[ReasonCode]
+                    ,[LiveTrainCancellation].[Type]
+                    ,[DelayAttributionCodes].[Description]
+                    ,[CancelTiploc].[TiplocId]
+                    ,[CancelTiploc].[Tiploc]
+                    ,[CancelTiploc].[Nalco]
+                    ,[CancelTiploc].[Description]
+                    ,[CancelTiploc].[Stanox]
+                    ,[CancelTiploc].[CRS]
+                FROM [LiveTrainCancellation]
+                LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
+                LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                WHERE [LiveTrainCancellation].[TrainId] IN @trainIds";
+
+            return connection.Query<ExtendedCancellation, TiplocCode, ExtendedCancellation>(sql,
+                (c, t) =>
+                {
+                    c.CancelledAt = t;
+                    return c;
+                }, new { trainIds }, splitOn: "TiplocId");
+        }
+
         public IEnumerable<CallingAtTrainMovement> CallingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
