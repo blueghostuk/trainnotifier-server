@@ -29,7 +29,7 @@ namespace TrainNotifier.Common.Model
         {
             TrainChangeOfOrigin change = new TrainChangeOfOrigin();
             change.Stanox = (string)body.loc_stanox;
-            change.NewDepartureTime = UnixTsToDateTime((string)body.coo_timestamp);
+            change.NewDepartureTime = UnixTsToDateTime((string)body.dep_timestamp);
             change.ReasonCode = (string)body.reason_code;
 
             return change;
