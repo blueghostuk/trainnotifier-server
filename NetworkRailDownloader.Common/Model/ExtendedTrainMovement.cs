@@ -5,7 +5,7 @@ using TrainNotifier.Common.Model.Schedule;
 namespace TrainNotifier.Common.Model
 {
     [DataContract]
-    public class OriginTrainMovement : TrainMovement
+    public class OriginTrainMovement : ExtendedTrainMovement
     {
         [DataMember]
         public ScheduleTiploc Origin { get; set; }
@@ -15,12 +15,6 @@ namespace TrainNotifier.Common.Model
         public Guid? ScheduleId { get; set; }
         [DataMember]
         public AtocCode AtocCode { get; set; }
-        [DataMember]
-        public ExtendedCancellation Cancellation { get; set; }
-        [DataMember]
-        public Reinstatement Reinstatement { get; set; }
-        [DataMember]
-        public ChangeOfOrigin ChangeOfOrigin { get; set; }
         [DataMember]
         public DateTime? ActualDeparture { get; set; }
         [DataMember]

@@ -9,26 +9,26 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class TrainMovementController : ApiController
     {
-        private static readonly LiveTrainRepository _liveTrainRepo = new LiveTrainRepository();
         private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         [HttpGet]
-        public IEnumerable<TrainMovement> GetById(string id)
+        [Obsolete("Will be removed in future version")]
+        public ExtendedTrainMovement GetById(string id)
         {
-            return _liveTrainRepo.GetTrainMovementById(id);
+            return _tmRepo.GetTrainMovementById(id);
         }
 
         [HttpGet]
         public ExtendedTrainMovement GetWithUid(string id, string uid)
         {
-            return _liveTrainRepo.GetTrainMovementById(id, uid);
+            return _tmRepo.GetTrainMovementById(id, uid);
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
         public ExtendedTrainMovement GetForUid(string trainUid, DateTime date)
         {
-            return _liveTrainRepo.GetTrainMovementByUid(trainUid, date);
+            return _tmRepo.GetTrainMovementById(trainUid, date);
         }
 
         [HttpGet]

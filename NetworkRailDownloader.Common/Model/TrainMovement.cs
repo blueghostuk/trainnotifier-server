@@ -138,6 +138,10 @@ namespace TrainNotifier.Common.Model
     {
         [DataMember]
         public ExtendedCancellation Cancellation { get; set; }
+        [DataMember]
+        public Reinstatement Reinstatement { get; set; }
+        [DataMember]
+        public ChangeOfOrigin ChangeOfOrigin { get; set; }
     }
 
     [DataContract]
