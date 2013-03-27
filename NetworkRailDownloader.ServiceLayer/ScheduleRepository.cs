@@ -216,7 +216,7 @@ namespace TrainNotifier.Service
                     ,[DestTiploc].[CRS]
                 FROM [ScheduleTrain]
                 INNER JOIN [LiveTrain] ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
-                INNER JOIN [AtocCode]  ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
+                LEFT JOIN [AtocCode]  ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
                 WHERE   [LiveTrain].[TrainId] = @trainId
