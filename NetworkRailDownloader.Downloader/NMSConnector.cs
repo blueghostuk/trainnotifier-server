@@ -90,8 +90,9 @@ namespace TrainNotifier.Common.NMS
                     Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
                     Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
                     Task vstpDataTask = Task.Factory.StartNew(() => GetVSTPData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+                    Task rtppmTask = Task.Factory.StartNew(() => GetRtPPMData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-                    Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask }, _cancellationTokenSource.Token);
+                    Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask, rtppmTask }, _cancellationTokenSource.Token);
                     if (!cm.QuitOk)
                     {
                         Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
@@ -100,6 +101,31 @@ namespace TrainNotifier.Common.NMS
                     }
                     _cancellationTokenSource.Cancel();
                     Trace.TraceInformation("Closing connection to: {0}", connection);
+                }
+            }
+        }
+
+        private void GetRtPPMData(IConnection connection, CancellationToken cancellationToken)
+        {
+            string rtppmTopic = ConfigurationManager.AppSettings["RTPPMFeedName"];
+            if (!string.IsNullOrEmpty(rtppmTopic))
+            {
+                using (ISession session = connection.CreateSession())
+                {
+                    ITopic topic = session.GetTopic(rtppmTopic);
+                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "rtppm"))
+                    {
+                        Trace.TraceInformation("Created consumer to {0}", topic);
+                        // dont check expiry
+                        MessageConsumer messageConsumer = consumer as MessageConsumer;
+                        if (messageConsumer != null)
+                        {
+                            messageConsumer.CheckExpiry = false;
+                        }
+
+                        consumer.Listener += rtppm_Listener;
+                        cancellationToken.WaitHandle.WaitOne();
+                    }
                 }
             }
         }
@@ -214,6 +240,15 @@ namespace TrainNotifier.Common.NMS
             if (!string.IsNullOrEmpty(text))
             {
                 RaiseDataRecd(Feed.VSTP, text);
+            }
+        }
+
+        private void rtppm_Listener(IMessage message)
+        {
+            string text = ParseData(message);
+            if (!string.IsNullOrEmpty(text))
+            {
+                RaiseDataRecd(Feed.RtPPM, text);
             }
         }
 

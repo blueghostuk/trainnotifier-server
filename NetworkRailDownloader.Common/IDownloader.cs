@@ -27,7 +27,8 @@ namespace TrainNotifier.Common
     {
         TrainMovement,
         TrainDescriber,
-        VSTP
+        VSTP,
+        RtPPM
     }
 
     public enum ScheduleType
