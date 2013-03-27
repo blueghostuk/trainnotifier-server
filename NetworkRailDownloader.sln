@@ -40,6 +40,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Schedule.Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.Archiver", "TrainNotifier.Console.Archiver\TrainNotifier.Console.Archiver.csproj", "{D5E74111-8009-4B3B-91C2-20E9DD3922B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{5E7540AE-9709-449F-BDC9-E03801884EB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Azure|Any CPU = Azure|Any CPU
@@ -159,6 +161,16 @@ Global
 		{D5E74111-8009-4B3B-91C2-20E9DD3922B6}.Debug-Staging|Any CPU.Build.0 = Debug-Staging|Any CPU
 		{D5E74111-8009-4B3B-91C2-20E9DD3922B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5E74111-8009-4B3B-91C2-20E9DD3922B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Azure|Any CPU.ActiveCfg = Release|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Azure|Any CPU.Build.0 = Release|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug-Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug-Local|Any CPU.Build.0 = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug-Staging|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E7540AE-9709-449F-BDC9-E03801884EB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

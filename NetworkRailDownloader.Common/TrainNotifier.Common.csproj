@@ -73,6 +73,7 @@
     <Compile Include="Model\TrainMovementStep.cs" />
     <Compile Include="Model\TrainReinstatement.cs" />
     <Compile Include="Model\VSTP\VSTPMapper.cs" />
+    <Compile Include="NMSModel\RtppmData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ICacheService.cs" />
     <Compile Include="TraceHelper.cs" />
