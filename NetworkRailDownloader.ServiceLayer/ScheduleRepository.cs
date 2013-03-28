@@ -182,10 +182,10 @@ namespace TrainNotifier.Service
             });
         }
 
-        public ScheduleTrain GetTrainByUid(string trainId, string trainUid)
+        public ScheduleTrain GetTrainByUid(string trainUid, DateTime date)
         {
             const string sql = @"
-                SELECT 
+                SELECT TOP 1
                      [ScheduleTrain].[ScheduleId]
                     ,[ScheduleTrain].[TrainUid]
                     ,[ScheduleTrain].[StartDate]
@@ -219,8 +219,8 @@ namespace TrainNotifier.Service
                 LEFT JOIN [AtocCode]  ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                WHERE   [LiveTrain].[TrainId] = @trainId
-                    AND [LiveTrain].[TrainUId] = @trainUid";
+                WHERE [LiveTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
+                ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
 
             ScheduleTrain train = null;
 
@@ -249,8 +249,8 @@ namespace TrainNotifier.Service
                     },
                     new
                     {
-                        trainId,
-                        trainUid
+                        trainUid,
+                        date
                     },
                     splitOn: "Code,RunsMonday,TiplocId,TiplocId").FirstOrDefault();
 

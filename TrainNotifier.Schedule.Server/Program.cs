@@ -38,7 +38,7 @@ namespace TrainNotifier.Schedule.Server
                 {
                     ScheduleService.DownloadSchedule(gzFile,
                         // defaults to all
-                        options.Toc, 
+                        options.Toc,
                         // defaults to daily
                         options.ScheduleType,
                         // defaults to previous day (e.g. on monday download sunday - http://nrodwiki.rockshore.net/index.php/Schedule)
@@ -56,9 +56,9 @@ namespace TrainNotifier.Schedule.Server
                         {
                             using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
                             {
-                                Trace.TraceInformation("Decompressing {0} to {1}", gzFile, jsonFile);
+                                Console.WriteLine("Decompressing {0} to {1}", gzFile, jsonFile);
                                 decompressionStream.CopyTo(decompressedFileStream);
-                                Trace.TraceInformation("Decompressed: {0}", jsonFile);
+                                Console.WriteLine("Decompressed: {0}", jsonFile);
                             }
                         }
                     }
@@ -74,7 +74,20 @@ namespace TrainNotifier.Schedule.Server
                         var rowData = JsonConvert.DeserializeObject<dynamic>(row);
                         try
                         {
-                            if (rowData.JsonScheduleV1 != null)
+                            if (rowData.JsonTimetableV1 != null 
+                                && options.ScheduleType == ScheduleType.DailyUpdate 
+                                && !options.Day.HasValue)
+                            {
+                                DateTime dateCheck = DateTime.Today;
+                                DateTime unixTs = new DateTime(1970, 1, 1);
+                                DateTime date = unixTs.AddSeconds((double)rowData.JsonTimetableV1.timestamp);
+                                if (date.Date != dateCheck)
+                                {
+                                    throw new Exception(string.Format("Time stamp in file is for {0:dd/MM/yyyy} but requested {1:dd/MM/yyyy}",
+                                        date, dateCheck));
+                                }
+                            }
+                            else if (rowData.JsonScheduleV1 != null)
                             {
                                 AddSchedule(tiprep, tiplocs, schedrep, rowData);
                             }

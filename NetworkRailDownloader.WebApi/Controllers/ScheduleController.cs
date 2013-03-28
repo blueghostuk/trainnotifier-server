@@ -1,4 +1,5 @@
-﻿using System.Web.Http;
+﻿using System;
+using System.Web.Http;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Service;
@@ -7,13 +8,13 @@ namespace TrainNotifier.Console.WebApi.Controllers
 {
     public class ScheduleController : ApiController
     {
-        // cache for 12 hrs
-        [CachingActionFilterAttribute(60 * 60 * 12)]
-        public ScheduleTrain GetByUid(string trainId, string trainUid)
+        // cache for 24 hrs
+        [CachingActionFilterAttribute(60 * 60 * 24)]
+        public ScheduleTrain GetByUid(string trainUid, DateTime date)
         {
             ScheduleRepository sr = new ScheduleRepository();
 
-            return sr.GetTrainByUid(trainId, trainUid);
+            return sr.GetTrainByUid(trainUid, date);
         }
     }
 }

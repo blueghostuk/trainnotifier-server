@@ -179,6 +179,7 @@ namespace TrainNotifier.Service
                             [TrainUid] = @trainUid
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
+                        AND [Deleted] = 0
                         {0}
                     ORDER BY [STPIndicatorId]";
 
