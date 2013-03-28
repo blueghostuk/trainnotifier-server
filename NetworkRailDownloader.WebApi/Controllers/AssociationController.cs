@@ -11,7 +11,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
     public class AssociationController : ApiController
     {
         [CachingActionFilterAttribute(60 * 60 * 24)]
-        public IEnumerable<Association> GetForTrain(string trainUid, [FromUri]DateTime date)
+        public IEnumerable<Association> GetForTrain(string trainUid, DateTime date)
         {
             AssociationRepository ar = new AssociationRepository();
 
