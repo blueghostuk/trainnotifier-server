@@ -18,7 +18,7 @@ namespace TrainNotifier.ScheduleLibrary
         public static void DownloadSchedule(string filePath, Toc toc = Toc.All, ScheduleType schedule = ScheduleType.Full, DayOfWeek? day = null)
         {
             Uri requestUri = new Uri(string.Format("{0}?type={1}&day={2}", (object)ConfigurationManager.AppSettings["ScheduleUri"], (object)string.Format("CIF_{0}_{1}_DAILY", (object)TocHelper.TocToString(toc), (object)TocHelper.ScheduleTypeToString(schedule)), (object)TocHelper.ScheduleTypeToDay(schedule, day)));
-            Trace.TraceInformation("Downloading file: {0}", requestUri);
+            Trace.TraceInformation("Downloading file: {0} to {1}", requestUri, filePath);
             byte[] buffer = new byte[4096];
             WebRequest webRequest = WebRequest.Create(requestUri);
             webRequest.Timeout = (int)TimeSpan.FromMinutes((double)int.Parse(ConfigurationManager.AppSettings["ScheduleTimeoutMins"])).TotalMilliseconds;
@@ -34,7 +34,7 @@ namespace TrainNotifier.ScheduleLibrary
                         int counter = 0;
                         do
                         {
-                            Trace.WriteLine(string.Format("Downloading bytes {0}", counter * 4096));
+                            Console.WriteLine("Downloading bytes {0}", counter * 4096);
                             count = responseStream.Read(buffer, 0, buffer.Length);
                             memoryStream.Write(buffer, 0, count);
                             counter++;

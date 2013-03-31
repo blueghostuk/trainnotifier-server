@@ -48,5 +48,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
             endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
             return _tmRepo.CallingAt(stanox, startDate, endDate);
         }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public IEnumerable<OriginTrainMovement> TerminatingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.Date;
+            endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
+            return _tmRepo.TerminatingAtStation(stanox, startDate, endDate);
+        }
     }
 }
