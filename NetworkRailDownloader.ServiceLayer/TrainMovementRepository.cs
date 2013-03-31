@@ -281,6 +281,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
+                    ,[DestinationStop].[Pass]
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
                     ,[OriginTiploc].[TiplocId]
@@ -318,8 +319,7 @@ namespace TrainNotifier.Service
 	                AND [DestinationStop].[TiplocId] IN @toTiplocs
 	                AND [OriginStop].[StopNumber] < [DestinationStop].[StopNumber]
                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate
-                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
+                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
