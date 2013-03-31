@@ -56,6 +56,7 @@
     <Compile Include="DataArchiveRepository.cs" />
     <Compile Include="LiveTrainRepository.cs" />
     <Compile Include="DbRepository.cs" />
+    <Compile Include="PPMDataRepository.cs" />
     <Compile Include="ScheduleRepository.cs" />
     <Compile Include="TiplocRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
