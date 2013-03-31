@@ -404,7 +404,6 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-	                ,[DestinationStop].[Pass]
 					,[ScheduleTrainStop].[Pass]
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
