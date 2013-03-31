@@ -58,6 +58,7 @@
     <Compile Include="Model\ChangeOfOrigin.cs" />
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\ExtendedTrainMovement.cs" />
+    <Compile Include="Model\ICacheableItem.cs" />
     <Compile Include="Model\Reinstatement.cs" />
     <Compile Include="Model\Schedule\Enumerations.cs" />
     <Compile Include="Model\ITrainData.cs" />

@@ -92,6 +92,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionFilters\CacheableItemFilterAttribute.cs" />
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
     <Compile Include="Config\RouteConfig.cs" />
     <Compile Include="Controllers\AssociationController.cs" />
