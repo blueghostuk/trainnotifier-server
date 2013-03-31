@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
@@ -53,6 +54,7 @@ namespace TrainNotifier.Service
             return ExecuteScalar<short>(sql, new { tiploc });
         }
 
+        [Obsolete("Update code to use GetByStanoxs")]
         public StationTiploc GetByStanox(string stanox)
         {
             const string sql = @"
@@ -72,6 +74,29 @@ namespace TrainNotifier.Service
 
             // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { stanox }).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// There can be more than one location per stanox
+        /// </summary>
+        public IEnumerable<StationTiploc> GetByStanoxs(string stanox)
+        {
+            const string sql = @"
+                SELECT 
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox],
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
+                FROM [Tiploc]
+                LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
+                WHERE [Tiploc].[Stanox] = @stanox";
+
+            return Query<StationTiploc>(sql, new { stanox });
         }
 
         public StationTiploc GetByStationName(string stationName)
