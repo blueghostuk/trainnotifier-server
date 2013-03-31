@@ -23,6 +23,4 @@ namespace TrainNotifier.Console.WebApi.ActionFilters
             //base.OnActionExecuted(actionExecutedContext);
         }
     }
-
-    internal sealed
 }

@@ -2,6 +2,7 @@
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.PPM;
 
 namespace TrainNotifier.Common.Services
 {
@@ -13,6 +14,8 @@ namespace TrainNotifier.Common.Services
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainChangeOfOrigin))]
     [ServiceKnownType(typeof(TrainReinstatement))]
+    [ServiceKnownType(typeof(RtppmData))]
+    [ServiceKnownType(typeof(PPMRecord))]
     [ServiceKnownType(typeof(CaTD))]
     [ServiceKnownType(typeof(CbTD))]
     [ServiceKnownType(typeof(CcTD))]
@@ -27,5 +30,8 @@ namespace TrainNotifier.Common.Services
 
         [OperationContract]
         void CacheVSTPSchedule(ScheduleTrain train);
+
+        [OperationContract]
+        void CachePPMData(RtppmData data);
     }
 }

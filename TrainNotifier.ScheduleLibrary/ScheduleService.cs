@@ -1,15 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using TrainNotifier.Common;
-using TrainNotifier.Common.Model.Schedule;
-using TrainNotifier.Service;
 
 namespace TrainNotifier.ScheduleLibrary
 {

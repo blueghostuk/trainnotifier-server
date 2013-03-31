@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.PPM;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
 
@@ -38,6 +39,14 @@ namespace TrainNotifier.WcfLibrary
             Task.Run(() =>
             {
                 _scheduleRepository.InsertSchedule(train, ScheduleSource.VSTP);
+            });
+        }
+
+        public void CachePPMData(RtppmData data)
+        {
+            Task.Run(() =>
+            {
+
             });
         }
     }
