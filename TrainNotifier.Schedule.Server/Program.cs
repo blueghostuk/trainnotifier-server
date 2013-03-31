@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -30,8 +29,9 @@ namespace TrainNotifier.Schedule.Server
             var aRep = new AssociationRepository();
 
             string tempDir = Path.GetTempPath();
-            string gzFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.gz", DateTime.UtcNow));
-            string jsonFile = Path.Combine(tempDir, string.Format("{0:ddMMyyyy}.json", DateTime.UtcNow));
+            Trace.TraceInformation("Temporary Directory is {0}", tempDir);
+            string gzFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.gz", DateTime.UtcNow));
+            string jsonFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.json", DateTime.UtcNow));
             try
             {
                 if (options.Force || !File.Exists(gzFile))
@@ -112,6 +112,7 @@ namespace TrainNotifier.Schedule.Server
                     File.Delete(gzFile);
                     File.Delete(jsonFile);
                 }
+                TraceHelper.FlushLog();
             }
         }
 
