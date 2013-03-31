@@ -1,6 +1,6 @@
 USE [natrail]
 GO
-/****** Object:  Table [dbo].[Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,7 +9,7 @@ CREATE TABLE [dbo].[Tiploc](
 	[TiplocId] [smallint] IDENTITY(1,1) NOT NULL,
 	[Tiploc] [nvarchar](7) NOT NULL,
 	[Nalco] [nvarchar](6) NULL,
-	[Description] [nvarchar](26) NULL,
+	[Description] [nvarchar](40) NULL,
 	[Stanox] [nvarchar](5) NULL,
 	[CRS] [nvarchar](3) NULL,
 	[Deleted] [bit] NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE [dbo].[Tiploc](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TDArea]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[TDArea]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -33,7 +33,7 @@ CREATE TABLE [dbo].[TDArea](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[STPIndicator]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[STPIndicator]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -48,7 +48,7 @@ CREATE TABLE [dbo].[STPIndicator](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -75,7 +75,7 @@ CREATE TABLE [dbo].[LiveTrain](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[DelayAttributionCodes]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[DelayAttributionCodes]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -89,7 +89,7 @@ CREATE TABLE [dbo].[DelayAttributionCodes](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[AtocCode]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[AtocCode]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -103,7 +103,7 @@ CREATE TABLE [dbo].[AtocCode](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ScheduleStatus]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[ScheduleStatus]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -118,7 +118,7 @@ CREATE TABLE [dbo].[ScheduleStatus](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ScheduleSource]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[ScheduleSource]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -132,7 +132,7 @@ CREATE TABLE [dbo].[ScheduleSource](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainStopArchive]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainStopArchive]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -146,7 +146,7 @@ CREATE TABLE [dbo].[LiveTrainStopArchive](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainStop]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainStop]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -168,7 +168,7 @@ CREATE TABLE [dbo].[LiveTrainStop](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainReinstatement]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainReinstatement]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -176,15 +176,16 @@ GO
 CREATE TABLE [dbo].[LiveTrainReinstatement](
 	[TrainReinstatementId] [uniqueidentifier] NOT NULL,
 	[TrainId] [uniqueidentifier] NOT NULL,
-	[PlannedDepartureTime] [datetime] NULL,
-	[ReinstatedTiplocId] [smallint] NULL,
+	[PlannedDepartureTime] [datetime] NOT NULL,
+	[ReinstatedTiplocId] [smallint] NOT NULL,
+	[ReinstatementTime] [datetime] NULL,
  CONSTRAINT [PK_LiveTrainReinstatement] PRIMARY KEY CLUSTERED 
 (
 	[TrainReinstatementId] ASC
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainChangeOfOrigin]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainChangeOfOrigin]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -192,16 +193,17 @@ GO
 CREATE TABLE [dbo].[LiveTrainChangeOfOrigin](
 	[TrainChangeOfOriginId] [uniqueidentifier] NOT NULL,
 	[TrainId] [uniqueidentifier] NOT NULL,
-	[ReasonCode] [nchar](2) NOT NULL,
+	[ReasonCode] [nchar](2) NULL,
 	[NewTiplocId] [smallint] NOT NULL,
-	[NewDepartureTime] [datetime] NULL,
+	[NewDepartureTime] [datetime] NOT NULL,
+	[ChangedTime] [datetime] NULL,
  CONSTRAINT [PK_LiveTrainChangeOfOrigin] PRIMARY KEY CLUSTERED 
 (
 	[TrainChangeOfOriginId] ASC
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainCancellation]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainCancellation]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -219,7 +221,7 @@ CREATE TABLE [dbo].[LiveTrainCancellation](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[LiveTrainBerth]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[LiveTrainBerth]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -239,7 +241,7 @@ CREATE TABLE [dbo].[LiveTrainBerth](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TrainAssociation]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[TrainAssociation]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -268,7 +270,7 @@ CREATE TABLE [dbo].[TrainAssociation](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ScheduleTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[ScheduleTrain]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -299,7 +301,7 @@ CREATE TABLE [dbo].[ScheduleTrain](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Station]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[Station]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -318,7 +320,7 @@ CREATE TABLE [dbo].[Station](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ScheduleTrainStop]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Table [dbo].[ScheduleTrainStop]    Script Date: 03/31/2013 23:27:07 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -348,223 +350,223 @@ CREATE TABLE [dbo].[ScheduleTrainStop](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Default [DF_LiveTrain_Id]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrain_Id]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrain] ADD  CONSTRAINT [DF_LiveTrain_Id]  DEFAULT (newsequentialid()) FOR [Id]
 GO
-/****** Object:  Default [DF_LiveTrain_Activated]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrain_Activated]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrain] ADD  CONSTRAINT [DF_LiveTrain_Activated]  DEFAULT ((1)) FOR [Activated]
 GO
-/****** Object:  Default [DF_LiveTrain_Cancelled]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrain_Cancelled]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrain] ADD  CONSTRAINT [DF_LiveTrain_Cancelled]  DEFAULT ((0)) FOR [Cancelled]
 GO
-/****** Object:  Default [DF_LiveTrain_Terminated]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrain_Terminated]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrain] ADD  CONSTRAINT [DF_LiveTrain_Terminated]  DEFAULT ((0)) FOR [Terminated]
 GO
-/****** Object:  Default [DF_LiveTrain_Archived]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrain_Archived]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrain] ADD  CONSTRAINT [DF_LiveTrain_Archived]  DEFAULT ((0)) FOR [Archived]
 GO
-/****** Object:  Default [DF_LiveTrainBerth_TrainBerthId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainBerth_TrainBerthId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainBerth] ADD  CONSTRAINT [DF_LiveTrainBerth_TrainBerthId]  DEFAULT (newsequentialid()) FOR [TrainBerthId]
 GO
-/****** Object:  Default [DF_LiveTrainCancellation_TrainCancellationId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainCancellation_TrainCancellationId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainCancellation] ADD  CONSTRAINT [DF_LiveTrainCancellation_TrainCancellationId]  DEFAULT (newsequentialid()) FOR [TrainCancellationId]
 GO
-/****** Object:  Default [DF_LiveTrainChangeOfOrigin_TrainChangeOfOriginId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainChangeOfOrigin_TrainChangeOfOriginId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin] ADD  CONSTRAINT [DF_LiveTrainChangeOfOrigin_TrainChangeOfOriginId]  DEFAULT (newsequentialid()) FOR [TrainChangeOfOriginId]
 GO
-/****** Object:  Default [DF_LiveTrainReinstatement_TrainReinstatementId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainReinstatement_TrainReinstatementId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainReinstatement] ADD  CONSTRAINT [DF_LiveTrainReinstatement_TrainReinstatementId]  DEFAULT (newsequentialid()) FOR [TrainReinstatementId]
 GO
-/****** Object:  Default [DF_LiveTrainStop_TrainStopId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainStop_TrainStopId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainStop] ADD  CONSTRAINT [DF_LiveTrainStop_TrainStopId]  DEFAULT (newsequentialid()) FOR [TrainStopId]
 GO
-/****** Object:  Default [DF_LiveTrainStop_TrainTerminated]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_LiveTrainStop_TrainTerminated]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainStop] ADD  CONSTRAINT [DF_LiveTrainStop_TrainTerminated]  DEFAULT ((0)) FOR [TrainTerminated]
 GO
-/****** Object:  Default [DF_ScheduleTrain_ScheduleId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_ScheduleId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_ScheduleId]  DEFAULT (newsequentialid()) FOR [ScheduleId]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsMonday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsMonday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsMonday]  DEFAULT ((0)) FOR [RunsMonday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsTuesday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsTuesday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsTuesday]  DEFAULT ((0)) FOR [RunsTuesday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsWednesday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsWednesday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsWednesday]  DEFAULT ((0)) FOR [RunsWednesday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsThursday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsThursday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsThursday]  DEFAULT ((0)) FOR [RunsThursday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsFriday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsFriday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsFriday]  DEFAULT ((0)) FOR [RunsFriday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsSaturday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsSaturday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsSaturday]  DEFAULT ((0)) FOR [RunsSaturday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsSunday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsSunday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsSunday]  DEFAULT ((0)) FOR [RunsSunday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_RunsBankHoliday]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_RunsBankHoliday]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_RunsBankHoliday]  DEFAULT ((0)) FOR [RunsBankHoliday]
 GO
-/****** Object:  Default [DF_ScheduleTrain_Deleted]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_Deleted]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_Deleted]  DEFAULT ((0)) FOR [Deleted]
 GO
-/****** Object:  Default [DF_ScheduleTrain_Source]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrain_Source]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain] ADD  CONSTRAINT [DF_ScheduleTrain_Source]  DEFAULT ((0)) FOR [Source]
 GO
-/****** Object:  Default [DF_ScheduleTrainStop_Origin]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrainStop_Origin]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrainStop] ADD  CONSTRAINT [DF_ScheduleTrainStop_Origin]  DEFAULT ((0)) FOR [Origin]
 GO
-/****** Object:  Default [DF_ScheduleTrainStop_Intermediate]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrainStop_Intermediate]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrainStop] ADD  CONSTRAINT [DF_ScheduleTrainStop_Intermediate]  DEFAULT ((0)) FOR [Intermediate]
 GO
-/****** Object:  Default [DF_ScheduleTrainStop_Terminate]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_ScheduleTrainStop_Terminate]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrainStop] ADD  CONSTRAINT [DF_ScheduleTrainStop_Terminate]  DEFAULT ((0)) FOR [Terminate]
 GO
-/****** Object:  Default [DF_Tiploc_Deleted]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_Tiploc_Deleted]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[Tiploc] ADD  CONSTRAINT [DF_Tiploc_Deleted]  DEFAULT ((0)) FOR [Deleted]
 GO
-/****** Object:  Default [DF_TrainAssociation_AssociationId]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_TrainAssociation_AssociationId]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[TrainAssociation] ADD  CONSTRAINT [DF_TrainAssociation_AssociationId]  DEFAULT (newsequentialid()) FOR [AssociationId]
 GO
-/****** Object:  Default [DF_TrainAssociation_Deleted]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  Default [DF_TrainAssociation_Deleted]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[TrainAssociation] ADD  CONSTRAINT [DF_TrainAssociation_Deleted]  DEFAULT ((0)) FOR [Deleted]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainBerth_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainBerth_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainBerth]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainBerth_LiveTrain] FOREIGN KEY([TrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainBerth] CHECK CONSTRAINT [FK_LiveTrainBerth_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainBerth_TDArea]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainBerth_TDArea]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainBerth]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainBerth_TDArea] FOREIGN KEY([AreaId])
 REFERENCES [dbo].[TDArea] ([TDAreaId])
 GO
 ALTER TABLE [dbo].[LiveTrainBerth] CHECK CONSTRAINT [FK_LiveTrainBerth_TDArea]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainCancellation_DelayAttributionCodes]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainCancellation_DelayAttributionCodes]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainCancellation]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainCancellation_DelayAttributionCodes] FOREIGN KEY([ReasonCode])
 REFERENCES [dbo].[DelayAttributionCodes] ([ReasonCode])
 GO
 ALTER TABLE [dbo].[LiveTrainCancellation] CHECK CONSTRAINT [FK_LiveTrainCancellation_DelayAttributionCodes]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainCancellation_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainCancellation_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainCancellation]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainCancellation_LiveTrain] FOREIGN KEY([TrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainCancellation] CHECK CONSTRAINT [FK_LiveTrainCancellation_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainCancellation_LiveTrainCancellation]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainCancellation_LiveTrainCancellation]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainCancellation]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainCancellation_LiveTrainCancellation] FOREIGN KEY([TrainCancellationId])
 REFERENCES [dbo].[LiveTrainCancellation] ([TrainCancellationId])
 GO
 ALTER TABLE [dbo].[LiveTrainCancellation] CHECK CONSTRAINT [FK_LiveTrainCancellation_LiveTrainCancellation]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_DelayAttributionCodes]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_DelayAttributionCodes]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainChangeOfOrigin_DelayAttributionCodes] FOREIGN KEY([ReasonCode])
 REFERENCES [dbo].[DelayAttributionCodes] ([ReasonCode])
 GO
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin] CHECK CONSTRAINT [FK_LiveTrainChangeOfOrigin_DelayAttributionCodes]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainChangeOfOrigin_LiveTrain] FOREIGN KEY([TrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin] CHECK CONSTRAINT [FK_LiveTrainChangeOfOrigin_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainChangeOfOrigin_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainChangeOfOrigin_Tiploc] FOREIGN KEY([NewTiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[LiveTrainChangeOfOrigin] CHECK CONSTRAINT [FK_LiveTrainChangeOfOrigin_Tiploc]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainReinstatement_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainReinstatement_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainReinstatement]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainReinstatement_LiveTrain] FOREIGN KEY([TrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainReinstatement] CHECK CONSTRAINT [FK_LiveTrainReinstatement_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainReinstatement_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainReinstatement_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainReinstatement]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainReinstatement_Tiploc] FOREIGN KEY([ReinstatedTiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[LiveTrainReinstatement] CHECK CONSTRAINT [FK_LiveTrainReinstatement_Tiploc]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainStop_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainStop_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainStop]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainStop_LiveTrain] FOREIGN KEY([TrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainStop] CHECK CONSTRAINT [FK_LiveTrainStop_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_LiveTrainStopArchive_LiveTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_LiveTrainStopArchive_LiveTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[LiveTrainStopArchive]  WITH CHECK ADD  CONSTRAINT [FK_LiveTrainStopArchive_LiveTrain] FOREIGN KEY([LiveTrainId])
 REFERENCES [dbo].[LiveTrain] ([Id])
 GO
 ALTER TABLE [dbo].[LiveTrainStopArchive] CHECK CONSTRAINT [FK_LiveTrainStopArchive_LiveTrain]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_AtocCode]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_AtocCode]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_AtocCode] FOREIGN KEY([AtocCode])
 REFERENCES [dbo].[AtocCode] ([AtocCode])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_AtocCode]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_ScheduleSource]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_ScheduleSource]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_ScheduleSource] FOREIGN KEY([Source])
 REFERENCES [dbo].[ScheduleSource] ([ScheduleSourceId])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_ScheduleSource]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_ScheduleStatus]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_ScheduleStatus]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_ScheduleStatus] FOREIGN KEY([ScheduleStatusId])
 REFERENCES [dbo].[ScheduleStatus] ([StatusId])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_ScheduleStatus]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_STPIndicator]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_STPIndicator]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_STPIndicator] FOREIGN KEY([STPIndicatorId])
 REFERENCES [dbo].[STPIndicator] ([STPIndicatorId])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_STPIndicator]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_Tiploc] FOREIGN KEY([OriginStopTiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_Tiploc]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrain_Tiploc1]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrain_Tiploc1]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrain]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrain_Tiploc1] FOREIGN KEY([DestinationStopTiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[ScheduleTrain] CHECK CONSTRAINT [FK_ScheduleTrain_Tiploc1]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrainStop_ScheduleTrain]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrainStop_ScheduleTrain]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrainStop]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrainStop_ScheduleTrain] FOREIGN KEY([ScheduleId])
 REFERENCES [dbo].[ScheduleTrain] ([ScheduleId])
 GO
 ALTER TABLE [dbo].[ScheduleTrainStop] CHECK CONSTRAINT [FK_ScheduleTrainStop_ScheduleTrain]
 GO
-/****** Object:  ForeignKey [FK_ScheduleTrainStop_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_ScheduleTrainStop_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[ScheduleTrainStop]  WITH CHECK ADD  CONSTRAINT [FK_ScheduleTrainStop_Tiploc] FOREIGN KEY([TiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[ScheduleTrainStop] CHECK CONSTRAINT [FK_ScheduleTrainStop_Tiploc]
 GO
-/****** Object:  ForeignKey [FK_Station_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_Station_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[Station]  WITH CHECK ADD  CONSTRAINT [FK_Station_Tiploc] FOREIGN KEY([TiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
 ALTER TABLE [dbo].[Station] CHECK CONSTRAINT [FK_Station_Tiploc]
 GO
-/****** Object:  ForeignKey [FK_TrainAssociation_STPIndicator]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_TrainAssociation_STPIndicator]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[TrainAssociation]  WITH CHECK ADD  CONSTRAINT [FK_TrainAssociation_STPIndicator] FOREIGN KEY([STPIndicatorId])
 REFERENCES [dbo].[STPIndicator] ([STPIndicatorId])
 GO
 ALTER TABLE [dbo].[TrainAssociation] CHECK CONSTRAINT [FK_TrainAssociation_STPIndicator]
 GO
-/****** Object:  ForeignKey [FK_TrainAssociation_Tiploc]    Script Date: 03/25/2013 23:53:40 ******/
+/****** Object:  ForeignKey [FK_TrainAssociation_Tiploc]    Script Date: 03/31/2013 23:27:07 ******/
 ALTER TABLE [dbo].[TrainAssociation]  WITH CHECK ADD  CONSTRAINT [FK_TrainAssociation_Tiploc] FOREIGN KEY([LocationTiplocId])
 REFERENCES [dbo].[Tiploc] ([TiplocId])
 GO
