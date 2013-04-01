@@ -2,6 +2,7 @@
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.PPM;
 using TrainNotifier.Common.Services;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -23,6 +24,12 @@ namespace TrainNotifier.Console.WebSocketServer
         public void CacheVSTPSchedule(ScheduleTrain train)
         {
             base.Channel.CacheVSTPSchedule(train);
+        }
+
+
+        public void CachePPMData(RtppmData data)
+        {
+            base.Channel.CachePPMData(data);
         }
     }
 }
