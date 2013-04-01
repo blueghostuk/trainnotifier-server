@@ -252,7 +252,7 @@ namespace TrainNotifier.Service
             }
         }
 
-        public IEnumerable<CallingAtTrainMovement> CallingAt(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<CallingAtStationsTrainMovement> CallingAt(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.AddDays(1);
@@ -264,7 +264,7 @@ namespace TrainNotifier.Service
                 .Select(t => t.TiplocId);
 
             if (!fromTiplocs.Any() || !toTiplocs.Any())
-                return Enumerable.Empty<CallingAtTrainMovement>();
+                return Enumerable.Empty<CallingAtStationsTrainMovement>();
 
             const string sql = @"
                 SELECT
@@ -281,6 +281,10 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
+                    ,[DestinationStop].[PublicArrival] AS [DestExpectedArrival]
+                    ,[DestinationStop].[PublicDeparture] AS [DestExpectedDeparture]
+                    ,[ToActualArrival].[ActualTimestamp] AS [DestActualArrival]
+                    ,[ToActualDeparture].[ActualTimestamp] AS [DestActualDeparture]
                     ,[DestinationStop].[Pass]
                     ,[AtocCode].[AtocCode] AS [Code]
                     ,[AtocCode].[Name]
@@ -315,6 +319,12 @@ namespace TrainNotifier.Service
 				LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
 					AND [ActualArrival].[ScheduleStopNumber] = [OriginStop].[StopNumber]
 					AND [ActualArrival].[EventType] = 'ARRIVAL'
+                LEFT JOIN [LiveTrainStop] [ToActualArrival] ON [LiveTrain].[Id] = [ToActualArrival].[TrainId] 
+					AND [ToActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
+					AND [ToActualArrival].[EventType] = 'ARRIVAL'
+                LEFT JOIN [LiveTrainStop] [ToActualDeparture] ON [LiveTrain].[Id] = [ToActualDeparture].[TrainId] 
+					AND [ToActualDeparture].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
+					AND [ToActualDeparture].[EventType] = 'DEPARTURE'
                 WHERE   [OriginStop].[TiplocId] IN @fromTiplocs
 	                AND [DestinationStop].[TiplocId] IN @toTiplocs
 	                AND [OriginStop].[StopNumber] < [DestinationStop].[StopNumber]
@@ -323,8 +333,8 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                List<CallingAtTrainMovement> trains
-                    = dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtTrainMovement>(
+                List<CallingAtStationsTrainMovement> trains
+                    = dbConnection.Query<CallingAtStationsTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtStationsTrainMovement>(
                     sql,
                     (tm, ac, ot, dt) =>
                     {

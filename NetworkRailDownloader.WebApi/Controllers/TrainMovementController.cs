@@ -51,7 +51,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<CallingAtTrainMovement> CallingAtStations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<CallingAtStationsTrainMovement> CallingAtStations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
