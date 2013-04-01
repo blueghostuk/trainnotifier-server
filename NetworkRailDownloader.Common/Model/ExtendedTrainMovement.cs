@@ -22,9 +22,22 @@ namespace TrainNotifier.Common.Model
     }
 
     [DataContract]
-    public sealed class CallingAtTrainMovement : OriginTrainMovement
+    public class CallingAtTrainMovement : OriginTrainMovement
     {
         [DataMember]
         public TimeSpan? Pass { get; set; }
+    }
+
+    [DataContract]
+    public class CallingAtStationsTrainMovement : CallingAtTrainMovement
+    {
+        [DataMember]
+        public TimeSpan? DestExpectedArrival { get; set; }
+        [DataMember]
+        public TimeSpan? DestExpectedDeparture { get; set; }
+        [DataMember]
+        public DateTime? DestActualDeparture { get; set; }
+        [DataMember]
+        public DateTime? DestActualArrival { get; set; }
     }
 }
