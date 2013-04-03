@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Configuration;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.MessageHandlers
 {
@@ -25,9 +27,9 @@ namespace TrainNotifier.Console.WebApi.MessageHandlers
             }
         }
 
-        private static string GetOriginAccepted(string host)
+        private static bool GetOriginAccepted(string host)
         {
-            return _singleCorsHeader ?? (_allowedOrigins.Contains(host) ? host : "null");
+            return _singleCorsHeader == null || _allowedOrigins.Contains(host);
         }
 
         protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
@@ -37,9 +39,24 @@ namespace TrainNotifier.Console.WebApi.MessageHandlers
 
         protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, System.Threading.CancellationToken cancellationToken)
         {
-            response.Headers.Add("Access-Control-Allow-Origin", GetOriginAccepted(response.RequestMessage.Headers.Host));
+            string origin = response.RequestMessage.Headers.Origin();
+            response.Headers.Add("Access-Control-Allow-Origin", GetOriginAccepted(origin) ? origin : "null");
             response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
             return response;
+        }
+    }
+
+    public static class HttpHeadersExtensions
+    {
+        public static string Origin(this HttpHeaders headers)
+        {
+            IEnumerable<string> values;
+            if (headers.TryGetValues("Origin", out values))
+            {
+                return values.FirstOrDefault();
+            }
+
+            return null;
         }
     }
 }
