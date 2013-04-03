@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Linq;
+using System.Security.Authentication;
 
 namespace TrainNotifier.Console.WebApi.MessageHandlers
 {
@@ -29,17 +30,22 @@ namespace TrainNotifier.Console.WebApi.MessageHandlers
 
         private static bool GetOriginAccepted(string host)
         {
-            return _singleCorsHeader == null || _allowedOrigins.Contains(host);
+            return _singleCorsHeader != null || _allowedOrigins.Contains(host);
         }
 
         protected override HttpRequestMessage ProcessRequest(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
+            string origin = request.Headers.Origin();
+            if (string.IsNullOrEmpty(origin) && !GetOriginAccepted(origin))
+                throw new AuthenticationException();
             return request;
         }
 
         protected override HttpResponseMessage ProcessResponse(HttpResponseMessage response, System.Threading.CancellationToken cancellationToken)
         {
             string origin = response.RequestMessage.Headers.Origin();
+            if (string.IsNullOrEmpty(origin) && !GetOriginAccepted(origin))
+                return new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized);
             response.Headers.Add("Access-Control-Allow-Origin", GetOriginAccepted(origin) ? origin : "null");
             response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
             return response;
