@@ -46,7 +46,7 @@ namespace TrainNotifier.Console.WebApi.MessageHandlers
             string origin = response.RequestMessage.Headers.Origin();
             if (string.IsNullOrEmpty(origin) && !GetOriginAccepted(origin))
                 return new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized);
-            response.Headers.Add("Access-Control-Allow-Origin", GetOriginAccepted(origin) ? origin : "null");
+            response.Headers.Add("Access-Control-Allow-Origin", GetOriginAccepted(origin) ? _singleCorsHeader ?? origin : "null");
             response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Accept");
             return response;
         }
