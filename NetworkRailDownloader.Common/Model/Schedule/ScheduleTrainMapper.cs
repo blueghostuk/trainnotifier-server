@@ -98,9 +98,11 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 case TransactionType.Create:
                     t.EndDate = NullableDateField.ParseDataString(DynamicValueToString(s.schedule_end_date));
-                    t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.atoc_code));
+                    // not different location of atoc code
+                    t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].atoc_code));
                     t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
                     t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
+                    // not different location of stops
                     t.Stops = ParseJsonVSTPStops(s.schedule_segment[0].schedule_location, tiplocs);
                     if (t.Stops.Any())
                     {
