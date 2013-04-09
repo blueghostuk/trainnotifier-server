@@ -59,6 +59,7 @@
     <Compile Include="Model\CommandResponse.cs" />
     <Compile Include="Model\ExtendedTrainMovement.cs" />
     <Compile Include="Model\ICacheableItem.cs" />
+    <Compile Include="Model\PPM\PPMJsonMapper.cs" />
     <Compile Include="Model\PPM\PPMSector.cs" />
     <Compile Include="Model\Reinstatement.cs" />
     <Compile Include="Model\Schedule\Enumerations.cs" />

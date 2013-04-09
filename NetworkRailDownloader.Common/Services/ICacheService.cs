@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.PPM;
 using TrainNotifier.Common.Model.Schedule;
-using TrainNotifier.Common.PPM;
 
 namespace TrainNotifier.Common.Services
 {
