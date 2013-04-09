@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace TrainNotifier.Common.PPM
+namespace TrainNotifier.Common.Model.PPM
 {
     [DataContract]
     public class RtppmData
@@ -11,7 +11,19 @@ namespace TrainNotifier.Common.PPM
         public DateTime Timestamp { get; set; }
 
         [DataMember]
-        public List<PPMRecord> Records { get; set; }
+        public List<PPMRecord> Sectors { get; set; }
+
+        [DataMember]
+        public List<PPMRecord> Operators { get; set; }
+
+        [DataMember]
+        public PPMRecord NationalPPM { get; set; }
+
+        public RtppmData()
+        {
+            Sectors = new List<PPMRecord>();
+            Operators = new List<PPMRecord>();
+        }
     }
 
     [DataContract]

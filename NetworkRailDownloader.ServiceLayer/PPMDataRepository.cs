@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using TrainNotifier.Common.Model.PPM;
-using TrainNotifier.Common.PPM;
 
 namespace TrainNotifier.Service
 {

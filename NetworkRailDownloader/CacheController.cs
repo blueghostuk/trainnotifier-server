@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Exceptions;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.PPM;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.VSTP;
 using TrainNotifier.Service;
@@ -175,6 +176,40 @@ namespace TrainNotifier.Console.WebSocketServer
                                     }
                                 }
 
+                                break;
+
+                            case Common.Feed.RtPPM:
+                                RtppmData ppmData = null;
+                                try
+                                {
+                                    ppmData = PPMJsonMapper.ParsePPMData(f.Data.RTPPMDataMsgV1.RTPPMData);
+                                }
+                                catch (Exception e)
+                                {
+                                    Trace.TraceError("Could not add PPM Data: {0}", e);
+                                }
+                                if (ppmData != null)
+                                {
+                                    CacheServiceClient cacheService = null;
+                                    try
+                                    {
+                                        cacheService = new CacheServiceClient();
+                                        cacheService.Open();
+                                        cacheService.CachePPMData(ppmData);
+                                    }
+                                    finally
+                                    {
+                                        try
+                                        {
+                                            if (cacheService != null)
+                                                cacheService.Close();
+                                        }
+                                        catch (CommunicationObjectFaultedException e)
+                                        {
+                                            Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                        }
+                                    }
+                                }
                                 break;
                         }
                     });
