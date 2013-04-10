@@ -16,6 +16,6 @@ namespace TrainNotifier.Common.Model.PPM
         public string SectorCode { get; set; }
 
         [DataMember]
-        public string Description { get; set; }   
+        public string Description { get; set; }
     }
 }
