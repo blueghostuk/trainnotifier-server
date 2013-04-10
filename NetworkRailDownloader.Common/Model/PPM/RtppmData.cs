@@ -37,7 +37,6 @@ namespace TrainNotifier.Common.Model.PPM
 
         public PPMRecord(bool isServiceGroup)
         {
-            IsServiceGroup = isServiceGroup;
             ServiceGroups = isServiceGroup ? null : new List<PPMRecord>();
         }
 
@@ -69,14 +68,11 @@ namespace TrainNotifier.Common.Model.PPM
         public PpmTrendIndicator Trend { get; set; }
 
         [DataMember]
-        public bool IsServiceGroup { get; set; }
-
-        [DataMember]
         public List<PPMRecord> ServiceGroups { get; set; }
     }
 
     [DataContract]
-    public enum PpmTrendIndicator
+    public enum PpmTrendIndicator : byte
     {
         [EnumMember]
         Negative = 0,
