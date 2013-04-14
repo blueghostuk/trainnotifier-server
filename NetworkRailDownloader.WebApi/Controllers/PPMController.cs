@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
@@ -27,10 +28,17 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(60)]
-        public PPMRecord Get(byte? operatorCode, string name)
+        public IEnumerable<PPMRecord> Get(byte? operatorCode, string name, DateTime? startDate = null, DateTime? endDate = null)
         {
             PPMDataRepository repo = new PPMDataRepository();
-            return repo.GetLatestRecord(operatorCode, name);
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                return repo.GetLatestRecords(operatorCode, name, startDate.Value, endDate.Value);
+            }
+            else
+            {
+                return new[] { repo.GetLatestRecord(operatorCode, name) };
+            }
         }
     }
 }
