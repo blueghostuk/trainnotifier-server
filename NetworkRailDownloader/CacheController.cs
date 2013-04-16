@@ -231,9 +231,32 @@ namespace TrainNotifier.Console.WebSocketServer
                         case "unsubtrain":
                             HandleSubTrainCommand(context, args, false);
                             break;
+                        case "substanox":
+                            HandleSubStanoxCommand(context, args, true);
+                            break;
+                        case "unsubstanox":
+                            HandleSubStanoxCommand(context, args, false);
+                            break;
                     }
                 }
             };
+        }
+
+        private void HandleSubStanoxCommand(UserContextEventArgs context, string stanox, bool subscribe)
+        {
+            UserContextData uc = _userManager.ActiveUsers[context.UserContext];
+            if (uc != null)
+            {
+                if (subscribe)
+                {
+                    uc.StateArgs = stanox;
+                    uc.State = UserContextState.SubscribeToStanox;
+                }
+                else
+                {
+                    uc.State = UserContextState.None;
+                }
+            }
         }
 
         private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)

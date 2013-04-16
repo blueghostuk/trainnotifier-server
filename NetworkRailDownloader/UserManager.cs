@@ -82,7 +82,8 @@ namespace TrainNotifier.Console.WebSocketServer
     {
         None,
         SubscribeToFeed,
-        SubscribeToTrain
+        SubscribeToTrain,
+        SubscribeToStanox
     }
 
 }
