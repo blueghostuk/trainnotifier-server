@@ -43,6 +43,10 @@ namespace TrainNotifier.Console.WebSocketServer
                                 .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
                                 .Where(u => DataContainsTrain(evtData, u.Value.StateArgs)), uc => SendTrainData(uc, evtData as IEnumerable<dynamic>));
 
+                            Parallel.ForEach(_userManager.ActiveUsers
+                                .Where(u => u.Value.State == UserContextState.SubscribeToStanox)
+                                .Where(u => DataContainsStanox(evtData, u.Value.StateArgs)), uc => SendStanoxData(uc, evtData as IEnumerable<dynamic>));
+
                             break;
                         case Feed.TrainDescriber:
 
@@ -63,10 +67,22 @@ namespace TrainNotifier.Console.WebSocketServer
             _nmsDownloader.Quit();
         }
 
+        private bool DataContainsStanox(dynamic evtData, string stanox)
+        {
+            if (string.IsNullOrWhiteSpace(stanox))
+                return false;
+            foreach (dynamic evt in evtData)
+            {
+                if (evt.body.loc_stanox == stanox)
+                    return true;
+            }
+            return false;
+        }
+
         private bool DataContainsTrain(dynamic evtData, string trainId)
         {
             if (string.IsNullOrWhiteSpace(trainId))
-                return true;
+                return false;
 
             foreach (dynamic evt in evtData)
             {
@@ -87,6 +103,20 @@ namespace TrainNotifier.Console.WebSocketServer
                     return true;
             }
             return false;
+        }
+
+        private static void SendStanoxData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
+        {
+            var data = evtData
+                .Where(e => e.body.loc_stanox == uc.Value.StateArgs)
+                .Select(e => e);
+
+            uc.Key.Send(JsonConvert.SerializeObject(new CommandResponse<IEnumerable<dynamic>>
+            {
+                Command = "substanoxupdate",
+                Args = uc.Value.StateArgs,
+                Response = data
+            }));
         }
 
         private static void SendData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<dynamic> evtData)
