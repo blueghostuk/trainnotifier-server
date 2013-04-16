@@ -20,7 +20,7 @@ namespace TrainNotifier.Common.Model
             TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
             if (tiploc == null)
             {
-                throw new TiplocNotFoundException
+                throw new TiplocNotFoundException(tiplocCode)
                 {
                     Code = tiplocCode
                 };
