@@ -57,7 +57,7 @@ namespace TrainNotifier.Common.Model.Schedule
                 TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
                 if (tiploc == null)
                 {
-                    throw new TiplocNotFoundException
+                    throw new TiplocNotFoundException(tiplocCode)
                     {
                         Code = tiplocCode
                     };
@@ -136,7 +136,7 @@ namespace TrainNotifier.Common.Model.Schedule
                 TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
                 if (tiploc == null)
                 {
-                    throw new TiplocNotFoundException
+                    throw new TiplocNotFoundException(tiplocCode)
                     {
                         Code = tiplocCode
                     };
