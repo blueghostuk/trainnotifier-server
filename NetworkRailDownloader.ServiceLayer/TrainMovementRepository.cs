@@ -32,10 +32,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[CreationTimestamp] AS Activated
                     ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
                     ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[LiveTrain].[Toc] AS TocId
-                    ,[LiveTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
-                    ,[LiveTrain].[SchedWttId] AS WorkingTTId
+                    ,[ScheduleTrain].[TrainUid] AS TrainUid
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
@@ -70,10 +67,10 @@ namespace TrainNotifier.Service
                     AND [DestinationStop].[Terminate] = 1
                 LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
 					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+					AND [ActualDeparture].[EventTypeId] = @departureTypeId
                 LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
 					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ActualArrival].[EventType] = 'ARRIVAL'
+					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
                 WHERE   [DestinationStop].[TiplocId] IN @tiplocs
                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate
@@ -95,7 +92,9 @@ namespace TrainNotifier.Service
                         {
                             tiplocs,
                             startDate,
-                            endDate
+                            endDate,
+                            departureTypeId = TrainMovementEventType.Departure,
+                            arrivalTypeId = TrainMovementEventType.Arrival
                         },
                         splitOn: "Code,TiplocId,TiplocId").ToList();
 
@@ -152,10 +151,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[CreationTimestamp] AS Activated
                     ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
                     ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[LiveTrain].[Toc] AS TocId
-                    ,[LiveTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
-                    ,[LiveTrain].[SchedWttId] AS WorkingTTId
+                    ,[ScheduleTrain].[TrainUid] AS TrainUid
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
@@ -190,10 +186,10 @@ namespace TrainNotifier.Service
                     AND [DestinationStop].[Terminate] = 1
                 LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
 					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+					AND [ActualDeparture].[EventTypeId] = @departureTypeId
                 LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
 					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ActualArrival].[EventType] = 'ARRIVAL'
+					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
                 WHERE   [OriginStop].[TiplocId] IN @tiplocs
                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate
@@ -215,7 +211,9 @@ namespace TrainNotifier.Service
                         {
                             tiplocs,
                             startDate,
-                            endDate
+                            endDate,
+                            departureTypeId = TrainMovementEventType.Departure,
+                            arrivalTypeId = TrainMovementEventType.Arrival
                         },
                         splitOn: "Code,TiplocId,TiplocId").ToList();
 
@@ -274,10 +272,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[CreationTimestamp] AS Activated
                     ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
                     ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[LiveTrain].[Toc] AS TocId
-                    ,[LiveTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
-                    ,[LiveTrain].[SchedWttId] AS WorkingTTId
+                    ,[ScheduleTrain].[TrainUid] AS TrainUid
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
@@ -307,24 +302,24 @@ namespace TrainNotifier.Service
                     ,[OriginStop].[Departure]
                     ,[OriginStop].[PublicDeparture]
                 FROM [LiveTrain]
-                LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                LEFT JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
-                LEFT JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
+                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
+                INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
+                INNER JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
+                INNER JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
                 LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
 					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+					AND [ActualDeparture].[EventTypeId] = @departureTypeId
 				LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
 					AND [ActualArrival].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualArrival].[EventType] = 'ARRIVAL'
+					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
                 LEFT JOIN [LiveTrainStop] [ToActualArrival] ON [LiveTrain].[Id] = [ToActualArrival].[TrainId] 
 					AND [ToActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ToActualArrival].[EventType] = 'ARRIVAL'
+					AND [ToActualArrival].[EventTypeId] = @arrivalTypeId
                 LEFT JOIN [LiveTrainStop] [ToActualDeparture] ON [LiveTrain].[Id] = [ToActualDeparture].[TrainId] 
 					AND [ToActualDeparture].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ToActualDeparture].[EventType] = 'DEPARTURE'
+					AND [ToActualDeparture].[EventTypeId] = @departureTypeId
                 WHERE   [OriginStop].[TiplocId] IN @fromTiplocs
 	                AND [DestinationStop].[TiplocId] IN @toTiplocs
 	                AND [OriginStop].[StopNumber] < [DestinationStop].[StopNumber]
@@ -348,7 +343,9 @@ namespace TrainNotifier.Service
                         fromTiplocs,
                         toTiplocs,
                         startDate,
-                        endDate
+                        endDate,
+                        departureTypeId = TrainMovementEventType.Departure,
+                        arrivalTypeId = TrainMovementEventType.Arrival
                     },
                     splitOn: "Code,TiplocId,TiplocId").ToList();
 
@@ -407,10 +404,7 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[CreationTimestamp] AS Activated
                     ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
                     ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[LiveTrain].[Toc] AS TocId
-                    ,[LiveTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[OriginStanox] AS SchedOriginStanox
-                    ,[LiveTrain].[SchedWttId] AS WorkingTTId
+                    ,[ScheduleTrain].[TrainUid] AS TrainUid
                     ,[LiveTrain].[ScheduleTrain] AS ScheduleId
                     ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
                     ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
@@ -444,10 +438,10 @@ namespace TrainNotifier.Service
                 INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
                 LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
 					AND [ActualDeparture].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
-					AND [ActualDeparture].[EventType] = 'DEPARTURE'
+					AND [ActualDeparture].[EventTypeId] = @departureTypeId
                 LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
 					AND [ActualArrival].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
-					AND [ActualArrival].[EventType] = 'ARRIVAL'
+					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
                 WHERE    [Tiploc].[TiplocId] IN @tiplocs
                      AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
                      AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
@@ -468,7 +462,9 @@ namespace TrainNotifier.Service
                     {
                         tiplocs,
                         startDate,
-                        endDate
+                        endDate,
+                        departureTypeId = TrainMovementEventType.Departure,
+                        arrivalTypeId = TrainMovementEventType.Arrival
                     },
                     splitOn: "Code,TiplocId,TiplocId").ToList();
 
@@ -507,44 +503,29 @@ namespace TrainNotifier.Service
         }
 
         [Obsolete("Will be removed in future version")]
-        public ExtendedTrainMovement GetTrainMovementById(string trainId)
+        public ViewModelTrainMovement GetTrainMovementById(string trainId)
         {
             const string sql = @"
                 SELECT TOP 1
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS [Id]
-                    ,[LiveTrain].[Headcode] AS [HeadCode]
-                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
-                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
-                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
-                    ,[LiveTrain].[Toc] AS [TocId]
-                    ,[LiveTrain].[TrainUid] AS [TrainUid]
-                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
-                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                    [LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
+                    ,[ScheduleTrain].[TrainUid] AS [TrainUid]
                 FROM [LiveTrain]
+                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                INNER JOIN  [Tiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [Tiploc].[TiplocId]
                 WHERE [LiveTrain].[TrainId] = @trainId
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC"; // get latest occurance
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
+                ViewModelTrainMovement tm = dbConnection.Query<ViewModelTrainMovement>(sql, new
                 {
                     trainId
                 }).FirstOrDefault();
-
-                if (tm != null)
-                {
-                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
-                    return tm;
-                }
-                return null;
+                return tm;
             }
         }
 
-        public ExtendedTrainMovement GetTrainMovementById(string trainId, string trainUid)
+        public ViewModelTrainMovement GetTrainMovementById(string trainUid, DateTime date)
         {
             const string sql = @"
                 SELECT TOP 1
@@ -554,96 +535,85 @@ namespace TrainNotifier.Service
                     ,[LiveTrain].[CreationTimestamp] AS [Activated]
                     ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
                     ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
-                    ,[LiveTrain].[Toc] AS [TocId]
-                    ,[LiveTrain].[TrainUid] AS [TrainUid]
-                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
-                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
+                    ,[ScheduleTrain].[TrainUid] AS [TrainUid]
+                    ,[AtocCode].[AtocCode] AS [Code]
+                    ,[AtocCode].[Name]
+                    ,[OriginTiploc].[TiplocId]
+                    ,[OriginTiploc].[Tiploc]
+                    ,[OriginTiploc].[Nalco]
+                    ,[OriginTiploc].[Description]
+                    ,[OriginTiploc].[Stanox]
+                    ,[OriginTiploc].[CRS]
                 FROM [LiveTrain]
-                WHERE [LiveTrain].[TrainId] = @trainId AND [LiveTrain].[TrainUid] = @trainUid
-                ORDER BY [LiveTrain].[OriginDepartTimestamp] DESC";
-
-            using (DbConnection dbConnection = CreateAndOpenConnection())
-            {
-                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
-                    {
-                        trainId,
-                        trainUid
-                    }).FirstOrDefault();
-
-                if (tm != null)
-                {
-                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
-                    return tm;
-                }
-            }
-
-            return null;
-        }
-
-        public ExtendedTrainMovement GetTrainMovementById(string trainUid, DateTime date)
-        {
-            const string sql = @"
-                SELECT TOP 1
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS [Id]
-                    ,[LiveTrain].[Headcode] AS [HeadCode]
-                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
-                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
-                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
-                    ,[LiveTrain].[Toc] AS [TocId]
-                    ,[LiveTrain].[TrainUid] AS [TrainUid]
-                    ,[LiveTrain].[OriginStanox] AS [SchedOriginStanox]
-                    ,[LiveTrain].[SchedWttId] AS [WorkingTTId]
-                FROM [LiveTrain]
-                WHERE [LiveTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
+                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
+                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
+                WHERE [ScheduleTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                ExtendedTrainMovement tm = dbConnection.Query<ExtendedTrainMovement>(sql, new
-                {
-                    trainUid,
-                    date
-                }).FirstOrDefault();
+                ViewModelTrainMovement train = dbConnection.Query<ViewModelTrainMovement, AtocCode, ScheduleTiploc, ViewModelTrainMovement>(
+                    sql,
+                    (tm, ac, ot) =>
+                    {
+                        tm.AtocCode = ac;
+                        tm.Origin = ot;
+                        return tm;
+                    },
+                    new
+                    {
+                        trainUid,
+                        date
+                    },
+                    splitOn: "Code,TiplocId").FirstOrDefault();
 
-                if (tm != null)
+                if (train != null)
                 {
-                    tm.Cancellation = GetCancellations(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Reinstatement = GetReinstatements(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.ChangeOfOrigin = GetChangeOfOrigins(new[] { tm.UniqueId }, dbConnection).FirstOrDefault();
-                    tm.Steps = GetTmSteps(tm.UniqueId, dbConnection);
-                    return tm;
+                    train.Cancellation = GetCancellations(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
+                    train.Reinstatement = GetReinstatements(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
+                    train.ChangeOfOrigin = GetChangeOfOrigins(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
+                    train.Steps = GetTmSteps(train.UniqueId, dbConnection);
+                    return train;
                 }
             }
 
             return null;
         }
 
-        private IEnumerable<TrainMovementStep> GetTmSteps(Guid trainId, DbConnection dbConnection)
+        private IEnumerable<TrainMovementStepViewModel> GetTmSteps(Guid trainId, DbConnection dbConnection)
         {
             const string tmsSql = @"
                 SELECT
-                    [EventType]
+                    [EventTypeId]
                     ,[PlannedTimestamp] AS [PlannedTime]
                     ,[ActualTimestamp]
-                    ,[ReportingStanox] AS [Stanox]
                     ,[Platform]
-                    ,[Line] 
-                    ,[TrainTerminated] AS [Terminated]
+                    ,[Line]
                     ,[ScheduleStopNumber]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[TiplocId]
+                    ,[Tiploc].[Tiploc]
+                    ,[Tiploc].[Nalco]
+                    ,[Tiploc].[Description]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[CRS]
                 FROM [LiveTrainStop]
+                INNER JOIN  [Tiploc] ON [LiveTrainStop].[ReportingTiplocId] = [Tiploc].[TiplocId]
                 WHERE [TrainId] = @trainId";
 
-            IEnumerable<TrainMovementStep> tmSteps = Query<TrainMovementStep>(tmsSql, new { trainId }, dbConnection)
-                .ToList();
-            foreach (var tms in tmSteps)
-            {
-                if (tms.Terminated)
-                    tms.State = State.Terminated;
-            }
+            IEnumerable<TrainMovementStepViewModel> tmSteps = dbConnection.Query<TrainMovementStepViewModel, ScheduleTiploc, TrainMovementStepViewModel>(
+                    tmsSql,
+                    (tms, loc) =>
+                    {
+                        tms.Station = loc;
+                        return tms;
+                    },
+                    new
+                    {
+                        trainId
+                    },
+                    splitOn: "TiplocId").ToList();
 
             return tmSteps;
         }

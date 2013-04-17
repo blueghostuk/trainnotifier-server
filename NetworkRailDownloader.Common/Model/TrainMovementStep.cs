@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Model
 {

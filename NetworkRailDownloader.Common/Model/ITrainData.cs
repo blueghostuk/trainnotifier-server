@@ -5,7 +5,7 @@ namespace TrainNotifier.Common.Model
 {
     [ServiceContract]
     [ServiceKnownType(typeof(TrainMovement))]
-    [ServiceKnownType(typeof(ExtendedTrainMovement))]
+    [ServiceKnownType(typeof(ViewModelTrainMovement))]
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainMovementStep))]
     [ServiceKnownType(typeof(TrainChangeOfOrigin))]

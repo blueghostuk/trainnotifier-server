@@ -11,9 +11,6 @@ namespace TrainNotifier.Common.Model
     public class TrainMovement : ITrainData
     {
         private ICollection<TrainMovementStep> _steps;
-        private bool _activated,
-            _cancelled,
-            _terminated;
 
         [IgnoreDataMember]
         public Guid UniqueId { get; set; }
@@ -42,60 +39,8 @@ namespace TrainNotifier.Common.Model
         public string WorkingTTId { get; set; }
         [DataMember]
         public string TrainUid { get; set; }
-
         [DataMember]
         public TrainState State { get; private set; }
-
-        [IgnoreDataMember]
-        public bool IsActivated
-        {
-            get { return _activated; }
-            set
-            {
-                if (value != _activated)
-                {
-                    _activated = value;
-                    if (_activated && State != TrainState.InProgress && State != TrainState.Cancelled)
-                    {
-                        State = TrainState.Activated;
-                    }
-                }
-            }
-        }
-
-        [IgnoreDataMember]
-        public bool Cancelled
-        {
-            get { return _cancelled; }
-            set
-            {
-                if (value != _cancelled)
-                {
-                    _cancelled = value;
-                    if (_cancelled)
-                    {
-                        State = TrainState.Cancelled;
-                    }
-                }
-            }
-        }
-
-        [IgnoreDataMember]
-        public bool Terminated
-        {
-            get { return _terminated; }
-            set
-            {
-                if (value != _terminated)
-                {
-                    _terminated = value;
-                    if (_terminated && State != TrainState.Cancelled)
-                    {
-                        State = TrainState.Terminated;
-                    }
-                }
-            }
-        }
 
         [DataMember]
         public IEnumerable<TrainMovementStep> Steps
@@ -134,17 +79,6 @@ namespace TrainNotifier.Common.Model
     }
 
     [DataContract]
-    public class ExtendedTrainMovement : TrainMovement
-    {
-        [DataMember]
-        public ExtendedCancellation Cancellation { get; set; }
-        [DataMember]
-        public Reinstatement Reinstatement { get; set; }
-        [DataMember]
-        public ChangeOfOrigin ChangeOfOrigin { get; set; }
-    }
-
-    [DataContract]
     public class TrainMovementSchedule
     {
         [DataMember]
@@ -155,19 +89,6 @@ namespace TrainNotifier.Common.Model
 
         [DataMember]
         public byte StopNumber { get; set; }
-    }
-
-    [DataContract]
-    public enum TrainState : short
-    {
-        [EnumMember()]
-        Activated = 1,
-        [EnumMember()]
-        Cancelled = 2,
-        [EnumMember()]
-        InProgress = 3,
-        [EnumMember()]
-        Terminated = 4
     }
 
     public static class TrainMovementMapper

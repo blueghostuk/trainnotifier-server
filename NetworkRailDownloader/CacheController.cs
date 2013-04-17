@@ -122,6 +122,10 @@ namespace TrainNotifier.Console.WebSocketServer
                                         cacheService.Open();
                                         cacheService.CacheTrainDescriberData(tdData);
                                     }
+                                    catch (Exception e)
+                                    {
+                                        Trace.TraceError("Error In Cache Connection: {0}", e);
+                                    }
                                     finally
                                     {
                                         try
@@ -162,6 +166,10 @@ namespace TrainNotifier.Console.WebSocketServer
                                         cacheService.Open();
                                         cacheService.CacheVSTPSchedule(train);
                                     }
+                                    catch (Exception e)
+                                    {
+                                        Trace.TraceError("Error In Cache Connection: {0}", e);
+                                    }
                                     finally
                                     {
                                         try
@@ -196,6 +204,10 @@ namespace TrainNotifier.Console.WebSocketServer
                                         cacheService = new CacheServiceClient();
                                         cacheService.Open();
                                         cacheService.CachePPMData(ppmData);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Trace.TraceError("Error In Cache Connection: {0}", e);
                                     }
                                     finally
                                     {

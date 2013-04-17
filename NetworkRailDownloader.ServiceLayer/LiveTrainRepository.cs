@@ -20,6 +20,7 @@ namespace TrainNotifier.Service
         };
 
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
+        private static readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
 
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
@@ -32,12 +33,10 @@ namespace TrainNotifier.Service
                     ,[TrainId]
                     ,[ScheduleTrain]
                 FROM [LiveTrain] 
-                WHERE [Activated] = 1  
-                    AND [Terminated] = 0  
-                    AND [Archived] = 0
+                WHERE [TrainStateId] = @activated
                     AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
 
-            var activeTrains = Query<dynamic>(sql);
+            var activeTrains = Query<dynamic>(sql, new { TrainState.Activated });
 
             Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
 
@@ -54,114 +53,56 @@ namespace TrainNotifier.Service
             }
         }
 
-        public IEnumerable<TrainMovement> SearchByOrigin(string stanox)
-        {
-            const string sql = @"
-                SELECT
-                    TrainId AS Id,
-                    Headcode AS HeadCode,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                WHERE OriginStanox = @stanox 
-                    AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
-                ORDER BY OriginDepartTimestamp";
-
-            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
-
-            // TODO: get more detail
-            return tms;
-        }
-
-        public IEnumerable<TrainMovement> TrainsCallingAtStation(string stanox)
-        {
-            // distinct as can include arrival/departure
-            const string sql = @"
-                SELECT DISTINCT
-                    [LiveTrain].[TrainId] AS Id,
-                    Headcode AS HeadCode,
-                    CreationTimestamp AS Activated,
-                    OriginDepartTimestamp AS SchedOriginDeparture,
-                    TrainServiceCode AS ServiceCode,
-                    Toc AS TocId,
-                    TrainUid AS TrainUid,
-                    OriginStanox AS SchedOriginStanox,
-                    SchedWttId AS WorkingTTId
-                FROM LiveTrain
-                INNER JOIN LiveTrainStop ON LiveTrain.Id = LiveTrainStop.TrainId
-                WHERE LiveTrainStop.ReportingStanox = @stanox 
-                    AND OriginDepartTimestamp >= DATEADD(day, -1, GETDATE())
-                ORDER BY OriginDepartTimestamp";
-
-            IEnumerable<TrainMovement> tms = Query<TrainMovement>(sql, new { stanox });
-
-            // TODO: get more detail
-            return tms;
-        }
-
         public void AddActivation(TrainMovement tm, DbConnection existingConnection = null)
         {
-            Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
-            const string insertActivation = @"
+            var tiplocs = _tiplocRepository.GetByStanoxs(tm.SchedOriginStanox);
+            if (tiplocs.Any())
+            {
+                Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
+                const string insertActivation = @"
                 INSERT INTO [natrail].[dbo].[LiveTrain]
                     ([TrainId]
                     ,[Headcode]
                     ,[CreationTimestamp]
                     ,[OriginDepartTimestamp]
                     ,[TrainServiceCode]
-                    ,[Toc]
-                    ,[TrainUid]
-                    ,[OriginStanox]
-                    ,[SchedWttId]
-                    ,[Activated]
-                    ,[Cancelled]
-                    ,[Terminated])
+                    ,[OriginTiplocId]
+                    ,[TrainStateId])
                 OUTPUT [inserted].[Id]
                 VALUES
                     (@trainId
                     ,@headcode
                     ,@activationDate
-                    ,@OriginTime
-                    ,@ServiceCode
-                    ,@tocId
-                    ,@trainUid
-                    ,@Origin
-                    ,@wttid
-                    ,1
-                    ,0
-                    ,0)";
+                    ,@originTime
+                    ,@serviceCode
+                    ,@originTiplocId
+                    ,@trainStateId)";
 
-            Guid id = ExecuteInsert(insertActivation, new
-            {
-                trainId = tm.Id,
-                headcode = tm.Id.Substring(2, 4),
-                activationDate = tm.Activated,
-                Origin = tm.SchedOriginStanox,
-                OriginTime = tm.SchedOriginDeparture,
-                ServiceCode = tm.ServiceCode,
-                tocId = tm.TocId,
-                trainUid = tm.TrainUid,
-                wttid = tm.WorkingTTId,
-            }, existingConnection);
+                Guid id = ExecuteInsert(insertActivation, new
+                {
+                    trainId = tm.Id,
+                    headcode = tm.WorkingTTId.Substring(0, 4),
+                    activationDate = tm.Activated,
+                    originTime = tm.SchedOriginDeparture,
+                    serviceCode = tm.ServiceCode,
+                    originTiplocId = tiplocs.First().TiplocId,
+                    trainStateId = TrainState.Activated
+                }, existingConnection);
 
-            _trainActivationCache.Add(tm.Id, new TrainMovementSchedule
-            {
-                Id = id,
-                Schedule = null,
-                StopNumber = 0
-            }, _trainActivationCachePolicy);
+                _trainActivationCache.Add(tm.Id, new TrainMovementSchedule
+                {
+                    Id = id,
+                    Schedule = null,
+                    StopNumber = 0
+                }, _trainActivationCachePolicy);
 
-            tm.UniqueId = id;
+                tm.UniqueId = id;
 
-            SetLiveTrainSchedule(tm);
+                SetLiveTrainSchedule(tm, tiplocs);
+            }
         }
 
-        private Task SetLiveTrainSchedule(TrainMovement tm)
+        private Task SetLiveTrainSchedule(TrainMovement tm, IEnumerable<TiplocCode> tiplocs)
         {
             return Task.Run(() =>
             {
@@ -210,12 +151,40 @@ namespace TrainNotifier.Service
                     {
                         ((TrainMovementSchedule)_trainActivationCache[tm.Id]).Schedule = scheduleId.Value;
                     }
+                    // if there was more than 1 tiploc see if we can find the correct one
+                    if (tiplocs.Count() > 1)
+                    {
+                        var stops = _scheduleRepository.GetStopsById(scheduleId.Value);
+                        foreach (var stop in stops)
+                        {
+                            var matchedTiploc = tiplocs.FirstOrDefault(t => t.TiplocId == stop.Tiploc.TiplocId);
+                            if (matchedTiploc != null)
+                            {
+                                if (matchedTiploc.TiplocId != tiplocs.First().TiplocId)
+                                {
+                                    UpdateLiveTrainOrigin(tm.UniqueId, matchedTiploc.TiplocId);
+                                }
+
+                                break;
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     Trace.TraceWarning("Could not find matching schedule for activation: {0}", tm.TrainId);
                 }
             });
+        }
+
+        private void UpdateLiveTrainOrigin(Guid trainId, short tiplocId)
+        {
+            const string sql = @"
+                UPDATE [LiveTrain]
+                SET [OriginTiplocId] = @tiplocId
+                WHERE [Id] = @trainId";
+
+            ExecuteNonQuery(sql, new { trainId, tiplocId });
         }
 
         private static string GetDatePartSql(DateTime date)
@@ -229,20 +198,20 @@ namespace TrainNotifier.Service
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
             if (tm == null)
             {
-//                tm = ExecuteScalar<TrainMovementSchedule>(@"
-//                    SELECT 
-//                        [Id]
-//                        ,[TrainId]
-//                        ,[ScheduleTrain] AS [Schedule]
-//                    FROM [LiveTrain] 
-//                    WHERE [TrainId] = @trainId
-//                        AND [Activated] = 1  
-//                        AND [Terminated] = 0  
-//                        AND [Archived] = 0", new { trainId }, existingConnection);
-//                if (tm != null)
-//                {
-//                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-//                }
+                //                tm = ExecuteScalar<TrainMovementSchedule>(@"
+                //                    SELECT 
+                //                        [Id]
+                //                        ,[TrainId]
+                //                        ,[ScheduleTrain] AS [Schedule]
+                //                    FROM [LiveTrain] 
+                //                    WHERE [TrainId] = @trainId
+                //                        AND [Activated] = 1  
+                //                        AND [Terminated] = 0  
+                //                        AND [Archived] = 0", new { trainId }, existingConnection);
+                //                if (tm != null)
+                //                {
+                //                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
+                //                }
             }
             return tm != null && tm.Id != Guid.Empty;
         }
@@ -262,81 +231,115 @@ namespace TrainNotifier.Service
         public bool AddMovement(TrainMovementStep tms, DbConnection existingConnection = null)
         {
             TrainMovementSchedule trainId = null;
-            if (TrainExists(tms.TrainId, out trainId, existingConnection))
+            if (TrainExists(tms.TrainId, out trainId, existingConnection) && trainId.Schedule.HasValue && trainId.Schedule != Guid.Empty)
             {
                 tms.DatabaseId = trainId.Id;
                 Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
                 const string insertStop = @"
                     INSERT INTO [natrail].[dbo].[LiveTrainStop]
                                ([TrainId]
-                               ,[EventType]
+                               ,[EventTypeId]
                                ,[PlannedTimestamp]
                                ,[ActualTimestamp]
-                               ,[ReportingStanox]
+                               ,[ReportingTiplocId]
                                ,[Platform]
                                ,[Line]
-                               ,[TrainTerminated]
                                ,[ScheduleStopNumber])
                          VALUES
                                (@trainId
-                               ,@eventType
+                               ,@eventTypeId
                                ,@plannedTs
                                ,@actualTs
-                               ,@stanox
+                               ,@reportingTiplocId
                                ,@platform
                                ,@line
-                               ,@terminated
                                ,@stopNumber)";
 
                 byte? stopNumber = null;
+                short? tiplocId = null;
 
-                if (trainId.Schedule.HasValue
-                    && trainId.Schedule != Guid.Empty
-                    && !string.IsNullOrEmpty(tms.Stanox))
+                if (!string.IsNullOrEmpty(tms.Stanox))
                 {
-                    stopNumber = GetNextStop(trainId.Schedule.Value, tms.Stanox, trainId.StopNumber);
+                    var values = GetNextStop(trainId.Schedule.Value, tms.Stanox, trainId.StopNumber);
 
-                    if (stopNumber.HasValue)
+                    try
                     {
-                        ((TrainMovementSchedule)_trainActivationCache[tms.TrainId]).StopNumber = stopNumber.Value;
+                        stopNumber = values.StopNumber;
+                        tiplocId = values.TiplocId;
+
+                        if (stopNumber.HasValue)
+                        {
+                            ((TrainMovementSchedule)_trainActivationCache[tms.TrainId]).StopNumber = stopNumber.Value;
+                        }
+                    }
+                    catch { }
+                }
+                if (!tiplocId.HasValue)
+                {
+                    var tiplocs = _tiplocRepository.GetByStanoxs(tms.Stanox);
+                    if (tiplocs.Any())
+                    {
+                        if (tiplocs.Count() > 1)
+                        {
+                            var stops = _scheduleRepository.GetStopsById(trainId.Schedule.Value);
+                            foreach (var stop in stops)
+                            {
+                                var matchedTiploc = tiplocs.FirstOrDefault(t => t.TiplocId == stop.Tiploc.TiplocId);
+                                if (matchedTiploc != null)
+                                {
+                                    if (matchedTiploc.TiplocId != tiplocs.First().TiplocId)
+                                    {
+                                        tiplocId = matchedTiploc.TiplocId;
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+                        if (!tiplocId.HasValue)
+                        {
+                            tiplocId = tiplocs.First().TiplocId;
+                        }
                     }
                 }
-
-                ExecuteNonQuery(insertStop, new
+                if (tiplocId.HasValue)
                 {
-                    trainId = trainId.Id,
-                    eventType = tms.EventType,
-                    plannedTs = tms.PlannedTime,
-                    actualTs = tms.ActualTimeStamp,
-                    stanox = tms.Stanox,
-                    platform = tms.Platform,
-                    line = tms.Line,
-                    terminated = tms.State == State.Terminated,
-                    stopNumber = stopNumber
-                }, existingConnection);
+                    ExecuteNonQuery(insertStop, new
+                    {
+                        trainId = trainId.Id,
+                        eventTypeId = TrainMovementEventTypeField.ParseDataString(tms.EventType),
+                        plannedTs = tms.PlannedTime,
+                        actualTs = tms.ActualTimeStamp,
+                        reportingTiplocId = tiplocId,
+                        platform = tms.Platform,
+                        line = tms.Line,
+                        stopNumber = stopNumber
+                    }, existingConnection);
 
-                if (tms.State == State.Terminated)
-                {
-                    _trainActivationCache.Remove(tms.TrainId);
+                    if (tms.State == State.Terminated)
+                    {
+                        _trainActivationCache.Remove(tms.TrainId);
+                    }
+
+                    return true;
                 }
-
-                return true;
             }
             return false;
         }
 
-        private byte? GetNextStop(Guid scheduleId, string stanox, byte latestStopNumber)
+        private dynamic GetNextStop(Guid scheduleId, string stanox, byte latestStopNumber)
         {
             const string sql = @"
                 SELECT TOP 1
-                      [ScheduleTrainStop].[StopNumber]
+                      [ScheduleTrainStop].[StopNumber],
+                      [Tiploc].[TiplocId]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
                 WHERE [ScheduleId] = @scheduleId
                 AND [Tiploc].[Stanox] = @stanox
                 AND [ScheduleTrainStop].[StopNumber] >= @latestStopNumber";
 
-            return ExecuteScalar<byte?>(sql, new
+            return ExecuteScalar<dynamic>(sql, new
             {
                 scheduleId,
                 stanox,
@@ -388,7 +391,6 @@ namespace TrainNotifier.Service
                 TiplocCode tiploc = _tiplocRepository.GetByStanox(tOrigin.Stanox);
                 if (tiploc != null)
                 {
-
                     Trace.TraceInformation("Saving Change of Origin to: {0} @ {1}", tOrigin.TrainId, tOrigin.Stanox);
 
                     const string insertStop = @"
@@ -426,7 +428,6 @@ namespace TrainNotifier.Service
                 TiplocCode tiploc = _tiplocRepository.GetByStanox(tr.Stanox);
                 if (tiploc != null)
                 {
-
                     Trace.TraceInformation("Saving Reinstatement of: {0} @ {1}", tr.TrainId, tr.Stanox);
 
                     const string insertStop = @"
@@ -457,34 +458,15 @@ namespace TrainNotifier.Service
         {
             switch (state)
             {
-                case TrainState.Activated:
-                    const string activateSql = @"
-                    UPDATE [natrail].[dbo].[LiveTrain]
-                       SET Activated = 1
-                     WHERE [Id] = @trainId";
-
-                    ExecuteNonQuery(activateSql, new { trainId }, existingConnection);
-                    break;
-
                 case TrainState.Cancelled:
+                case TrainState.Terminated:
                     const string cancelSql = @"
                     UPDATE [natrail].[dbo].[LiveTrain]
-                       SET Cancelled = 1
+                       SET [TrainStateId] = [TrainStateId] + @state
                      WHERE [Id] = @trainId";
 
-                    ExecuteNonQuery(cancelSql, new { trainId }, existingConnection);
+                    ExecuteNonQuery(cancelSql, new { trainId, state }, existingConnection);
                     break;
-
-                case TrainState.Terminated:
-                    const string termSql = @"
-                    UPDATE [natrail].[dbo].[LiveTrain]
-                       SET Terminated = 1
-                     WHERE [Id] = @trainId";
-
-                    ExecuteNonQuery(termSql, new { trainId }, existingConnection);
-                    break;
-
-                // in progress - dont need to do anything
             }
         }
 
@@ -636,10 +618,14 @@ namespace TrainNotifier.Service
                 }
 
                 // only update once per train
-                foreach (var groupByTrain in trainMovements.Where(tm => tm.DatabaseId.HasValue).GroupBy(tm => tm.DatabaseId.Value))
+                foreach (var groupByTrain in trainMovements
+                    .Where(tm => tm.DatabaseId.HasValue)
+                    .GroupBy(tm => tm.DatabaseId.Value))
                 {
-                    UpdateTrainState(groupByTrain.Key, groupByTrain.Any(tm => tm.State == State.Terminated) ?
-                        TrainState.Terminated : TrainState.InProgress, dbConnection);
+                    if (groupByTrain.Any(tm => tm.State == State.Terminated))
+                    {
+                        UpdateTrainState(groupByTrain.Key, TrainState.Terminated, dbConnection);
+                    }
                 }
             }
         }

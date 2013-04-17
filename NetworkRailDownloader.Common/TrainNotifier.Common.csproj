@@ -75,7 +75,9 @@
     <Compile Include="Model\TrainDescriber.cs" />
     <Compile Include="Model\TrainMovement.cs" />
     <Compile Include="Model\TrainMovementStep.cs" />
+    <Compile Include="Model\TrainMovementStepViewModel.cs" />
     <Compile Include="Model\TrainReinstatement.cs" />
+    <Compile Include="Model\TrainState.cs" />
     <Compile Include="Model\VSTP\VSTPMapper.cs" />
     <Compile Include="Model\PPM\RtppmData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

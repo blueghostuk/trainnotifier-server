@@ -38,11 +38,6 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "GetById" });
 
             routes.MapHttpRoute(
-                name: "TM-WithUid",
-                routeTemplate: "TrainMovement/{id}/{uid}",
-                defaults: new { controller = "TrainMovement", action = "GetWithUid" });
-
-            routes.MapHttpRoute(
                 name: "TM-ForUid",
                 routeTemplate: "TrainMovement/Uid/{trainUid}/{date}",
                 defaults: new { controller = "TrainMovement", action = "GetForUid" });
