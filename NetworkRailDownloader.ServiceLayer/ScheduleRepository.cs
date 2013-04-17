@@ -219,7 +219,7 @@ namespace TrainNotifier.Service
                 LEFT JOIN [AtocCode]  ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
                 LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                WHERE [LiveTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
+                WHERE [ScheduleTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
 
             ScheduleTrain train = null;
@@ -264,6 +264,11 @@ namespace TrainNotifier.Service
             return train;
         }
 
+        /// <summary>
+        /// Get stops for a schedule
+        /// </summary>
+        /// <param name="scheduleId">schedule id</param>
+        /// <returns>stops for schedule</returns>
         public IEnumerable<ScheduleStop> GetStopsById(Guid scheduleId)
         {
             const string sql = @"
@@ -292,7 +297,8 @@ namespace TrainNotifier.Service
                       ,[Tiploc].[CRS]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
-                WHERE [ScheduleId] = @scheduleId";
+                WHERE [ScheduleId] = @scheduleId
+                ORDER BY [ScheduleTrainStop].[StopNumber]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {

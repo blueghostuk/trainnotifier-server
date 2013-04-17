@@ -154,6 +154,24 @@ namespace TrainNotifier.Common.Model.Schedule
         }
     }
 
+    public class TrainMovementEventTypeField : EnumField<TrainMovementEventType>
+    {
+        public static readonly TrainMovementEventTypeField Default = new TrainMovementEventTypeField();
+
+        public static TrainMovementEventType ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public TrainMovementEventTypeField()
+            : base(3, new Dictionary<string, TrainMovementEventType>
+            {
+                { "DEPARTURE", TrainMovementEventType.Departure },
+                { "ARRIVAL", TrainMovementEventType.Arrival },
+            }) { }
+    }
+
     public abstract class DateTimeBaseField<T> : RecordField<T>
     {
         private readonly string _format;

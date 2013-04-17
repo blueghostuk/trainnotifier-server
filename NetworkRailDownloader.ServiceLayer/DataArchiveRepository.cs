@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters;
 using TrainNotifier.Common.Archive;
@@ -41,20 +42,12 @@ namespace TrainNotifier.Service
             return Query<TrainStopArchive>(sql, new { trainId });
         }
 
-        public void ArchiveTrainMovement(Guid trainId, IEnumerable<TrainStopArchive> trainMovements)
+        public void ArchiveTrainMovement(Guid trainId, IEnumerable<TrainStopArchive> trainMovements, string directoryPath)
         {
             using (var ts = GetTransactionScope())
             {
                 if (trainMovements.Any())
                 {
-                    const string insertSql = @"
-                        INSERT INTO [natrail].[dbo].[LiveTrainStopArchive]
-                           ([LiveTrainId]
-                           ,[Stops])
-                        VALUES
-                           (@trainId
-                           ,@stops)";
-
                     string stops = JsonConvert.SerializeObject(trainMovements, new JsonSerializerSettings
                     {
                         DateFormatHandling = DateFormatHandling.IsoDateFormat,
@@ -64,7 +57,13 @@ namespace TrainNotifier.Service
                         Formatting = Formatting.None
                     });
 
-                    ExecuteNonQuery(insertSql, new { trainId, stops});
+                    string path = Path.Combine(directoryPath, trainId.ToString(), ".json");
+
+                    if (File.Exists(path))
+                    {
+                        throw new Exception(string.Format("File '{0}' already exists", path));
+                    }
+                    File.WriteAllText(path, stops);
 
                     const string deleteSql = @"DELETE FROM [dbo].[LiveTrainStop] WHERE [TrainId] = @trainId";
                     ExecuteNonQuery(deleteSql, new { trainId });

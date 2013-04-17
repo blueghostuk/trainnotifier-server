@@ -13,20 +13,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [Obsolete("Will be removed in future version")]
-        public ExtendedTrainMovement GetById(string id)
+        public ViewModelTrainMovement GetById(string id)
         {
             return _tmRepo.GetTrainMovementById(id);
         }
 
         [HttpGet]
-        public ExtendedTrainMovement GetWithUid(string id, string uid)
-        {
-            return _tmRepo.GetTrainMovementById(id, uid);
-        }
-
-        [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public ExtendedTrainMovement GetForUid(string trainUid, DateTime date)
+        public ViewModelTrainMovement GetForUid(string trainUid, DateTime date)
         {
             return _tmRepo.GetTrainMovementById(trainUid, date);
         }
