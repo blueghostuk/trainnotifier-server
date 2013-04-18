@@ -29,6 +29,7 @@ namespace TrainNotifier.Console.Archiver
                     throw new DirectoryNotFoundException(filePath);
                 }
                 FileIOPermission ioPermission = new FileIOPermission(FileIOPermissionAccess.Write, filePath);
+                Trace.TraceInformation("Archiving to path: {0}", filePath);
                 ioPermission.Demand();
                 uint amount = Convert.ToUInt32(ConfigurationManager.AppSettings["trainsPerRun"]);
                 do
