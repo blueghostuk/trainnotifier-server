@@ -28,18 +28,28 @@ namespace TrainNotifier.Service
         public IEnumerable<TrainStopArchive> GetTrainMovements(Guid trainId)
         {
             const string sql = @"
-                SELECT [EventType]
+                SELECT [EventTypeId]
                       ,[PlannedTimestamp]
                       ,[ActualTimestamp]
-                      ,[ReportingStanox]
+                      ,[ReportingTiplocId]
                       ,[Platform]
                       ,[Line]
-                      ,[TrainTerminated]
                       ,[ScheduleStopNumber]
                 FROM [dbo].[LiveTrainStop]
                 WHERE [TrainId] = @trainId";
 
             return Query<TrainStopArchive>(sql, new { trainId });
+        }
+
+        private DateTime GetTrainDate(Guid trainId)
+        {
+            const string sql = @"
+                SELECT
+                    [OriginDepartTimestamp]
+                FROM [LiveTrain]
+                WHERE [Id] = @trainId";
+
+            return ExecuteScalar<DateTime>(sql, new { trainId });
         }
 
         public void ArchiveTrainMovement(Guid trainId, IEnumerable<TrainStopArchive> trainMovements, string directoryPath)
@@ -48,6 +58,7 @@ namespace TrainNotifier.Service
             {
                 if (trainMovements.Any())
                 {
+                    DateTime trainDate = GetTrainDate(trainId);
                     string stops = JsonConvert.SerializeObject(trainMovements, new JsonSerializerSettings
                     {
                         DateFormatHandling = DateFormatHandling.IsoDateFormat,
@@ -57,7 +68,13 @@ namespace TrainNotifier.Service
                         Formatting = Formatting.None
                     });
 
-                    string path = Path.Combine(directoryPath, trainId.ToString(), ".json");
+                    string path = Path.Combine(directoryPath, trainDate.ToString("yyyy-MM-dd"), string.Concat(trainId.ToString(), ".json"));
+
+                    string dir = Path.GetDirectoryName(path);
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
 
                     if (File.Exists(path))
                     {
