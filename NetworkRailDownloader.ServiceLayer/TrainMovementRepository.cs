@@ -600,7 +600,8 @@ namespace TrainNotifier.Service
                     ,[Tiploc].[CRS]
                 FROM [LiveTrainStop]
                 INNER JOIN  [Tiploc] ON [LiveTrainStop].[ReportingTiplocId] = [Tiploc].[TiplocId]
-                WHERE [TrainId] = @trainId";
+                WHERE [TrainId] = @trainId
+                ORDER BY [ScheduleStopNumber] ASC, [EventTypeId] DESC";
 
             IEnumerable<TrainMovementStepViewModel> tmSteps = dbConnection.Query<TrainMovementStepViewModel, ScheduleTiploc, TrainMovementStepViewModel>(
                     tmsSql,
