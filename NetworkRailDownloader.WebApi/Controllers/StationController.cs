@@ -25,5 +25,12 @@ namespace TrainNotifier.Console.WebApi.Controllers
         {
             return _tiplocRepo.GetByStationName(id);
         }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(604800)]
+        public IEnumerable<StationTiploc> GeoLookup(double lat, double lon, int limit = 5)
+        {
+            return _tiplocRepo.GetByLocation(lat, lon, limit);
+        }
     }
 }

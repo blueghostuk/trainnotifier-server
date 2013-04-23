@@ -140,5 +140,27 @@ namespace TrainNotifier.Service
             // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { crsCode }).FirstOrDefault();
         }
+
+        public IEnumerable<StationTiploc> GetByLocation(double lat, double lon, int limit)
+        {
+            const string sql = @"
+                DECLARE @g geography = 'POINT({0} {1})';
+                SELECT TOP({2})
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox],
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
+                FROM [Tiploc]
+                INNER JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
+                WHERE [Station].[Location].STDistance(@g) IS NOT NULL
+                ORDER BY [Station].[Location].STDistance(@g);";
+
+            return Query<StationTiploc>(string.Format(sql, lon, lat, limit));
+        }
     }
 }
