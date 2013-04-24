@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
+using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
@@ -313,6 +314,93 @@ namespace TrainNotifier.Service
                     splitOn: "TiplocId");
             }
 
+        }
+
+        public IEnumerable<ScheduleViewModel> GetForDate(string stanox, DateTime date)
+        {
+            TiplocRepository tr = new TiplocRepository();
+            var tiplocs = tr.GetByStanoxs(stanox);
+            if (tiplocs == null || !tiplocs.Any())
+            {
+                return Enumerable.Empty<ScheduleViewModel>();
+            }
+            const string sql = @"
+                SELECT 
+	                [ScheduleId]
+	                ,[TrainUid]
+	                ,[ScheduleStatusId]
+	                ,[STPIndicatorId]
+	                ,[Departure]
+	                ,[PublicDeparture]
+	                ,[AtocCode] AS [Code]
+	                ,[Name]
+	                ,[OriginTiplocId] AS [TiplocId]
+	                ,[OriginTiploc] AS [Tiploc]
+	                ,[OriginNalco] AS [Nalco]
+	                ,[OriginDescription] AS [Description]
+	                ,[OriginStanox] AS [Stanox]
+	                ,[OriginCRS] AS [CRS]
+	                ,[DestTiplocId] AS [TiplocId]
+	                ,[DestTiploc] AS [Tiploc]
+	                ,[DestNalco] AS [Nalco]
+	                ,[DestDescription] AS [Description]
+	                ,[DestStanox] AS [Stanox]
+                 FROM( 
+	                SELECT
+		                 [ScheduleTrain].[ScheduleId]
+		                ,[ScheduleTrain].[TrainUid]
+		                ,[ScheduleTrain].[ScheduleStatusId]
+		                ,[ScheduleTrain].[STPIndicatorId]
+		                ,[FirstStop].[Departure]
+		                ,[FirstStop].[PublicDeparture]
+		                ,[AtocCode].[AtocCode]
+		                ,[AtocCode].[Name]
+		                ,[OriginTiploc].[TiplocId] AS [OriginTiplocId]
+		                ,[OriginTiploc].[Tiploc] AS [OriginTiploc]
+		                ,[OriginTiploc].[Nalco] AS [OriginNalco]
+		                ,[OriginTiploc].[Description] AS [OriginDescription]
+		                ,[OriginTiploc].[Stanox] AS [OriginStanox]
+		                ,[OriginTiploc].[CRS] AS [OriginCRS]
+		                ,[DestTiploc].[TiplocId] AS [DestTiplocId]
+		                ,[DestTiploc].[Tiploc] AS [DestTiploc]
+		                ,[DestTiploc].[Nalco] AS [DestNalco]
+		                ,[DestTiploc].[Description] AS [DestDescription]
+		                ,[DestTiploc].[Stanox] AS [DestStanox]
+		                ,[DestTiploc].[CRS] AS [DestCRS]
+		                ,ROW_NUMBER() OVER (PARTITION BY [ScheduleTrain].[TrainUid] ORDER BY [ScheduleTrain].[STPIndicatorId]) AS [RowNumber]
+	                FROM [ScheduleTrain]
+	                INNER JOIN [ScheduleTrainStop] ON [ScheduleTrain].[ScheduleId] = [ScheduleTrainStop].[ScheduleId]
+	                INNER JOIN [ScheduleTrainStop] AS [FirstStop] ON [ScheduleTrain].[ScheduleId] = [FirstStop].[ScheduleId]
+		                AND [FirstStop].[StopNumber] = 0
+	                LEFT JOIN [AtocCode]  ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
+	                LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
+	                LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
+	                WHERE [ScheduleTrain].[Runs{0}] = 1 
+		                AND [ScheduleTrainStop].[TiplocId] IN @tiplocIds
+		                AND @date >= [StartDate]
+		                AND @date <= [EndDate]) AS [Results]
+                WHERE   [Results].[RowNumber] = 1
+                ORDER BY [Departure], [PublicDeparture]";
+
+            using (DbConnection dbConnection = CreateAndOpenConnection())
+            {
+                return dbConnection.Query<ScheduleViewModel, AtocCode, TiplocCode, TiplocCode, ScheduleViewModel>(
+                    string.Format(sql, date.DayOfWeek.ToString()),
+                    (st, ac, ot, dt) =>
+                    {
+                        st.AtocCode = ac;
+                        st.Origin = ot;
+                        st.Destination = dt;
+                        return st;
+                    },
+                    new
+                    {
+                        tiplocIds = tiplocs.Select(t => t.TiplocId),
+                        date
+                    },
+                    splitOn: "Code,TiplocId,TiplocId");
+
+            }
         }
     }
 }

@@ -63,6 +63,7 @@
     <Compile Include="Model\PPM\PPMJsonMapper.cs" />
     <Compile Include="Model\PPM\PPMSector.cs" />
     <Compile Include="Model\Reinstatement.cs" />
+    <Compile Include="Model\ScheduleViewModel.cs" />
     <Compile Include="Model\Schedule\Enumerations.cs" />
     <Compile Include="Model\ITrainData.cs" />
     <Compile Include="Model\Schedule\RecordField.cs" />
