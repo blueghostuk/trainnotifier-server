@@ -71,6 +71,7 @@ namespace TrainNotifier.Console.WebSocketServer
         public UserContextState State { get; set; }
         public string LastRequest { get; set; }
         public string StateArgs { get; set; }
+        public string HeadCode { get; set; }
 
         public UserContextData()
         {

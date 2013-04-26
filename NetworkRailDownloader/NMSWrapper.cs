@@ -50,6 +50,22 @@ namespace TrainNotifier.Console.WebSocketServer
                             break;
                         case Feed.TrainDescriber:
 
+                            if (_userManager.ActiveUsers.Any())
+                            {
+                                ICollection<TrainDescriber> tdData = new List<TrainDescriber>(32);
+                                foreach (var message in evtData)
+                                {
+                                    tdData.Add(TrainDescriberMapper.MapFromBody(message));
+                                }
+                                tdData = tdData.Where(d => d != null)
+                                    .Where(d => !string.IsNullOrEmpty(d.Description))
+                                    .ToList();
+                                Parallel.ForEach(_userManager.ActiveUsers
+                                    .Where(u => u.Value.State == UserContextState.SubscribeToTrain)
+                                    .Where(u => !string.IsNullOrEmpty(u.Value.HeadCode))
+                                    .Where(u => DataContainsTrainDescriber(tdData, u.Value.HeadCode)), uc => SendTrainDescriberData(uc, tdData));
+                            }
+
                             break;
                     }
 
@@ -90,6 +106,13 @@ namespace TrainNotifier.Console.WebSocketServer
                     return true;
             }
             return false;
+        }
+
+        private bool DataContainsTrainDescriber(IEnumerable<TrainDescriber> tdData, string headCode)
+        {
+            return tdData
+                .Where(td => !string.IsNullOrEmpty(td.Description))
+                .Any(td => td.Description.Equals(headCode, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private static bool DoSendData(dynamic evtData, string filter)
@@ -135,6 +158,21 @@ namespace TrainNotifier.Console.WebSocketServer
             uc.Key.Send(JsonConvert.SerializeObject(new CommandResponse<IEnumerable<TrainMovementStep>>
             {
                 Command = "subtrainupdate",
+                Args = uc.Value.StateArgs,
+                Response = data
+            }));
+        }
+
+        private void SendTrainDescriberData(KeyValuePair<UserContext, UserContextData> uc, IEnumerable<TrainDescriber> tdData)
+        {
+            var data = tdData
+                .Where(td => !string.IsNullOrEmpty(td.Description))
+                .Where(td => td.Description.Equals(uc.Value.HeadCode, StringComparison.InvariantCultureIgnoreCase))
+                .ToList();
+
+            uc.Key.Send(JsonConvert.SerializeObject(new CommandResponse<IEnumerable<TrainDescriber>>
+            {
+                Command = "subtrainupdate-berth",
                 Args = uc.Value.StateArgs,
                 Response = data
             }));

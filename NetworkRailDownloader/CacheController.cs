@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
@@ -18,7 +19,10 @@ namespace TrainNotifier.Console.WebSocketServer
         private readonly UserManager _userManager;
         private readonly TiplocRepository _tiplocRepository = new TiplocRepository();
         private readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
+        private readonly LiveTrainRepository _liveTrainRepository = new LiveTrainRepository();
         private readonly ICollection<TiplocCode> _tiplocs;
+
+        private static readonly bool _saveTdData = bool.Parse(ConfigurationManager.AppSettings["SaveTrainDescriberData"]);
 
         private static readonly object _cacheLock = new object();
 
@@ -106,36 +110,39 @@ namespace TrainNotifier.Console.WebSocketServer
                                 }
                                 break;
                             case Common.Feed.TrainDescriber:
-                                ICollection<TrainDescriber> tdData = new List<TrainDescriber>(32);
-                                foreach (var message in f.Data)
+                                if (_saveTdData)
                                 {
-                                    tdData.Add(TrainDescriberMapper.MapFromBody(message));
-                                }
-                                tdData = tdData.Where(d => d != null)
-                                    .ToList();
-                                if (tdData.Any())
-                                {
-                                    CacheServiceClient cacheService = null;
-                                    try
+                                    ICollection<TrainDescriber> tdData = new List<TrainDescriber>(32);
+                                    foreach (var message in f.Data)
                                     {
-                                        cacheService = new CacheServiceClient();
-                                        cacheService.Open();
-                                        cacheService.CacheTrainDescriberData(tdData);
+                                        tdData.Add(TrainDescriberMapper.MapFromBody(message));
                                     }
-                                    catch (Exception e)
+                                    tdData = tdData.Where(d => d != null)
+                                        .ToList();
+                                    if (tdData.Any())
                                     {
-                                        Trace.TraceError("Error In Cache Connection: {0}", e);
-                                    }
-                                    finally
-                                    {
+                                        CacheServiceClient cacheService = null;
                                         try
                                         {
-                                            if (cacheService != null)
-                                                cacheService.Close();
+                                            cacheService = new CacheServiceClient();
+                                            cacheService.Open();
+                                            cacheService.CacheTrainDescriberData(tdData);
                                         }
-                                        catch (CommunicationObjectFaultedException e)
+                                        catch (Exception e)
                                         {
-                                            Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                            Trace.TraceError("Error In Cache Connection: {0}", e);
+                                        }
+                                        finally
+                                        {
+                                            try
+                                            {
+                                                if (cacheService != null)
+                                                    cacheService.Close();
+                                            }
+                                            catch (CommunicationObjectFaultedException e)
+                                            {
+                                                Trace.TraceError("Error Closing Cache Connection: {0}", e);
+                                            }
                                         }
                                     }
                                 }
@@ -279,7 +286,9 @@ namespace TrainNotifier.Console.WebSocketServer
                 if (subscribe)
                 {
                     uc.StateArgs = trainId;
+                    uc.HeadCode = _liveTrainRepository.GetHeadCode(trainId);
                     uc.State = UserContextState.SubscribeToTrain;
+                    Trace.TraceInformation("User {0} subscribed to train {1} - {2}", context.UserContext.ClientAddress, uc.HeadCode, trainId);
                 }
                 else
                 {
