@@ -598,8 +598,12 @@ namespace TrainNotifier.Service
                     ,[Tiploc].[Description]
                     ,[Tiploc].[Stanox]
                     ,[Tiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainStop]
                 INNER JOIN  [Tiploc] ON [LiveTrainStop].[ReportingTiplocId] = [Tiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [Tiploc].[TiplocId]
                 WHERE [TrainId] = @trainId
                 ORDER BY [ScheduleStopNumber] ASC, [EventTypeId] DESC";
 
