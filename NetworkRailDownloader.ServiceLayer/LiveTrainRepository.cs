@@ -553,6 +553,18 @@ namespace TrainNotifier.Service
             }
         }
 
+        public string GetHeadCode(string trainId)
+        {
+            const string sql = @"
+                SELECT TOP 1
+                    [Headcode]
+                FROM [natrail].[dbo].[LiveTrain]
+                WHERE [TrainId] = @trainId
+                ORDER BY [OriginDepartTimestamp] DESC";
+
+            return ExecuteScalar<string>(sql, new { trainId });
+        }
+
         public void BatchInsertTrainData(IEnumerable<ITrainData> trainData)
         {
             using (DbConnection dbConnection = CreateAndOpenConnection())
