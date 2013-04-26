@@ -274,36 +274,40 @@ namespace TrainNotifier.Service
         {
             const string sql = @"
                 SELECT 
-                       [ScheduleTrainStop].[ScheduleId]
-                      ,[ScheduleTrainStop].[StopNumber]
-                      ,[ScheduleTrainStop].[Arrival]
-                      ,[ScheduleTrainStop].[Departure]
-                      ,[ScheduleTrainStop].[Pass]
-                      ,[ScheduleTrainStop].[PublicArrival]
-                      ,[ScheduleTrainStop].[PublicDeparture]
-                      ,[ScheduleTrainStop].[Line]
-                      ,[ScheduleTrainStop].[Path]
-                      ,[ScheduleTrainStop].[Platform]
-                      ,[ScheduleTrainStop].[EngineeringAllowance]
-                      ,[ScheduleTrainStop].[PathingAllowance]
-                      ,[ScheduleTrainStop].[PerformanceAllowance]
-                      ,[ScheduleTrainStop].[Origin]
-                      ,[ScheduleTrainStop].[Intermediate]
-                      ,[ScheduleTrainStop].[Terminate]
-                      ,[Tiploc].[TiplocId]
-                      ,[Tiploc].[Tiploc]
-                      ,[Tiploc].[Nalco]
-                      ,[Tiploc].[Description]
-                      ,[Tiploc].[Stanox]
-                      ,[Tiploc].[CRS]
+                    [ScheduleTrainStop].[ScheduleId]
+                    ,[ScheduleTrainStop].[StopNumber]
+                    ,[ScheduleTrainStop].[Arrival]
+                    ,[ScheduleTrainStop].[Departure]
+                    ,[ScheduleTrainStop].[Pass]
+                    ,[ScheduleTrainStop].[PublicArrival]
+                    ,[ScheduleTrainStop].[PublicDeparture]
+                    ,[ScheduleTrainStop].[Line]
+                    ,[ScheduleTrainStop].[Path]
+                    ,[ScheduleTrainStop].[Platform]
+                    ,[ScheduleTrainStop].[EngineeringAllowance]
+                    ,[ScheduleTrainStop].[PathingAllowance]
+                    ,[ScheduleTrainStop].[PerformanceAllowance]
+                    ,[ScheduleTrainStop].[Origin]
+                    ,[ScheduleTrainStop].[Intermediate]
+                    ,[ScheduleTrainStop].[Terminate]
+                    ,[Tiploc].[TiplocId]
+                    ,[Tiploc].[Tiploc]
+                    ,[Tiploc].[Nalco]
+                    ,[Tiploc].[Description]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [Tiploc].[TiplocId]
                 WHERE [ScheduleId] = @scheduleId
                 ORDER BY [ScheduleTrainStop].[StopNumber]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                return dbConnection.Query<ScheduleStop, TiplocCode, ScheduleStop>(
+                return dbConnection.Query<ScheduleStop, StationTiploc, ScheduleStop>(
                     sql,
                     (st, t) =>
                     {
@@ -313,7 +317,6 @@ namespace TrainNotifier.Service
                     new { scheduleId },
                     splitOn: "TiplocId");
             }
-
         }
 
         public IEnumerable<ScheduleViewModel> GetForDate(string stanox, DateTime date)

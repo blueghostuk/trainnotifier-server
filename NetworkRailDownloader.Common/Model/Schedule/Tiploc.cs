@@ -21,7 +21,7 @@ namespace TrainNotifier.Common.Model.Schedule
     }
 
     [DataContract]
-    public sealed class ScheduleTiploc : TiplocCode
+    public sealed class ScheduleTiploc : StationTiploc
     {
         [DataMember]
         public string Platform { get; set; }
@@ -40,7 +40,7 @@ namespace TrainNotifier.Common.Model.Schedule
     }
 
     [DataContract]
-    public sealed class StationTiploc : TiplocCode
+    public class StationTiploc : TiplocCode
     {
         [DataMember]
         public string Name
