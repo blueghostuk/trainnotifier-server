@@ -32,6 +32,7 @@ namespace TrainNotifier.Schedule.Server
             Trace.TraceInformation("Temporary Directory is {0}", tempDir);
             string gzFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.gz", DateTime.UtcNow));
             string jsonFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.json", DateTime.UtcNow));
+            bool fail = false;
             try
             {
                 if (options.Force || !File.Exists(gzFile))
@@ -74,8 +75,8 @@ namespace TrainNotifier.Schedule.Server
                         var rowData = JsonConvert.DeserializeObject<dynamic>(row);
                         try
                         {
-                            if (rowData.JsonTimetableV1 != null 
-                                && options.ScheduleType == ScheduleType.DailyUpdate 
+                            if (rowData.JsonTimetableV1 != null
+                                && options.ScheduleType == ScheduleType.DailyUpdate
                                 && !options.Day.HasValue)
                             {
                                 DateTime dateCheck = DateTime.Today;
@@ -83,6 +84,7 @@ namespace TrainNotifier.Schedule.Server
                                 DateTime date = unixTs.AddSeconds((double)rowData.JsonTimetableV1.timestamp);
                                 if (date.Date != dateCheck)
                                 {
+                                    fail = true;
                                     throw new Exception(string.Format("Time stamp in file is for {0:dd/MM/yyyy} but requested {1:dd/MM/yyyy}",
                                         date, dateCheck));
                                 }
@@ -99,11 +101,16 @@ namespace TrainNotifier.Schedule.Server
                         catch (Exception e)
                         {
                             Trace.TraceError(e.ToString());
+                            fail = true;
                             delete = false;
                             throw;
                         }
                     }
                 }
+            }
+            catch (Exception)
+            {
+                fail = true;
             }
             finally
             {
@@ -113,6 +120,10 @@ namespace TrainNotifier.Schedule.Server
                     File.Delete(jsonFile);
                 }
                 TraceHelper.FlushLog();
+            }
+            if (fail)
+            {
+                Environment.Exit(1);
             }
         }
 
