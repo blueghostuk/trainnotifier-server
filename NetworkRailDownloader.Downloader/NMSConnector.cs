@@ -83,17 +83,17 @@ namespace TrainNotifier.Common.NMS
                 {
                     connection.ClientId = clientId;
                 }
-                using (var cm = NMSConnectionMonitor.MonitorConnection(connection, _cancellationTokenSource))
+                using (var connectionMonitor = new NMSConnectionMonitor(connection, _cancellationTokenSource, TimeSpan.FromMinutes(3)))
                 {
                     connection.Start();
 
-                    Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-                    Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-                    Task vstpDataTask = Task.Factory.StartNew(() => GetVSTPData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-                    Task rtppmTask = Task.Factory.StartNew(() => GetRtPPMData(connection, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+                    Task tmDataTask = Task.Factory.StartNew(() => GetTrainMovementData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
+                    Task tdDataTask = Task.Factory.StartNew(() => GetTrainDescriberData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
+                    Task vstpDataTask = Task.Factory.StartNew(() => GetVSTPData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
+                    Task rtppmTask = Task.Factory.StartNew(() => GetRtPPMData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
 
                     Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask, rtppmTask }, _cancellationTokenSource.Token);
-                    if (!cm.QuitOk)
+                    if (!connectionMonitor.QuitOk)
                     {
                         Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
                         TraceHelper.FlushLog();
@@ -105,7 +105,7 @@ namespace TrainNotifier.Common.NMS
             }
         }
 
-        private void GetRtPPMData(IConnection connection, CancellationToken cancellationToken)
+        private void GetRtPPMData(IConnection connection, CancellationToken cancellationToken, NMSConnectionMonitor connectionMonitor)
         {
             string rtppmTopic = ConfigurationManager.AppSettings["RTPPMFeedName"];
             if (!string.IsNullOrEmpty(rtppmTopic))
@@ -124,13 +124,14 @@ namespace TrainNotifier.Common.NMS
                         }
 
                         consumer.Listener += rtppm_Listener;
+                        connectionMonitor.AddMessageConsumer(consumer);
                         cancellationToken.WaitHandle.WaitOne();
                     }
                 }
             }
         }
 
-        private void GetVSTPData(IConnection connection, CancellationToken ct)
+        private void GetVSTPData(IConnection connection, CancellationToken ct, NMSConnectionMonitor connectionMonitor)
         {
             string vstpTopic = ConfigurationManager.AppSettings["VSTPFeedName"];
             if (!string.IsNullOrEmpty(vstpTopic))
@@ -149,13 +150,14 @@ namespace TrainNotifier.Common.NMS
                         }
 
                         consumer.Listener += vstpConsumer_Listener;
+                        connectionMonitor.AddMessageConsumer(consumer);
                         ct.WaitHandle.WaitOne();
                     }
                 }
             }
         }
 
-        private void GetTrainMovementData(IConnection connection, CancellationToken ct)
+        private void GetTrainMovementData(IConnection connection, CancellationToken ct, NMSConnectionMonitor connectionMonitor)
         {
             string trainMovementTopic = ConfigurationManager.AppSettings["TrainMovementName"];
             if (!string.IsNullOrEmpty(trainMovementTopic))
@@ -174,13 +176,14 @@ namespace TrainNotifier.Common.NMS
                         }
 
                         consumer.Listener += new MessageListener(this.tmConsumer_Listener);
+                        connectionMonitor.AddMessageConsumer(consumer);
                         ct.WaitHandle.WaitOne();
                     }
                 }
             }
         }
 
-        private void GetTrainDescriberData(IConnection connection, CancellationToken ct)
+        private void GetTrainDescriberData(IConnection connection, CancellationToken ct, NMSConnectionMonitor connectionMonitor)
         {
             string trainDescriberTopic = ConfigurationManager.AppSettings["TrainDescriberName"];
             if (!string.IsNullOrEmpty(trainDescriberTopic))
@@ -199,6 +202,7 @@ namespace TrainNotifier.Common.NMS
                         }
 
                         consumer.Listener += new MessageListener(this.tdConsumer_Listener);
+                        connectionMonitor.AddMessageConsumer(consumer);
                         ct.WaitHandle.WaitOne();
                     }
                 }
