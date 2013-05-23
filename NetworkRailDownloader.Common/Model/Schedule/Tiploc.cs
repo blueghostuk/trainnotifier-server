@@ -43,18 +43,6 @@ namespace TrainNotifier.Common.Model.Schedule
     public class StationTiploc : TiplocCode
     {
         [DataMember]
-        public string Name
-        {
-            get
-            {
-                return Stanox;
-            }
-            set
-            {
-                Stanox = value;
-            }
-        }
-        [DataMember]
         public string StationName { get; set; }
         [DataMember]
         public double? Lat { get; set; }
