@@ -48,6 +48,7 @@ namespace TrainNotifier.Console.Archiver
                         }
                     }
                 } while (trains.Any());
+                dar.UpdateIndexes();
             }
             catch (Exception e)
             {

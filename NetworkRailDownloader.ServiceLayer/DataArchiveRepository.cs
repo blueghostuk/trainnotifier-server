@@ -75,11 +75,6 @@ namespace TrainNotifier.Service
                     {
                         Directory.CreateDirectory(dir);
                     }
-
-                    if (File.Exists(path))
-                    {
-                        throw new Exception(string.Format("File '{0}' already exists", path));
-                    }
                     File.WriteAllText(path, stops);
 
                     const string deleteSql = @"DELETE FROM [dbo].[LiveTrainStop] WHERE [TrainId] = @trainId";
@@ -91,6 +86,33 @@ namespace TrainNotifier.Service
 
                 ts.Complete();
             }
+        }
+
+        public void UpdateIndexes()
+        {
+            const string updateIndexSql = @"DECLARE @TableName varchar(255)
+ 
+                DECLARE TableCursor CURSOR FOR
+                (
+                      SELECT '[' + IST.TABLE_SCHEMA + '].[' + IST.TABLE_NAME + ']' AS [TableName]
+                      FROM INFORMATION_SCHEMA.TABLES IST
+                      WHERE IST.TABLE_TYPE = 'BASE TABLE'
+                )
+ 
+                OPEN TableCursor
+                FETCH NEXT FROM TableCursor INTO @TableName
+                WHILE @@FETCH_STATUS = 0
+ 
+                BEGIN
+                      PRINT('Rebuilding Indexes on ' + @TableName)
+                      EXEC('ALTER INDEX ALL ON ' + @TableName + ' REBUILD')
+                      FETCH NEXT FROM TableCursor INTO @TableName
+                END
+ 
+                CLOSE TableCursor
+                DEALLOCATE TableCursor";
+
+            ExecuteNonQuery(updateIndexSql);
         }
     }
 }
