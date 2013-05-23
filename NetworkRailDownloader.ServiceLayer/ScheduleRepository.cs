@@ -322,7 +322,7 @@ namespace TrainNotifier.Service
         public IEnumerable<ScheduleViewModel> GetForDate(string stanox, DateTime date)
         {
             TiplocRepository tr = new TiplocRepository();
-            var tiplocs = tr.GetByStanoxs(stanox);
+            var tiplocs = tr.GetAllByStanox(stanox);
             if (tiplocs == null || !tiplocs.Any())
             {
                 return Enumerable.Empty<ScheduleViewModel>();

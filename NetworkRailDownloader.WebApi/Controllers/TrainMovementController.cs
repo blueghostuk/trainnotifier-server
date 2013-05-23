@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Api;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Service;
+using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
@@ -27,11 +29,20 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<OriginTrainMovement> StartingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<OriginTrainMovement> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
-            return _tmRepo.StartingAt(stanox, startDate, endDate);
+            return _tmRepo.StartingAtStanox(stanox, startDate, endDate);
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public IEnumerable<TrainMovementResult> StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.Date;
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.StartingAtLocation(crsCode, startDate, endDate);
         }
 
         [HttpGet]
