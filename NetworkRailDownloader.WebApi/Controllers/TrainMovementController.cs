@@ -29,10 +29,10 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<OriginTrainMovement> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
-            endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
             return _tmRepo.StartingAtStanox(stanox, startDate, endDate);
         }
 
