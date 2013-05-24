@@ -33,7 +33,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return _tmRepo.StartingAtStanox(stanox, startDate, endDate);
+            return _tmRepo.StartingAtLocation(stanox, startDate, endDate);
         }
 
         [HttpGet]
@@ -42,16 +42,25 @@ namespace TrainNotifier.Console.WebApi.Controllers
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return _tmRepo.StartingAtLocation(crsCode, startDate, endDate);
+            return _tmRepo.StartingAtStation(crsCode, startDate, endDate);
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<CallingAtTrainMovement> CallingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
-            endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
-            return _tmRepo.CallingAt(stanox, startDate, endDate);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.CallingAtLocation(stanox, startDate, endDate);
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public IEnumerable<TrainMovementResult> CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.Date;
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.CallingAtStation(crsCode, startDate, endDate);
         }
 
         [HttpGet]
