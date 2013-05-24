@@ -132,125 +132,6 @@ namespace TrainNotifier.Service
             }
         }
 
-        public IEnumerable<OriginTrainMovement> StartingAtStanox(string stanox, DateTime? startDate = null, DateTime? endDate = null)
-        {
-            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
-            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
-
-            // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
-                .Select(t => t.TiplocId);
-
-            if (!tiplocs.Any())
-                return Enumerable.Empty<OriginTrainMovement>();
-
-            const string sql = @"
-                SELECT
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS Id
-                    ,[LiveTrain].[Headcode] AS HeadCode
-                    ,[LiveTrain].[CreationTimestamp] AS Activated
-                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
-                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[ScheduleTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
-                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-                    ,[OriginStop].[Platform]
-                    ,[OriginStop].[Departure]
-                    ,[OriginStop].[PublicDeparture]
-                    ,[DestTiploc].[TiplocId]
-                    ,[DestTiploc].[Tiploc]
-                    ,[DestTiploc].[Nalco]
-                    ,[DestTiploc].[Description]
-                    ,[DestTiploc].[Stanox]
-                    ,[DestTiploc].[CRS]
-                    ,[DestinationStop].[Platform]
-                    ,[DestinationStop].[Arrival]
-                    ,[DestinationStop].[PublicArrival]
-                FROM [LiveTrain]
-                LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                LEFT JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
-                    AND [OriginStop].[Origin] = 1
-                LEFT JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
-                    AND [DestinationStop].[Terminate] = 1
-                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
-					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventTypeId] = @departureTypeId
-                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
-					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
-                WHERE   [OriginStop].[TiplocId] IN @tiplocs
-                    AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate
-                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
-
-            using (DbConnection dbConnection = CreateAndOpenConnection())
-            {
-                List<OriginTrainMovement> trains
-                    = dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
-                        sql,
-                        (tm, ac, ot, dt) =>
-                        {
-                            tm.AtocCode = ac;
-                            tm.Origin = ot;
-                            tm.Destination = dt;
-                            return tm;
-                        },
-                        new
-                        {
-                            tiplocs,
-                            startDate,
-                            endDate,
-                            departureTypeId = TrainMovementEventType.Departure,
-                            arrivalTypeId = TrainMovementEventType.Arrival
-                        },
-                        splitOn: "Code,TiplocId,TiplocId").ToList();
-
-                if (trains.Any())
-                {
-                    var trainIds = trains
-                        .Select(t => t.UniqueId)
-                        .Distinct()
-                        .ToArray();
-
-                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
-                    foreach (var cancellation in cancellations)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
-                        train.Cancellation = cancellation;
-                    }
-
-                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
-                    foreach (var reinstatement in reinstatements)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
-                        train.Reinstatement = reinstatement;
-                    }
-
-                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
-                    foreach (var changeOfOrigin in changeOfOrigins)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
-                        train.ChangeOfOrigin = changeOfOrigin;
-                    }
-                }
-
-                return trains;
-            }
-        }
-
         private sealed class ScheduleHolder
         {
             public Guid ScheduleId { get; set; }
@@ -503,6 +384,26 @@ namespace TrainNotifier.Service
                 splitOn: "TiplocId");
         }
 
+        public IEnumerable<TrainMovementResult> StartingAtStanox(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return StartingAt(tiplocs, startDate, endDate);
+        }
+
         public IEnumerable<TrainMovementResult> StartingAtLocation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
@@ -520,6 +421,11 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
+            return StartingAt(tiplocs, startDate, endDate);
+        }
+
+        private IEnumerable<TrainMovementResult> StartingAt(IEnumerable<short> tiplocs, DateTime? startDate, DateTime? endDate)
+        {
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Value.Date != endDate.Value.Date)
             {
@@ -581,8 +487,8 @@ namespace TrainNotifier.Service
                     Reinstatements = rein,
                     ChangeOfOrigins = coo
                 });
-            }   
-         
+            }
+
             return results;
         }
 
