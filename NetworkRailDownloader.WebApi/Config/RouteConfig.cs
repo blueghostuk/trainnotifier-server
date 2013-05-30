@@ -37,8 +37,13 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "TerminatingAtStation" });
 
             routes.MapHttpRoute(
+                name: "TM-CallingAtLocations",
+                routeTemplate: "TrainMovement/Between/Location/{fromStanox}/{toStanox}",
+                defaults: new { controller = "TrainMovement", action = "CallingAtLocations" });
+
+            routes.MapHttpRoute(
                 name: "TM-CallingAtStations",
-                routeTemplate: "TrainMovement/{fromStanox}/{toStanox}",
+                routeTemplate: "TrainMovement/Between/Station/{fromCrs}/{toCrs}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtStations" });
 
             routes.MapHttpRoute(
