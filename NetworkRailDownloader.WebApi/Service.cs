@@ -64,7 +64,7 @@ namespace TrainNotifier.Console.WebApi
 
         protected override void OnStart(string[] args)
         {
-            Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + ":82");
+            Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + GetPort());
             HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress);
 
             config.MessageHandlers.Add(new CorsHeader());
@@ -75,6 +75,14 @@ namespace TrainNotifier.Console.WebApi
             // Start listening 
             _server.OpenAsync().Wait();
             System.Console.WriteLine("Listening on " + baseAddress);
+        }
+
+        private static string GetPort()
+        {
+            string port = ConfigurationManager.AppSettings["port"];
+            if (string.IsNullOrEmpty(port))
+                return null;
+            return string.Format(":{0}", port);
         }
 
         protected override void OnStop()
@@ -97,11 +105,11 @@ namespace TrainNotifier.Console.WebApi
             //set the privileges
             processInstaller.Account = ServiceAccount.LocalSystem;
 
-            serviceInstaller.DisplayName = "TrainNotifier Web API Server";
+            serviceInstaller.DisplayName = "TrainNotifier Web API Server v2";
             serviceInstaller.StartType = ServiceStartMode.Automatic;
 
             //must be the same as what was set in Program's constructor
-            serviceInstaller.ServiceName = "TrainNotiferWebApiServer";
+            serviceInstaller.ServiceName = "TrainNotiferWebApiServerV2";
             this.Installers.Add(processInstaller);
             this.Installers.Add(serviceInstaller);
         }

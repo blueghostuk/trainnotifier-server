@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
