@@ -83,11 +83,20 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<OriginTrainMovement> TerminatingAtStation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> TerminatingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
-            endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
-            return _tmRepo.TerminatingAtStation(stanox, startDate, endDate);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.TerminatingAtLocation(stanox, startDate, endDate);
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public IEnumerable<TrainMovementResult> TerminatingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.Date;
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.TerminatingAtStation(crsCode, startDate, endDate);
         }
     }
 }
