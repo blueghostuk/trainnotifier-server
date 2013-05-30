@@ -65,11 +65,20 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public IEnumerable<CallingAtStationsTrainMovement> CallingAtStations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingAtLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
-            endDate = endDate ?? DateTime.UtcNow.Date.AddDays(1);
-            return _tmRepo.CallingAt(fromStanox, toStanox, startDate, endDate);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.CallingBetweenLocations(fromStanox, toStanox, startDate, endDate);
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public IEnumerable<TrainMovementResult> CallingAtStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.Date;
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+            return _tmRepo.CallingBetweenStations(fromCrs, toCrs, startDate, endDate);
         }
 
         [HttpGet]
