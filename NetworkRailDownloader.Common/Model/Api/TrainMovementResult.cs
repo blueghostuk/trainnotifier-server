@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
+using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Model.Api
 {
@@ -17,5 +18,15 @@ namespace TrainNotifier.Common.Model.Api
         public IEnumerable<Reinstatement> Reinstatements { get; set; }
         [DataMember]
         public IEnumerable<ChangeOfOrigin> ChangeOfOrigins { get; set; }
+    }
+
+    [DataContract]
+    public class TrainMovementResults
+    {
+        [DataMember]
+        public IEnumerable<TrainMovementResult> Movements { get; set; }
+
+        [DataMember]
+        public IEnumerable<StationTiploc> Tiplocs { get; set; }
     }
 }

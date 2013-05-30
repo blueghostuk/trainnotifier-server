@@ -25,8 +25,10 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public TrainState State { get; private set; }
 
-        [DataMember]
+        [IgnoreDataMember]
         public StationTiploc ScheduleOrigin { get; set; }
+        [DataMember]
+        public string ScheduleOriginStanoxCode { get; set; }
 
         [DataMember]
         public IEnumerable<RunningTrainActualStop> Stops { get; set; }

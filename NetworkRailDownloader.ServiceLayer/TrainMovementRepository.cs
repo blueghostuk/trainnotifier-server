@@ -963,12 +963,16 @@ namespace TrainNotifier.Service
                     ,[CancelTiploc].[Description]
                     ,[CancelTiploc].[Stanox]
                     ,[CancelTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainCancellation]
                 LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
                 LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [CancelTiploc].[TiplocId]
                 WHERE [LiveTrainCancellation].[TrainId] IN @trainIds";
 
-            return connection.Query<ExtendedCancellation, TiplocCode, ExtendedCancellation>(sql,
+            return connection.Query<ExtendedCancellation, StationTiploc, ExtendedCancellation>(sql,
                 (c, t) =>
                 {
                     c.CancelledAt = t;
@@ -988,11 +992,15 @@ namespace TrainNotifier.Service
                     ,[ReinstatementTiploc].[Description]
                     ,[ReinstatementTiploc].[Stanox]
                     ,[ReinstatementTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainReinstatement]
                 INNER JOIN [Tiploc] AS [ReinstatementTiploc] ON [LiveTrainReinstatement].[ReinstatedTiplocId] = [ReinstatementTiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [ReinstatementTiploc].[TiplocId]
                 WHERE [LiveTrainReinstatement].[TrainId] IN @trainIds";
 
-            return connection.Query<Reinstatement, TiplocCode, Reinstatement>(sql,
+            return connection.Query<Reinstatement, StationTiploc, Reinstatement>(sql,
                 (r, t) =>
                 {
                     r.NewOrigin = t;
@@ -1014,12 +1022,16 @@ namespace TrainNotifier.Service
                     ,[ChangeOfOriginTiploc].[Description]
                     ,[ChangeOfOriginTiploc].[Stanox]
                     ,[ChangeOfOriginTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainChangeOfOrigin]
                 INNER JOIN [Tiploc] AS [ChangeOfOriginTiploc] ON [LiveTrainChangeOfOrigin].[NewTiplocId] = [ChangeOfOriginTiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [ChangeOfOriginTiploc].[TiplocId]
                 LEFT JOIN [DelayAttributionCodes] [ChangeOfOriginDelay] ON [LiveTrainChangeOfOrigin].[ReasonCode] = [ChangeOfOriginDelay].[ReasonCode]
                 WHERE [LiveTrainChangeOfOrigin].[TrainId] IN @trainIds";
 
-            return connection.Query<ChangeOfOrigin, TiplocCode, ChangeOfOrigin>(sql,
+            return connection.Query<ChangeOfOrigin, StationTiploc, ChangeOfOrigin>(sql,
                 (o, t) =>
                 {
                     o.NewOrigin = t;

@@ -9,8 +9,12 @@ namespace TrainNotifier.Common.Model.Api
     {
         [IgnoreDataMember]
         public Guid ScheduleId { get; set; }
-        [DataMember]
+
+        [IgnoreDataMember]
         public StationTiploc Tiploc { get; set; }
+        [DataMember]
+        public string TiplocStanoxCode { get; set; }
+
         [DataMember]
         public byte StopNumber { get; set; }
         [DataMember]

@@ -29,7 +29,9 @@ namespace TrainNotifier.Common.Model
     [DataContract]
     public class ExtendedCancellation : Cancellation
     {
+        [IgnoreDataMember]
+        public StationTiploc CancelledAt { get; set; }
         [DataMember]
-        public TiplocCode CancelledAt { get; set; }
+        public string CancelledAtStanoxCode { get; set; }
     }
 }
