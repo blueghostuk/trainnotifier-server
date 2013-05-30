@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace TrainNotifier.Common.Model.Schedule
 {
     [DataContract]
-    public class TiplocCode
+    public class TiplocCode : IEquatable<TiplocCode>
     {
         [IgnoreDataMember]
         public short TiplocId { get; set; }
@@ -18,6 +18,21 @@ namespace TrainNotifier.Common.Model.Schedule
         public string Stanox { get; set; }
         [DataMember]
         public string CRS { get; set; }
+
+        public bool Equals(TiplocCode other)
+        {
+            return other != null && this.Stanox == other.Stanox;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as TiplocCode);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Stanox.GetHashCode();
+        }
     }
 
     [DataContract]

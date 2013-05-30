@@ -10,8 +10,10 @@ namespace TrainNotifier.Common.Model
         [IgnoreDataMember]
         public Guid TrainId { get; set; }
 
+        [IgnoreDataMember]
+        public StationTiploc NewOrigin { get; set; }
         [DataMember]
-        public TiplocCode NewOrigin { get; set; }
+        public string NewOriginStanoxCode { get; set; }
 
         [DataMember]
         public string ReasonCode { get; set; }

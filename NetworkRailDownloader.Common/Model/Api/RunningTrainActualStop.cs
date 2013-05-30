@@ -24,7 +24,9 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public byte? ScheduleStopNumber { get; set; }
 
-        [DataMember]
+        [IgnoreDataMember]
         public StationTiploc Tiploc { get; set; }
+        [DataMember]
+        public string TiplocStanoxCode { get; set; }
     }
 }
