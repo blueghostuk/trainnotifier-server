@@ -68,6 +68,7 @@ namespace TrainNotifier.Console.WebApi
             HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress);
 
             config.MessageHandlers.Add(new CorsHeader());
+            config.MessageHandlers.Add(new CompressHandler());
 
             RouteConfig.RegisterRoutes(config.Routes);
 
