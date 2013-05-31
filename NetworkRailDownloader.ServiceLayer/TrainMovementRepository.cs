@@ -261,37 +261,40 @@ namespace TrainNotifier.Service
 
         private IEnumerable<RunningScheduleTrain> GetTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
-            var filteredScheduleIds = GetDistinctSchedules(GetTerminatingAtSchedules(tiplocs, date))
-                .Where(s => s.Arrival >= startTime)
-                .Where(s => s.Arrival < endTime)
-                .Select(s => s.ScheduleId);
+            var scheduleIds = GetDistinctSchedules(GetTerminatingAtSchedules(tiplocs, date));
 
-            return GetSchedules(filteredScheduleIds, date);
+            return GetSchedules(scheduleIds, date, startTime, endTime);
         }
 
         private IEnumerable<RunningScheduleTrain> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
-            var filteredScheduleIds = GetDistinctSchedules(GetStartingAtSchedules(tiplocs, date))
-                .Where(s => s.Departure >= startTime)
-                .Where(s => s.Departure < endTime)
-                .Select(s => s.ScheduleId);
+            var scheduleIds = GetDistinctSchedules(GetStartingAtSchedules(tiplocs, date));
 
-            return GetSchedules(filteredScheduleIds, date);
+            return GetSchedules(scheduleIds, date, startTime, endTime);
         }
 
         private IEnumerable<RunningScheduleTrain> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
-            var filteredScheduleIds = GetDistinctSchedules(GetCallingAtSchedules(tiplocs, date))
-                .Where(s => s.AggregateTime >= startTime)
-                .Where(s => s.AggregateTime < endTime)
-                .Select(s => s.ScheduleId);
+            var scheduleIds = GetDistinctSchedules(GetCallingAtSchedules(tiplocs, date));
 
-            return GetSchedules(filteredScheduleIds, date);
+            return GetSchedules(scheduleIds, date, startTime, endTime);
         }
 
         private IEnumerable<RunningScheduleTrain> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime)
         {
-            var filteredScheduleIds = GetDistinctSchedules(GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, date))
+            var scheduleIds = GetDistinctSchedules(GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, date));
+
+            return GetSchedules(scheduleIds, date, startTime, endTime);
+        }
+
+        private static readonly TimeSpan EndOfDay = new TimeSpan(23, 59, 59);
+
+        private IEnumerable<RunningScheduleTrain> GetSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            if (endTime == TimeSpan.Zero)
+                endTime = EndOfDay;
+
+            var filteredScheduleIds = schedules
                 .Where(s => s.AggregateTime >= startTime)
                 .Where(s => s.AggregateTime < endTime)
                 .Select(s => s.ScheduleId);

@@ -21,7 +21,7 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public string TrainServiceCode { get; set; }
         [DataMember]
-        public DateTime? SchedOriginDeparture { get; set; }
+        public DateTime? OriginDepartTimestamp { get; set; }
         [DataMember]
         public TrainState State { get; private set; }
 
