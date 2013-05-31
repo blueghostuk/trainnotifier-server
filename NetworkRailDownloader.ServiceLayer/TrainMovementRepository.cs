@@ -346,7 +346,7 @@ namespace TrainNotifier.Service
                 return actual.Select(s =>
                 {
                     s.Stops = stops.Where(stop => stop.TrainId == s.Id)
-                        .OrderBy(stop => stop.ActualTimeStamp);
+                        .OrderBy(stop => stop.ActualTimestamp);
                     return s;
                 });
             }
