@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using TrainNotifier.Common.Model.Schedule;
+using System.Linq;
 
 namespace TrainNotifier.Common.Model.Api
 {
@@ -27,6 +28,23 @@ namespace TrainNotifier.Common.Model.Api
 
         [DataMember]
         public IEnumerable<RunningScheduleRunningStop> Stops { get; set; }
+
+        [IgnoreDataMember]
+        public TimeSpan? DepartureTime
+        {
+            get
+            {
+                if (Stops.Any())
+                {
+                    var firstStop = Stops.ElementAt(0);
+                    return firstStop.PublicDeparture ?? firstStop.Departure ?? firstStop.Pass ?? default(TimeSpan?);
+                }
+                return null;
+            }
+        }
+
+        [IgnoreDataMember]
+        public DateTime DateFor { get; set; }
     }
 
     [DataContract]
