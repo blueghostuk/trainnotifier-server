@@ -150,7 +150,7 @@ namespace TrainNotifier.Service
                 .Select(s => s.OrderBy(sub => sub.STPIndicatorId).First());
         }
 
-        private IEnumerable<RunningScheduleTrain> GetSchedules(IEnumerable<Guid> scheduleIds)
+        private IEnumerable<RunningScheduleTrain> GetSchedules(IEnumerable<Guid> scheduleIds, DateTime date)
         {
             if (!scheduleIds.Any())
                 return Enumerable.Empty<RunningScheduleTrain>();
@@ -203,6 +203,7 @@ namespace TrainNotifier.Service
 
                 return schedules.Select(s =>
                 {
+                    s.DateFor = date;
                     s.Stops = stops.Where(stop => stop.ScheduleId == s.ScheduleId)
                         .OrderBy(stop => stop.StopNumber);
                     return s;
@@ -265,7 +266,7 @@ namespace TrainNotifier.Service
                 .Where(s => s.Arrival < endTime)
                 .Select(s => s.ScheduleId);
 
-            return GetSchedules(filteredScheduleIds);
+            return GetSchedules(filteredScheduleIds, date);
         }
 
         private IEnumerable<RunningScheduleTrain> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
@@ -275,7 +276,7 @@ namespace TrainNotifier.Service
                 .Where(s => s.Departure < endTime)
                 .Select(s => s.ScheduleId);
 
-            return GetSchedules(filteredScheduleIds);
+            return GetSchedules(filteredScheduleIds, date);
         }
 
         private IEnumerable<RunningScheduleTrain> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
@@ -285,7 +286,7 @@ namespace TrainNotifier.Service
                 .Where(s => s.AggregateTime < endTime)
                 .Select(s => s.ScheduleId);
 
-            return GetSchedules(filteredScheduleIds);
+            return GetSchedules(filteredScheduleIds, date);
         }
 
         private IEnumerable<RunningScheduleTrain> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime)
@@ -295,7 +296,7 @@ namespace TrainNotifier.Service
                 .Where(s => s.AggregateTime < endTime)
                 .Select(s => s.ScheduleId);
 
-            return GetSchedules(filteredScheduleIds);
+            return GetSchedules(filteredScheduleIds, date);
         }
 
         private IEnumerable<RunningTrainActual> GetActualSchedule(IEnumerable<Guid> scheduleIds, DateTime startDate, DateTime endDate)
@@ -495,7 +496,9 @@ namespace TrainNotifier.Service
                 });
             }
 
-            return results;
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
         }
 
         public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
@@ -603,7 +606,9 @@ namespace TrainNotifier.Service
                 });
             }
 
-            return results;
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
         }
 
         public IEnumerable<TrainMovementResult> CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
@@ -711,7 +716,9 @@ namespace TrainNotifier.Service
                 });
             }
 
-            return results;
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
         }
 
         public IEnumerable<TrainMovementResult> CallingBetweenLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
@@ -823,7 +830,9 @@ namespace TrainNotifier.Service
                 });
             }
 
-            return results;
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
         }
 
         [Obsolete("Will be removed in future version")]
