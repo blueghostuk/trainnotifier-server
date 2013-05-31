@@ -4,8 +4,8 @@ using System.Configuration;
 using System.Configuration.Install;
 using System.Diagnostics;
 using System.Reflection;
+using System.ServiceModel;
 using System.ServiceProcess;
-using System.Web.Http;
 using System.Web.Http.SelfHost;
 using TrainNotifier.Common;
 using TrainNotifier.Console.WebApi.Config;
@@ -65,7 +65,10 @@ namespace TrainNotifier.Console.WebApi
         protected override void OnStart(string[] args)
         {
             Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + GetPort());
-            HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress);
+            HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress)
+            {
+                HostNameComparisonMode = HostNameComparisonMode.Exact
+            };
 
             config.MessageHandlers.Add(new CorsHeader());
             config.MessageHandlers.Add(new CompressHandler());
