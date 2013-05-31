@@ -14,9 +14,9 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public TrainMovementEventType EventType { get; set; }
         [DataMember]
-        public DateTime? PlannedTime { get; set; }
+        public DateTime? PlannedTimestamp { get; set; }
         [DataMember]
-        public DateTime ActualTimeStamp { get; set; }
+        public DateTime ActualTimestamp { get; set; }
         [DataMember]
         public string Line { get; set; }
         [DataMember]
