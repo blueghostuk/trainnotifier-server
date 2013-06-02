@@ -67,7 +67,7 @@ namespace TrainNotifier.Console.WebApi
             Uri baseAddress = new Uri("http://" + ConfigurationManager.AppSettings["server"] + GetPort());
             HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(baseAddress)
             {
-                //HostNameComparisonMode = HostNameComparisonMode.Exact
+                HostNameComparisonMode = HostNameComparisonMode.Exact
             };
 
             config.MessageHandlers.Add(new CorsHeader());
