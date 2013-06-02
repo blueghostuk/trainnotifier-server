@@ -146,7 +146,7 @@ namespace TrainNotifier.Service
 
         private IEnumerable<ScheduleHolder> GetDistinctSchedules(IEnumerable<ScheduleHolder> schedules)
         {
-            return schedules.GroupBy(s => s.ScheduleId)
+            return schedules.GroupBy(s => s.TrainUid)
                 .Select(s => s.OrderBy(sub => sub.STPIndicatorId).First());
         }
 
