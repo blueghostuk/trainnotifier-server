@@ -730,7 +730,17 @@ namespace TrainNotifier.Service
 
             return results
                 .OrderBy(s => s.Schedule.DateFor)
-                .ThenBy(s => s.Schedule.DepartureTime);
+                .ThenBy(s => {
+                    if (s.Schedule.Stops == null || !s.Schedule.Stops.Any())
+                        return default(TimeSpan?);
+
+                    var tiplocStops = s.Schedule.Stops.Where(stop => tiplocs.Contains(stop.Tiploc.TiplocId));
+                    if (!tiplocStops.Any())
+                        return default(TimeSpan?);
+
+                    var firstStop = tiplocStops.First();
+                    return firstStop.PublicArrival ?? firstStop.Arrival ?? firstStop.Departure ?? firstStop.PublicDeparture ?? firstStop.Pass;
+                });
         }
 
         public IEnumerable<TrainMovementResult> CallingBetweenLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
