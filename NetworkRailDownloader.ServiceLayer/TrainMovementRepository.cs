@@ -894,56 +894,41 @@ namespace TrainNotifier.Service
             }
         }
 
-        public ViewModelTrainMovement GetTrainMovementById(string trainUid, DateTime date)
+        public TrainMovementResult GetTrainMovementById(string trainUid, DateTime date)
         {
             const string sql = @"
                 SELECT TOP 1
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS [Id]
-                    ,[LiveTrain].[Headcode] AS [HeadCode]
-                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
-                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
-                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
-                    ,[ScheduleTrain].[TrainUid] AS [TrainUid]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
+                    [ScheduleTrain].[ScheduleId]
                 FROM [LiveTrain]
                 INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
                 WHERE [ScheduleTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
                 ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                ViewModelTrainMovement train = dbConnection.Query<ViewModelTrainMovement, AtocCode, ScheduleTiploc, ViewModelTrainMovement>(
-                    sql,
-                    (tm, ac, ot) =>
-                    {
-                        tm.AtocCode = ac;
-                        tm.Origin = ot;
-                        return tm;
-                    },
-                    new
-                    {
-                        trainUid,
-                        date
-                    },
-                    splitOn: "Code,TiplocId").FirstOrDefault();
+                Guid? scheduleId = ExecuteScalar<Guid?>(sql, new { trainUid, date});
 
-                if (train != null)
+                if (scheduleId.HasValue && scheduleId.Value != Guid.Empty)
                 {
-                    train.Cancellation = GetCancellations(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.Reinstatement = GetReinstatements(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.ChangeOfOrigin = GetChangeOfOrigins(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.Steps = GetTmSteps(train.UniqueId, dbConnection);
-                    return train;
+                    TrainMovementResult result = new TrainMovementResult();
+                    var scheduleIds = new[] { scheduleId.Value };
+                    result.Schedule = GetSchedules(scheduleIds, date).FirstOrDefault();
+                    result.Actual = GetActualSchedule(scheduleIds, date.Date, date.Date.Add(new TimeSpan(23, 59, 59))).FirstOrDefault();
+                    if (result.Actual != null)
+                    {
+                        var actualIds = new[] { result.Actual.Id };
+                        result.Cancellations = GetCancellations(actualIds, dbConnection);
+                        result.Reinstatements = GetReinstatements(actualIds, dbConnection);
+                        result.ChangeOfOrigins = GetChangeOfOrigins(actualIds, dbConnection);
+                    }
+                    else
+                    {
+                        result.Cancellations = Enumerable.Empty<ExtendedCancellation>();
+                        result.Reinstatements = Enumerable.Empty<Reinstatement>();
+                        result.ChangeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+                    }
+
+                    return result;
                 }
             }
 
