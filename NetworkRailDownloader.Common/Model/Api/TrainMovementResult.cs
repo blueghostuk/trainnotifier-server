@@ -30,4 +30,14 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public IEnumerable<StationTiploc> Tiplocs { get; set; }
     }
+
+    [DataContract]
+    public class SingleTrainMovementResult
+    {
+        [DataMember]
+        public TrainMovementResult Movement { get; set; }
+
+        [DataMember]
+        public IEnumerable<StationTiploc> Tiplocs { get; set; }
+    }
 }

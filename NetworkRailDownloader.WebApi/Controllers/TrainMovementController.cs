@@ -23,9 +23,9 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public ViewModelTrainMovement GetForUid(string trainUid, DateTime date)
+        public SingleTrainMovementResult GetForUid(string trainUid, DateTime date)
         {
-            return _tmRepo.GetTrainMovementById(trainUid, date);
+            return FromResults(_tmRepo.GetTrainMovementById(trainUid, date));
         }
 
         [HttpGet]
@@ -98,6 +98,90 @@ namespace TrainNotifier.Console.WebApi.Controllers
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
             return FromResults(_tmRepo.TerminatingAtStation(crsCode, startDate, endDate));
+        }
+        private static SingleTrainMovementResult FromResults(TrainMovementResult result)
+        {
+            if (result == null)
+                return null;
+
+            SingleTrainMovementResult actual = new SingleTrainMovementResult
+            {
+                Movement = result
+            };
+            HashSet<StationTiploc> tiplocs = new HashSet<StationTiploc>();
+            if (result.Actual != null)
+            {
+                if (result.Actual.ScheduleOrigin != null)
+                {
+                    tiplocs.Add(result.Actual.ScheduleOrigin);
+                    result.Actual.ScheduleOriginStanoxCode = result.Actual.ScheduleOrigin.Stanox;
+                }
+                if (result.Actual.Stops != null && result.Actual.Stops.Any())
+                {
+                    result.Actual.Stops = result.Actual.Stops.Select(s =>
+                    {
+                        if (s.Tiploc != null)
+                        {
+                            tiplocs.Add(s.Tiploc);
+                            s.TiplocStanoxCode = s.Tiploc.Stanox;
+                        }
+                        return s;
+                    });
+                }
+            }
+
+            if (result.Schedule != null && result.Schedule.Stops != null && result.Schedule.Stops.Any())
+                result.Schedule.Stops = result.Schedule.Stops.Select(s =>
+                {
+                    if (s.Tiploc != null)
+                    {
+                        tiplocs.Add(s.Tiploc);
+                        s.TiplocStanoxCode = s.Tiploc.Stanox;
+                    }
+                    return s;
+                });
+
+            if (result.Cancellations != null && result.Cancellations.Any())
+            {
+                result.Cancellations = result.Cancellations.Select(c =>
+                {
+                    if (c.CancelledAt != null)
+                    {
+                        tiplocs.Add(c.CancelledAt);
+                        c.CancelledAtStanoxCode = c.CancelledAt.Stanox;
+                    }
+                    return c;
+                });
+            }
+
+            if (result.ChangeOfOrigins != null && result.ChangeOfOrigins.Any())
+            {
+                result.ChangeOfOrigins = result.ChangeOfOrigins.Select(c =>
+                {
+                    if (c.NewOrigin != null)
+                    {
+                        tiplocs.Add(c.NewOrigin);
+                        c.NewOriginStanoxCode = c.NewOrigin.Stanox;
+                    }
+                    return c;
+                });
+            }
+
+            if (result.Reinstatements != null && result.Reinstatements.Any())
+            {
+                result.Reinstatements = result.Reinstatements.Select(r =>
+                {
+                    if (r.NewOrigin != null)
+                    {
+                        tiplocs.Add(r.NewOrigin);
+                        r.NewOriginStanoxCode = r.NewOrigin.Stanox;
+                    }
+                    return r;
+                });
+            }
+            actual.Tiplocs = tiplocs;
+
+            return actual;
         }
 
         private static TrainMovementResults FromResults(IEnumerable<TrainMovementResult> results)
