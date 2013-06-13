@@ -23,6 +23,7 @@ namespace TrainNotifier.Common.Model.Schedule
                     t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.atoc_code));
                     t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
                     t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
+                    t.Headcode = StringField.ParseDataString(DynamicValueToString(s.schedule_segment.signalling_id));
                     t.Stops = ParseJsonStops(s.schedule_segment.schedule_location, tiplocs);
                     if (t.Stops.Any())
                     {

@@ -18,10 +18,10 @@ namespace TrainNotifier.Console.Archiver
         {
             TraceHelper.SetupTrace();
 
+            DataArchiveRepository dar = new DataArchiveRepository();
             try
             {
                 IEnumerable<Guid> trains = Enumerable.Empty<Guid>();
-                DataArchiveRepository dar = new DataArchiveRepository();
                 DateTime period = DateTime.UtcNow.AddDays(-1 * Convert.ToInt32(ConfigurationManager.AppSettings["archiveDays"]));
                 string filePath = ConfigurationManager.AppSettings["FileArchivePath"];
                 if (!Directory.Exists(filePath))
@@ -48,7 +48,6 @@ namespace TrainNotifier.Console.Archiver
                         }
                     }
                 } while (trains.Any());
-                dar.UpdateIndexes();
             }
             catch (Exception e)
             {
@@ -56,8 +55,15 @@ namespace TrainNotifier.Console.Archiver
                 Trace.Flush();
                 throw;
             }
+            finally
+            {
+                Trace.TraceInformation("Cleaning Indexes");
+                dar.UpdateIndexes();
+                Trace.Flush();
+            }
 
             Trace.TraceInformation("Completed Archive");
+            Trace.Flush();
         }
     }
 }

@@ -14,6 +14,8 @@ namespace TrainNotifier.Common.Model.Api
         [DataMember]
         public string TrainUid { get; set; }
         [DataMember]
+        public string Headcode { get; set; }
+        [DataMember]
         public DateTime StartDate { get; set; }
         [DataMember]
         public DateTime? EndDate { get; set; }
