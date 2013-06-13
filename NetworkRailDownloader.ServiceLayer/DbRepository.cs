@@ -39,7 +39,7 @@ namespace TrainNotifier.Service
             return connection;
         }
 
-        protected virtual void ExecuteNonQuery(string sql, dynamic parameters = null, DbConnection existingConnection = null)
+        protected virtual void ExecuteNonQuery(string sql, dynamic parameters = null, DbConnection existingConnection = null, int? commandTimeout = null)
         {
             if (existingConnection != null)
             {
@@ -49,7 +49,7 @@ namespace TrainNotifier.Service
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    dbConnection.Execute(sql, (object)parameters, commandTimeout: _commandTimeout);
+                    dbConnection.Execute(sql, (object)parameters, commandTimeout: commandTimeout ?? _commandTimeout);
                 }
             }
         }

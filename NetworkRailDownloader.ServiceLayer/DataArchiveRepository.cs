@@ -111,8 +111,7 @@ namespace TrainNotifier.Service
  
                 CLOSE TableCursor
                 DEALLOCATE TableCursor";
-
-            ExecuteNonQuery(updateIndexSql);
+            ExecuteNonQuery(updateIndexSql, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
         }
     }
 }

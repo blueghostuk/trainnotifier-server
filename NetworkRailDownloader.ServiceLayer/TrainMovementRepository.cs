@@ -158,6 +158,7 @@ namespace TrainNotifier.Service
             const string sql = @"
                 SELECT [ScheduleTrain].[ScheduleId]
 	                ,[ScheduleTrain].[TrainUid]
+	                ,[ScheduleTrain].[Headcode]
 	                ,[ScheduleTrain].[StartDate]
 	                ,[ScheduleTrain].[EndDate]
 	                ,[ScheduleTrain].[STPIndicatorId]
@@ -897,16 +898,19 @@ namespace TrainNotifier.Service
         public TrainMovementResult GetTrainMovementById(string trainUid, DateTime date)
         {
             const string sql = @"
-                SELECT TOP 1
-                    [ScheduleTrain].[ScheduleId]
-                FROM [LiveTrain]
-                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                WHERE [ScheduleTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
-                ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
+                SELECT TOP 1 [ScheduleId]
+                    FROM [ScheduleTrain]
+                    WHERE 
+                        [TrainUid] = @trainUid
+                        AND @date >= [StartDate]
+                        AND @date <= [EndDate]
+                        AND [Deleted] = 0
+                        AND [Runs{0}] = 1
+                    ORDER BY [STPIndicatorId]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                Guid? scheduleId = ExecuteScalar<Guid?>(sql, new { trainUid, date});
+                Guid? scheduleId = ExecuteScalar<Guid?>(string.Format(sql, date.DayOfWeek), new { trainUid, date});
 
                 if (scheduleId.HasValue && scheduleId.Value != Guid.Empty)
                 {
