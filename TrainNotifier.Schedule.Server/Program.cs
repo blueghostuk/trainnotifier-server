@@ -79,14 +79,18 @@ namespace TrainNotifier.Schedule.Server
                                 && options.ScheduleType == ScheduleType.DailyUpdate
                                 && !options.Day.HasValue)
                             {
-                                DateTime dateCheck = DateTime.Today;
-                                DateTime unixTs = new DateTime(1970, 1, 1);
-                                DateTime date = unixTs.AddSeconds((double)rowData.JsonTimetableV1.timestamp);
-                                if (date.Date != dateCheck)
+                                if (!options.Force)
                                 {
-                                    fail = true;
-                                    throw new Exception(string.Format("Time stamp in file is for {0:dd/MM/yyyy} but requested {1:dd/MM/yyyy}",
-                                        date, dateCheck));
+                                    // defaults to previous day (e.g. on monday download sunday - http://nrodwiki.rockshore.net/index.php/Schedule)
+                                    DateTime dateCheck = DateTime.Today.AddDays(-1);
+                                    DateTime unixTs = new DateTime(1970, 1, 1);
+                                    DateTime date = unixTs.AddSeconds((double)rowData.JsonTimetableV1.timestamp);
+                                    if (date.Date != dateCheck)
+                                    {
+                                        fail = true;
+                                        throw new Exception(string.Format("Time stamp in file is for {0:dd/MM/yyyy} but requested {1:dd/MM/yyyy}",
+                                            date, dateCheck));
+                                    }
                                 }
                             }
                             else if (rowData.JsonScheduleV1 != null)
