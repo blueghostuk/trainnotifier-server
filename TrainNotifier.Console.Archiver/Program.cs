@@ -21,7 +21,7 @@ namespace TrainNotifier.Console.Archiver
             DataArchiveRepository dar = new DataArchiveRepository();
             try
             {
-                IEnumerable<Guid> trains = Enumerable.Empty<Guid>();
+                IEnumerable<ArchiveTrain> trains = Enumerable.Empty<ArchiveTrain>();
                 DateTime period = DateTime.UtcNow.AddDays(-1 * Convert.ToInt32(ConfigurationManager.AppSettings["archiveDays"]));
                 string filePath = ConfigurationManager.AppSettings["FileArchivePath"];
                 if (!Directory.Exists(filePath))
@@ -40,11 +40,11 @@ namespace TrainNotifier.Console.Archiver
                         Trace.TraceInformation("Got {0} Trains to archive", trains.Count());
                         foreach (var train in trains)
                         {
-                            Trace.TraceInformation("Getting train movements for train id {0}", train);
-                            var tms = dar.GetTrainMovements(train);
-                            Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train);
+                            Trace.TraceInformation("Getting train movements for train id {0}", train.Id);
+                            var tms = dar.GetTrainMovements(train.Id);
+                            Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train.Id);
                             dar.ArchiveTrainMovement(train, tms, filePath);
-                            Trace.TraceInformation("Archived train id {0}", train);
+                            Trace.TraceInformation("Archived train id {0}", train.Id);
                         }
                     }
                 } while (trains.Any());

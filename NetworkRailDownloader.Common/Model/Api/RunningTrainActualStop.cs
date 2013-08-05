@@ -8,8 +8,6 @@ namespace TrainNotifier.Common.Model.Api
     public class RunningTrainActualStop
     {
         [IgnoreDataMember]
-        public Guid TrainStopId { get; set; }
-        [IgnoreDataMember]
         public Guid TrainId { get; set; }
         [DataMember]
         public TrainMovementEventType EventType { get; set; }

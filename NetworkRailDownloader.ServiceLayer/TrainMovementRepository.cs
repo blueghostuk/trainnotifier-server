@@ -362,8 +362,7 @@ namespace TrainNotifier.Service
                 return Enumerable.Empty<RunningTrainActualStop>();
 
             const string sql = @"
-                SELECT [LiveTrainStop].[TrainStopId]
-	                ,[LiveTrainStop].[TrainId]
+                SELECT [LiveTrainStop].[TrainId]
 	                ,[LiveTrainStop].[EventTypeId] AS [EventType]
 	                ,[LiveTrainStop].[PlannedTimestamp]
 	                ,[LiveTrainStop].[ActualTimestamp]
