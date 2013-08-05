@@ -39,17 +39,17 @@ namespace TrainNotifier.Service
             return connection;
         }
 
-        protected virtual void ExecuteNonQuery(string sql, dynamic parameters = null, DbConnection existingConnection = null, int? commandTimeout = null)
+        protected virtual int ExecuteNonQuery(string sql, dynamic parameters = null, DbConnection existingConnection = null, int? commandTimeout = null)
         {
             if (existingConnection != null)
             {
-                existingConnection.Execute(sql, (object)parameters);
+                return existingConnection.Execute(sql, (object)parameters);
             }
             else
             {
                 using (DbConnection dbConnection = CreateAndOpenConnection())
                 {
-                    dbConnection.Execute(sql, (object)parameters, commandTimeout: commandTimeout ?? _commandTimeout);
+                    return dbConnection.Execute(sql, (object)parameters, commandTimeout: commandTimeout ?? _commandTimeout);
                 }
             }
         }
