@@ -48,6 +48,13 @@ namespace TrainNotifier.Console.Archiver
                         }
                     }
                 } while (trains.Any());
+
+                Trace.TraceInformation("Archiving unused schedules");
+                dar.CleanSchedules(period);
+                Trace.TraceInformation("Archiving unused associations");
+                dar.CleanAssociations(period);
+                Trace.TraceInformation("Archiving old ppm");
+                dar.CleanPPMRecords(period);
             }
             catch (Exception e)
             {
