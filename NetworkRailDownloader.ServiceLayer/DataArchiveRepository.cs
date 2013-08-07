@@ -119,5 +119,58 @@ namespace TrainNotifier.Service
                 DEALLOCATE TableCursor";
             ExecuteNonQuery(updateIndexSql, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
         }
+
+        public void CleanSchedules(DateTime olderThan)
+        {
+            using (var ts = GetTransactionScope())
+            {
+                const string deleteStopsSql = @"
+                    DELETE FROM [ScheduleTrainStop] 
+                    WHERE [ScheduleId] IN (
+                        SELECT DISTINCT [ScheduleId]
+                        FROM [ScheduleTrain]
+                        LEFT JOIN [LiveTrain] on [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
+                        WHERE [LiveTrain].[Id] IS NULL AND [ScheduleTrain].[EndDate] <= @olderThan)";
+
+                ExecuteNonQuery(deleteStopsSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+
+                const string deleteSchedulesSql = @"
+                    DELETE [ScheduleTrain] FROM [ScheduleTrain]
+                    LEFT JOIN [LiveTrain] on [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
+                    WHERE [LiveTrain].[Id] IS NULL AND [ScheduleTrain].[EndDate] <= @olderThan";
+
+                ExecuteNonQuery(deleteSchedulesSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+
+                ts.Complete();
+            }
+        }
+
+        public void CleanAssociations(DateTime olderThan)
+        {
+            using (var ts = GetTransactionScope())
+            {
+                const string deleteAssocSql = @"
+                    DELETE FROM [TrainAssociation] 
+                    WHERE [EndDate] <= @olderThan OR [Deleted] = 1";
+
+                ExecuteNonQuery(deleteAssocSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+
+                ts.Complete();
+            }
+        }
+
+        public void CleanPPMRecords(DateTime olderThan)
+        {
+            using (var ts = GetTransactionScope())
+            {
+                const string deletePPMSql = @"
+                    DELETE FROM [PPMRecord] 
+                    WHERE [Timestamp] <= @olderThan";
+
+                ExecuteNonQuery(deletePPMSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+
+                ts.Complete();
+            }
+        }
     }
 }
