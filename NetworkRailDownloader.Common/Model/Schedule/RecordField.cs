@@ -402,6 +402,14 @@ namespace TrainNotifier.Common.Model.Schedule
 
     public sealed class SpeedField : ByteField
     {
+        private static readonly SpeedField Default = new SpeedField();
+
+        public static byte? ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
         public SpeedField()
             : base(3, 0) { }
     }

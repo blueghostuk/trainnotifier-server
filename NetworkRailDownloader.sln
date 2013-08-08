@@ -36,7 +36,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vs2008-stomp", "External\Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.ScheduleLibrary", "TrainNotifier.ScheduleLibrary\TrainNotifier.ScheduleLibrary.csproj", "{3131B7DD-21A0-4CB2-9D60-AEB841F04976}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Schedule.Server", "TrainNotifier.Schedule.Server\TrainNotifier.Schedule.Server.csproj", "{112F5CE4-8945-48F1-90A8-F6F1BAC74E5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.ScheduleDownloader", "TrainNotifier.Schedule.Server\TrainNotifier.Console.ScheduleDownloader.csproj", "{112F5CE4-8945-48F1-90A8-F6F1BAC74E5F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.Archiver", "TrainNotifier.Console.Archiver\TrainNotifier.Console.Archiver.csproj", "{D5E74111-8009-4B3B-91C2-20E9DD3922B6}"
 EndProject

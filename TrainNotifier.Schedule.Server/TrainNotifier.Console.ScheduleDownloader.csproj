@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TrainNotifier.Schedule.Server</RootNamespace>
-    <AssemblyName>TrainNotifier.Schedule.Server</AssemblyName>
+    <AssemblyName>TrainNotifier.Console.ScheduleDownloader</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>

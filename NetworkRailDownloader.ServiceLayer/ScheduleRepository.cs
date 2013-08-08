@@ -48,7 +48,10 @@ namespace TrainNotifier.Service
                        ,[ScheduleStatusId]
                        ,[OriginStopTiplocId]
                        ,[DestinationStopTiplocId]
-                       ,[Source])
+                       ,[Source]
+                       ,[PowerTypeId]
+                       ,[CategoryTypeId]
+                       ,[Speed])
                     OUTPUT [inserted].[ScheduleId]
                     VALUES
                        (@TrainUid
@@ -68,7 +71,10 @@ namespace TrainNotifier.Service
                        ,@Status
                        ,@OriginTiplocId
                        ,@DestinationTiplocId
-                       ,@Source)";
+                       ,@Source
+                       ,@PowerTypeId
+                       ,@CategoryTypeId
+                       ,@Speed)";
 
                 Guid id = ExecuteInsert(sql, new
                 {
@@ -89,7 +95,10 @@ namespace TrainNotifier.Service
                     train.Status,
                     OriginTiplocId = train.Origin != null ? new short?(train.Origin.TiplocId) : default(short?),
                     DestinationTiplocId = train.Destination != null ? new short?(train.Destination.TiplocId) : default(short?),
-                    Source = source
+                    Source = source,
+                    PowerTypeId = train.PowerType != null ? (byte)train.PowerType : default(byte?),
+                    CategoryTypeId = train.TrainCategory != null ? (byte)train.TrainCategory : default(byte?),
+                    Speed = train.Speed != null ? (byte)train.Speed : default(byte?)
                 });
                 if (source == ScheduleSource.VSTP)
                 {
