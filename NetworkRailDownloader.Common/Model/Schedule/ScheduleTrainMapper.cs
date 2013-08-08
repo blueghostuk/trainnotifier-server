@@ -23,8 +23,14 @@ namespace TrainNotifier.Common.Model.Schedule
                     t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.atoc_code));
                     t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
                     t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
+
                     t.Headcode = StringField.ParseDataString(DynamicValueToString(s.schedule_segment.signalling_id));
+                    t.PowerType = PowerTypeField.ParseDataString(DynamicValueToString(s.schedule_segment.CIF_power_type));
+                    t.TrainCategory = TrainCategoryField.ParseDataString(DynamicValueToString(s.schedule_segment.CIF_train_category));
+                    t.Speed = SpeedField.ParseDataString(DynamicValueToString(s.schedule_segment.CIF_speed));
+
                     t.Stops = ParseJsonStops(s.schedule_segment.schedule_location, tiplocs);
+
                     if (t.Stops.Any())
                     {
                         t.Origin = t.Stops
@@ -99,12 +105,18 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 case TransactionType.Create:
                     t.EndDate = NullableDateField.ParseDataString(DynamicValueToString(s.schedule_end_date));
-                    // not different location of atoc code
-                    t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].atoc_code));
                     t.Status = StatusField.ParseDataString(DynamicValueToString(s.train_status));
                     t.Schedule = ScheduleField.ParseDataString(DynamicValueToString(s.schedule_days_runs));
-                    // not different location of stops
+
+                    // N.B atoc code in different location for VSTP
+                    // also schedule_segment is an array
+                    t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].atoc_code));
+                    t.PowerType = PowerTypeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].CIF_power_type));
+                    t.TrainCategory = TrainCategoryField.ParseDataString(DynamicValueToString(s.schedule_segment[0].CIF_train_category));
+                    t.Speed = SpeedField.ParseDataString(DynamicValueToString(s.schedule_segment[0].CIF_speed));
+
                     t.Stops = ParseJsonVSTPStops(s.schedule_segment[0].schedule_location, tiplocs);
+
                     if (t.Stops.Any())
                     {
                         t.Origin = t.Stops

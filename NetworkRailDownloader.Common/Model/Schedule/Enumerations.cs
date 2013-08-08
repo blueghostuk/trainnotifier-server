@@ -113,60 +113,114 @@ namespace TrainNotifier.Common.Model.Schedule
             }) { }
     }
 
-    public enum TrainCategory
+    [DataContract]
+    public enum TrainCategory : byte
     {
+        [EnumMember()]
         LondonUndergroundMetro,
+        [EnumMember()]
         UnadvertisedPassenger,
+        [EnumMember()]
         OrdinaryPassenger,
+        [EnumMember()]
         Staff,
+        [EnumMember()]
         Mixed,
+        [EnumMember()]
         ChannelTunnel,
+        [EnumMember()]
         SleeperEurope,
+        [EnumMember()]
         International,
+        [EnumMember()]
         Motorail,
+        [EnumMember()]
         UnadvertisedExpress,
+        [EnumMember()]
         ExpressPassenger,
+        [EnumMember()]
         SleeperDomestic,
+        [EnumMember()]
         BusReplacementEngineering,
+        [EnumMember()]
         BusWTT,
+        [EnumMember()]
         ECS,
+        [EnumMember()]
         ECSLondonUndergroundMetro,
+        [EnumMember()]
         ECSStaff,
+        [EnumMember()]
         Postal,
+        [EnumMember()]
         PostOfficeParcels,
+        [EnumMember()]
         Parcels,
+        [EnumMember()]
         EmptyNPCCS,
+        [EnumMember()]
         Departmental,
+        [EnumMember()]
         CivilEngineer,
+        [EnumMember()]
         MechanicalAndElectricalEngineer,
+        [EnumMember()]
         Stores,
+        [EnumMember()]
         Test,
+        [EnumMember()]
         SignalAndTelecommsEngineer,
+        [EnumMember()]
         LocoAndBrake,
+        [EnumMember()]
         LightLoco,
+        [EnumMember()]
         RfDAutomotiveComponents,
+        [EnumMember()]
         RfDAutomotiveVehicles,
+        [EnumMember()]
         RfDEdible,
+        [EnumMember()]
         RfDIndustrialMinerals,
+        [EnumMember()]
         RfDChemicals,
+        [EnumMember()]
         RfDBuildingMaterials,
+        [EnumMember()]
         RfDGeneralMerch,
+        [EnumMember()]
         RfDEuropean,
+        [EnumMember()]
         RfDFreightlinerContract,
+        [EnumMember()]
         RfDFreightlinerOther,
+        [EnumMember()]
         CoalDistributive,
+        [EnumMember()]
         CoalElectrical,
+        [EnumMember()]
         CoalAndNuclear,
+        [EnumMember()]
         Metals,
+        [EnumMember()]
         Aggreggates,
+        [EnumMember()]
         DomesticAndIndustrialWaste,
+        [EnumMember()]
         BuildingMaterials,
+        [EnumMember()]
         Petroleum,
+        [EnumMember()]
         RfDEuroChannelTunnelMixed,
+        [EnumMember()]
         RfDEuroChannelTunnelIntermodal,
+        [EnumMember()]
         RfDEuroChannelTunnelAutomotive,
+        [EnumMember()]
         RfDEuroChannelTunnelContractServices,
+        [EnumMember()]
         RfDEuroChannelTunnelHaulmark,
+        [EnumMember()]
         RfDEuroChannelTunnelJointVenture
     }
 
@@ -239,18 +293,29 @@ namespace TrainNotifier.Common.Model.Schedule
             }) { }
     }
 
-    public enum PowerType
+    [DataContract]
+    public enum PowerType : byte
     {
-        Diesel,
-        DieselElectricMultipleUnit,
-        DieselMechanicalMultipleUnit,
-        Electric,
-        ElectroDiesel,
-        EML,
-        ElectricMultipleUnit,
-        ElectricParcelsUnit,
-        HighSpeedTrain,
-        DieselShuntingLocomotive
+        [EnumMember]
+        Diesel = 1,
+        [EnumMember]
+        DieselElectricMultipleUnit = 2,
+        [EnumMember]
+        DieselMechanicalMultipleUnit = 3,
+        [EnumMember]
+        Electric = 4,
+        [EnumMember]
+        ElectroDiesel = 5,
+        [EnumMember]
+        EML = 6,
+        [EnumMember]
+        ElectricMultipleUnit = 7,
+        [EnumMember]
+        ElectricParcelsUnit = 8,
+        [EnumMember]
+        HighSpeedTrain = 9,
+        [EnumMember]
+        DieselShuntingLocomotive = 10
     }
 
     public sealed class PowerTypeField : EnumField<PowerType?>

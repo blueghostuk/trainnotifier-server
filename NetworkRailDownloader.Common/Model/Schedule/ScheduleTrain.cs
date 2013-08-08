@@ -30,6 +30,13 @@ namespace TrainNotifier.Common.Model.Schedule
         [DataMember]
         public TiplocCode Destination { get; set; }
 
+        [DataMember]
+        public PowerType? PowerType { get; set; }
+        [DataMember]
+        public TrainCategory? TrainCategory { get; set; }
+        [DataMember]
+        public byte? Speed { get; set; }
+
         [IgnoreDataMember]
         public TransactionType TransactionType { get; set; }
 
