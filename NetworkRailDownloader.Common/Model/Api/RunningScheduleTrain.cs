@@ -27,6 +27,12 @@ namespace TrainNotifier.Common.Model.Api
         public Status? ScheduleStatusId { get; set; }
         [DataMember]
         public STPIndicator STPIndicatorId { get; set; }
+        [DataMember]
+        public PowerType? PowerTypeId { get; set; }
+        [DataMember]
+        public TrainCategory? CategoryTypeId { get; set; }
+        [DataMember]
+        public byte? Speed { get; set; }
 
         [DataMember]
         public IEnumerable<RunningScheduleRunningStop> Stops { get; set; }
