@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="RTTPMDataTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VSTPTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestFiles\RTPPMData.json">
@@ -70,8 +71,13 @@
       <Project>{55f15444-39a6-4b55-aa31-ced7a996de47}</Project>
       <Name>TrainNotifier.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\NetworkRailDownloader.ServiceLayer\TrainNotifier.Service.csproj">
+      <Project>{5aae47c1-e8a0-456d-86ca-c92b0c68f27c}</Project>
+      <Name>TrainNotifier.Service</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Choose>

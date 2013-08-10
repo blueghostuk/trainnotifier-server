@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Runtime.Serialization;
 
 namespace TrainNotifier.Common.Model.Schedule
@@ -6,7 +7,8 @@ namespace TrainNotifier.Common.Model.Schedule
     [DataContract]
     public class TiplocCode : IEquatable<TiplocCode>
     {
-        [IgnoreDataMember]
+        [DataMember]
+        [JsonIgnore]
         public short TiplocId { get; set; }
         [DataMember]
         public string Tiploc { get; set; }
