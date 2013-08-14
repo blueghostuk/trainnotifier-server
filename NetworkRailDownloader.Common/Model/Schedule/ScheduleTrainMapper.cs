@@ -110,6 +110,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
                     // N.B atoc code in different location for VSTP
                     // also schedule_segment is an array
+                    t.Headcode = StringField.ParseDataString(DynamicValueToString(s.schedule_segment[0].signalling_id));
                     t.AtocCode = AtocCodeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].atoc_code));
                     t.PowerType = PowerTypeField.ParseDataString(DynamicValueToString(s.schedule_segment[0].CIF_power_type));
                     t.TrainCategory = TrainCategoryField.ParseDataString(DynamicValueToString(s.schedule_segment[0].CIF_train_category));
