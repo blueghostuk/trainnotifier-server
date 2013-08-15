@@ -13,24 +13,43 @@ namespace TrainNotifier.Console.WebApi.Config
         {
             // Train Movements
             routes.MapHttpRoute(
+                name: "TM-StartingAtLocation",
+                routeTemplate: "TrainMovement/StartingAt/Location/{stanox}",
+                defaults: new { controller = "TrainMovement", action = "StartingAtLocation" });
+            routes.MapHttpRoute(
                 name: "TM-StartingAtStation",
-                routeTemplate: "TrainMovement/StartingAtStation/{stanox}",
+                routeTemplate: "TrainMovement/StartingAt/Station/{crsCode}",
                 defaults: new { controller = "TrainMovement", action = "StartingAtStation" });
 
             routes.MapHttpRoute(
+                name: "TM-CallingAtLocation",
+                routeTemplate: "TrainMovement/CallingAt/Location/{stanox}",
+                defaults: new { controller = "TrainMovement", action = "CallingAtLocation" });
+
+            routes.MapHttpRoute(
                 name: "TM-CallingAtStation",
-                routeTemplate: "TrainMovement/CallingAtStation/{stanox}",
+                routeTemplate: "TrainMovement/CallingAt/Station/{crsCode}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtStation" });
 
             routes.MapHttpRoute(
-                name: "TM-TerminatingAtStation",
-                routeTemplate: "TrainMovement/TerminatingAtStation/{stanox}",
-                defaults: new { controller = "TrainMovement", action = "TerminatingAtStation" });
+                name: "TM-CallingAtLocations",
+                routeTemplate: "TrainMovement/Between/Location/{fromStanox}/{toStanox}",
+                defaults: new { controller = "TrainMovement", action = "CallingAtLocations" });
 
             routes.MapHttpRoute(
                 name: "TM-CallingAtStations",
-                routeTemplate: "TrainMovement/{fromStanox}/{toStanox}",
+                routeTemplate: "TrainMovement/Between/Station/{fromCrs}/{toCrs}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtStations" });
+
+            routes.MapHttpRoute(
+                name: "TM-TerminatingAtLocation",
+                routeTemplate: "TrainMovement/TerminatingAt/Location/{stanox}",
+                defaults: new { controller = "TrainMovement", action = "TerminatingAtLocation" });
+
+            routes.MapHttpRoute(
+                name: "TM-TerminatingAtStation",
+                routeTemplate: "TrainMovement/TerminatingAt/Station/{crsCode}",
+                defaults: new { controller = "TrainMovement", action = "TerminatingAtStation" });
 
             routes.MapHttpRoute(
                 name: "TM-ById",

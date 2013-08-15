@@ -28,7 +28,14 @@ namespace TrainNotifier.WcfLibrary
         {
             Task.Run(() =>
             {
-                _cacheDb.BatchInsertTrainData(trainData);
+                try
+                {
+                    _cacheDb.BatchInsertTrainData(trainData);
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceError("Could not save Train Data: {0}", e);
+                }
             });
         }
 
@@ -44,7 +51,14 @@ namespace TrainNotifier.WcfLibrary
         {
             Task.Run(() =>
             {
-                _scheduleRepository.InsertSchedule(train, ScheduleSource.VSTP);
+                try
+                {
+                    _scheduleRepository.InsertSchedule(train, ScheduleSource.VSTP);
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceError("Could not save VSTP Train: {0}", e);
+                }
             });
         }
 

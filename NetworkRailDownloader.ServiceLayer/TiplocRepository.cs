@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
@@ -54,7 +53,7 @@ namespace TrainNotifier.Service
             return ExecuteScalar<short>(sql, new { tiploc });
         }
 
-        [Obsolete("Update code to use GetByStanoxs")]
+        [Obsolete("Update code to use GetAllByStanox")]
         public StationTiploc GetByStanox(string stanox)
         {
             const string sql = @"
@@ -79,7 +78,7 @@ namespace TrainNotifier.Service
         /// <summary>
         /// There can be more than one location per stanox
         /// </summary>
-        public IEnumerable<StationTiploc> GetByStanoxs(string stanox)
+        public IEnumerable<StationTiploc> GetAllByStanox(string stanox)
         {
             const string sql = @"
                 SELECT 
@@ -120,6 +119,7 @@ namespace TrainNotifier.Service
             return Query<StationTiploc>(sql, new { stationName }).FirstOrDefault();
         }
 
+        [Obsolete("Update code to use GetAllByCRSCode")]
         public StationTiploc GetByCRSCode(string crsCode)
         {
             const string sql = @"
@@ -139,6 +139,27 @@ namespace TrainNotifier.Service
 
             // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { crsCode }).FirstOrDefault();
+        }
+        
+        public IEnumerable<StationTiploc> GetAllByCRSCode(string crsCode)
+        {
+            const string sql = @"
+                SELECT 
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox],
+                    [Station].[StationName],
+                    [Station].[Location].[Lat] AS [Lat],
+                    [Station].[Location].[Long] AS [Lon]
+                FROM [Tiploc]
+                LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
+                WHERE [Tiploc].[CRS] = @crsCode";
+
+            // TODO: what if more than 1?
+            return Query<StationTiploc>(sql, new { crsCode });
         }
 
         public IEnumerable<StationTiploc> GetByLocation(double lat, double lon, int limit)

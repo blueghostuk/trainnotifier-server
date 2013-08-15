@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Api;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
@@ -12,494 +13,865 @@ namespace TrainNotifier.Service
     {
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
 
-        public IEnumerable<OriginTrainMovement> TerminatingAtStation(string stanox, DateTime? startDate, DateTime? endDate)
+        private sealed class ScheduleHolder
         {
-            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
-            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
+            public Guid ScheduleId { get; set; }
+            public string TrainUid { get; set; }
+            public STPIndicator STPIndicatorId { get; set; }
+            public TimeSpan? Arrival { get; set; }
+            public TimeSpan? Departure { get; set; }
+            public TimeSpan? Pass { get; set; }
+            public DateTime StartDate { get; set; }
 
-            // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetByStanoxs(stanox)
-                .Select(t => t.TiplocId);
-
-            if (!tiplocs.Any())
-                return Enumerable.Empty<OriginTrainMovement>();
-
-            const string sql = @"
-                SELECT
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS Id
-                    ,[LiveTrain].[Headcode] AS HeadCode
-                    ,[LiveTrain].[CreationTimestamp] AS Activated
-                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
-                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[ScheduleTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
-                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-                    ,[OriginStop].[Platform]
-                    ,[OriginStop].[Departure]
-                    ,[OriginStop].[PublicDeparture]
-                    ,[DestTiploc].[TiplocId]
-                    ,[DestTiploc].[Tiploc]
-                    ,[DestTiploc].[Nalco]
-                    ,[DestTiploc].[Description]
-                    ,[DestTiploc].[Stanox]
-                    ,[DestTiploc].[CRS]
-                    ,[DestinationStop].[Platform]
-                    ,[DestinationStop].[Arrival]
-                    ,[DestinationStop].[PublicArrival]
-                FROM [LiveTrain]
-                LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                LEFT JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
-                    AND [OriginStop].[Origin] = 1
-                LEFT JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
-                    AND [DestinationStop].[Terminate] = 1
-                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
-					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventTypeId] = @departureTypeId
-                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
-					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
-                WHERE   [DestinationStop].[TiplocId] IN @tiplocs
-                    AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate
-                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
-
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            public TimeSpan AggregateTime
             {
-                List<OriginTrainMovement> trains
-                    = dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
-                        sql,
-                        (tm, ac, ot, dt) =>
-                        {
-                            tm.AtocCode = ac;
-                            tm.Origin = ot;
-                            tm.Destination = dt;
-                            return tm;
-                        },
-                        new
-                        {
-                            tiplocs,
-                            startDate,
-                            endDate,
-                            departureTypeId = TrainMovementEventType.Departure,
-                            arrivalTypeId = TrainMovementEventType.Arrival
-                        },
-                        splitOn: "Code,TiplocId,TiplocId").ToList();
-
-                if (trains.Any())
+                get
                 {
-                    var trainIds = trains
-                        .Select(t => t.UniqueId)
-                        .Distinct()
-                        .ToArray();
-
-                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
-                    foreach (var cancellation in cancellations)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
-                        train.Cancellation = cancellation;
-                    }
-
-                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
-                    foreach (var reinstatement in reinstatements)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
-                        train.Reinstatement = reinstatement;
-                    }
-
-                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
-                    foreach (var changeOfOrigin in changeOfOrigins)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
-                        train.ChangeOfOrigin = changeOfOrigin;
-                    }
+                    return Arrival ?? Departure ?? Pass ?? TimeSpan.Zero;
                 }
-
-                return trains;
             }
         }
 
-        public IEnumerable<OriginTrainMovement> StartingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        private IEnumerable<ScheduleHolder> GetTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date)
         {
-            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
-            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
-
-            // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetByStanoxs(stanox)
-                .Select(t => t.TiplocId);
-
             if (!tiplocs.Any())
-                return Enumerable.Empty<OriginTrainMovement>();
+                return Enumerable.Empty<ScheduleHolder>();
 
-            const string sql = @"
-                SELECT
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS Id
-                    ,[LiveTrain].[Headcode] AS HeadCode
-                    ,[LiveTrain].[CreationTimestamp] AS Activated
-                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
-                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[ScheduleTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
-                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-                    ,[OriginStop].[Platform]
-                    ,[OriginStop].[Departure]
-                    ,[OriginStop].[PublicDeparture]
-                    ,[DestTiploc].[TiplocId]
-                    ,[DestTiploc].[Tiploc]
-                    ,[DestTiploc].[Nalco]
-                    ,[DestTiploc].[Description]
-                    ,[DestTiploc].[Stanox]
-                    ,[DestTiploc].[CRS]
-                    ,[DestinationStop].[Platform]
-                    ,[DestinationStop].[Arrival]
-                    ,[DestinationStop].[PublicArrival]
-                FROM [LiveTrain]
-                LEFT JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                LEFT JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                LEFT JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                LEFT JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
-                    AND [OriginStop].[Origin] = 1
-                LEFT JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
-                    AND [DestinationStop].[Terminate] = 1
-                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
-					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventTypeId] = @departureTypeId
-                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
-					AND [ActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
-                WHERE   [OriginStop].[TiplocId] IN @tiplocs
-                    AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate
-                ORDER BY [LiveTrain].[OriginDepartTimestamp]";
+            const string getSchedulesSql = @"
+                SELECT [ScheduleTrain].[ScheduleId]
+	                ,[ScheduleTrain].[TrainUid]
+	                ,[ScheduleTrain].[STPIndicatorId]
+	                ,[ScheduleTrainStop].[Arrival]
+                FROM [ScheduleTrain]
+                INNER JOIN [ScheduleTrainStop] ON [ScheduleTrain].[ScheduleId] = [ScheduleTrainStop].[ScheduleId]
+                WHERE [ScheduleTrainStop].[Terminate] = 1
+	                AND [ScheduleTrainStop].[TiplocId] IN @tiplocs
+	                AND [ScheduleTrain].[DestinationStopTiplocId] IN @tiplocs
+	                AND [ScheduleTrain].[Runs{0}] = 1
+	                AND @date >= [ScheduleTrain].[StartDate]
+	                AND @date <= [ScheduleTrain].[EndDate]
+	                AND [ScheduleTrain].[Deleted] = 0";
 
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
             {
-                List<OriginTrainMovement> trains
-                    = dbConnection.Query<OriginTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, OriginTrainMovement>(
-                        sql,
-                        (tm, ac, ot, dt) =>
-                        {
-                            tm.AtocCode = ac;
-                            tm.Origin = ot;
-                            tm.Destination = dt;
-                            return tm;
-                        },
-                        new
-                        {
-                            tiplocs,
-                            startDate,
-                            endDate,
-                            departureTypeId = TrainMovementEventType.Departure,
-                            arrivalTypeId = TrainMovementEventType.Arrival
-                        },
-                        splitOn: "Code,TiplocId,TiplocId").ToList();
-
-                if (trains.Any())
-                {
-                    var trainIds = trains
-                        .Select(t => t.UniqueId)
-                        .Distinct()
-                        .ToArray();
-
-                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
-                    foreach (var cancellation in cancellations)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
-                        train.Cancellation = cancellation;
-                    }
-
-                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
-                    foreach (var reinstatement in reinstatements)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
-                        train.Reinstatement = reinstatement;
-                    }
-
-                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
-                    foreach (var changeOfOrigin in changeOfOrigins)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
-                        train.ChangeOfOrigin = changeOfOrigin;
-                    }
-                }
-
-                return trains;
-            }
+                tiplocs,
+                date = date.Date
+            });
         }
 
-        public IEnumerable<CallingAtStationsTrainMovement> CallingAt(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        private IEnumerable<ScheduleHolder> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date)
         {
-            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
-            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
+            if (!tiplocs.Any())
+                return Enumerable.Empty<ScheduleHolder>();
 
-            // get tiploc id to improve query
-            var fromTiplocs = _tiplocRepository.GetByStanoxs(fromStanox)
-                .Select(t => t.TiplocId);
-            var toTiplocs = _tiplocRepository.GetByStanoxs(toStanox)
-                .Select(t => t.TiplocId);
+            const string getSchedulesSql = @"
+                SELECT [ScheduleTrain].[ScheduleId]
+	                ,[ScheduleTrain].[TrainUid]
+	                ,[ScheduleTrain].[STPIndicatorId]
+	                ,[ScheduleTrainStop].[Departure]
+                FROM [ScheduleTrain]
+                INNER JOIN [ScheduleTrainStop] ON [ScheduleTrain].[ScheduleId] = [ScheduleTrainStop].[ScheduleId]
+                WHERE [ScheduleTrainStop].[Origin] = 1
+	                AND [ScheduleTrainStop].[TiplocId] IN @tiplocs
+	                AND [ScheduleTrain].[OriginStopTiplocId] IN @tiplocs
+	                AND [ScheduleTrain].[Runs{0}] = 1
+	                AND @date >= [ScheduleTrain].[StartDate]
+	                AND @date <= [ScheduleTrain].[EndDate]
+	                AND [ScheduleTrain].[Deleted] = 0";
 
-            if (!fromTiplocs.Any() || !toTiplocs.Any())
-                return Enumerable.Empty<CallingAtStationsTrainMovement>();
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            {
+                tiplocs,
+                date = date.Date
+            });
+        }
+
+        private IEnumerable<ScheduleHolder> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date)
+        {
+            if (!tiplocs.Any())
+                return Enumerable.Empty<ScheduleHolder>();
+
+            const string getSchedulesSql = @"
+                SELECT [ScheduleTrain].[ScheduleId]
+                    ,[ScheduleTrain].[TrainUid]
+                    ,[ScheduleTrain].[STPIndicatorId]
+                    ,[ScheduleTrainStop].[Arrival]
+                    ,[ScheduleTrainStop].[Departure]
+                    ,[ScheduleTrainStop].[Pass]
+                FROM [ScheduleTrain]
+                INNER JOIN [ScheduleTrainStop] ON [ScheduleTrain].[ScheduleId] = [ScheduleTrainStop].[ScheduleId]
+                WHERE [ScheduleTrainStop].[TiplocId] IN @tiplocs
+                    AND [ScheduleTrain].[Runs{0}] = 1
+                    AND @date >= [ScheduleTrain].[StartDate]
+                    AND @date <= [ScheduleTrain].[EndDate]
+                    AND [ScheduleTrain].[Deleted] = 0";
+
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            {
+                tiplocs,
+                date = date.Date
+            });
+        }
+
+        private IEnumerable<ScheduleHolder> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date)
+        {
+            if (!tiplocsFrom.Any() || !tiplocsTo.Any())
+                return Enumerable.Empty<ScheduleHolder>();
+
+            const string getSchedulesSql = @"
+                SELECT [ScheduleTrain].[ScheduleId]
+                    ,[ScheduleTrain].[TrainUid]
+                    ,[ScheduleTrain].[STPIndicatorId]
+                    ,[FromStop].[Arrival]
+                    ,[FromStop].[Departure]
+                    ,[FromStop].[Pass]
+                FROM [ScheduleTrain]
+                INNER JOIN [ScheduleTrainStop] [FromStop] ON [ScheduleTrain].[ScheduleId] = [FromStop].[ScheduleId]
+                INNER JOIN [ScheduleTrainStop] [ToStop] ON [ScheduleTrain].[ScheduleId] = [ToStop].[ScheduleId]
+                WHERE [FromStop].[TiplocId] IN @tiplocsFrom
+	                AND [ToStop].[TiplocId] IN @tiplocsTo
+	                AND [FromStop].[StopNumber] < [ToStop].[StopNumber]
+                    AND [ScheduleTrain].[Runs{0}] = 1
+                    AND @date >= [ScheduleTrain].[StartDate]
+                    AND @date <= [ScheduleTrain].[EndDate]
+                    AND [ScheduleTrain].[Deleted] = 0";
+
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            {
+                tiplocsFrom,
+                tiplocsTo,
+                date = date.Date
+            });
+        }
+
+        private IEnumerable<ScheduleHolder> GetDistinctSchedules(IEnumerable<ScheduleHolder> schedules)
+        {
+            return schedules.GroupBy(s => s.TrainUid)
+                .Select(s => s.OrderBy(sub => sub.STPIndicatorId).First());
+        }
+
+        private IEnumerable<RunningScheduleTrain> GetSchedules(IEnumerable<Guid> scheduleIds, DateTime date)
+        {
+            if (!scheduleIds.Any())
+                return Enumerable.Empty<RunningScheduleTrain>();
 
             const string sql = @"
-                SELECT
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS Id
-                    ,[LiveTrain].[Headcode] AS HeadCode
-                    ,[LiveTrain].[CreationTimestamp] AS Activated
-                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
-                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[ScheduleTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
-                    ,[DestinationStop].[PublicArrival] AS [DestExpectedArrival]
-                    ,[DestinationStop].[PublicDeparture] AS [DestExpectedDeparture]
-                    ,[ToActualArrival].[ActualTimestamp] AS [DestActualArrival]
-                    ,[ToActualDeparture].[ActualTimestamp] AS [DestActualDeparture]
-                    ,[DestinationStop].[Pass]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-                    ,[OriginStop].[Platform]
-                    ,[OriginStop].[Arrival]
-                    ,[OriginStop].[PublicArrival]
-                    ,[DestTiploc].[TiplocId]
-                    ,[DestTiploc].[Tiploc]
-                    ,[DestTiploc].[Nalco]
-                    ,[DestTiploc].[Description]
-                    ,[DestTiploc].[Stanox]
-                    ,[DestTiploc].[CRS]
-                    ,[OriginStop].[Platform]
-                    ,[OriginStop].[Departure]
-                    ,[OriginStop].[PublicDeparture]
-                FROM [LiveTrain]
-                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                SELECT [ScheduleTrain].[ScheduleId]
+	                ,[ScheduleTrain].[TrainUid]
+	                ,[ScheduleTrain].[Headcode]
+	                ,[ScheduleTrain].[StartDate]
+	                ,[ScheduleTrain].[EndDate]
+	                ,[ScheduleTrain].[STPIndicatorId]
+                    ,[ScheduleTrain].[ScheduleStatusId]
+                    ,[ScheduleTrain].[PowerTypeId]
+                    ,[ScheduleTrain].[CategoryTypeId]
+                    ,[ScheduleTrain].[Speed]
+	                ,[ScheduleTrain].[RunsMonday]
+	                ,[ScheduleTrain].[RunsTuesday]
+	                ,[ScheduleTrain].[RunsWednesday]
+	                ,[ScheduleTrain].[RunsThursday]
+	                ,[ScheduleTrain].[RunsFriday]
+	                ,[ScheduleTrain].[RunsSaturday]
+	                ,[ScheduleTrain].[RunsSunday]
+	                ,[ScheduleTrain].[RunsBankHoliday]
+	                ,[AtocCode].[AtocCode] AS [Code]
+	                ,[AtocCode].[Name]
+                FROM [ScheduleTrain]
                 LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                INNER JOIN [ScheduleTrainStop] [OriginStop] ON [ScheduleTrain].[ScheduleId] = [OriginStop].[ScheduleId]
-                INNER JOIN [ScheduleTrainStop] [DestinationStop] ON [ScheduleTrain].[ScheduleId] = [DestinationStop].[ScheduleId]
-                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
-					AND [ActualDeparture].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualDeparture].[EventTypeId] = @departureTypeId
-				LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
-					AND [ActualArrival].[ScheduleStopNumber] = [OriginStop].[StopNumber]
-					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
-                LEFT JOIN [LiveTrainStop] [ToActualArrival] ON [LiveTrain].[Id] = [ToActualArrival].[TrainId] 
-					AND [ToActualArrival].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ToActualArrival].[EventTypeId] = @arrivalTypeId
-                LEFT JOIN [LiveTrainStop] [ToActualDeparture] ON [LiveTrain].[Id] = [ToActualDeparture].[TrainId] 
-					AND [ToActualDeparture].[ScheduleStopNumber] = [DestinationStop].[StopNumber]
-					AND [ToActualDeparture].[EventTypeId] = @departureTypeId
-                WHERE   [OriginStop].[TiplocId] IN @fromTiplocs
-	                AND [DestinationStop].[TiplocId] IN @toTiplocs
-	                AND [OriginStop].[StopNumber] < [DestinationStop].[StopNumber]
-                    AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                    AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
+                WHERE [ScheduleTrain].[ScheduleId] IN @scheduleIds";
 
-            using (DbConnection dbConnection = CreateAndOpenConnection())
+            using (DbConnection connection = CreateAndOpenConnection())
             {
-                List<CallingAtStationsTrainMovement> trains
-                    = dbConnection.Query<CallingAtStationsTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtStationsTrainMovement>(
+                var schedules = connection.Query<RunningScheduleTrain, dynamic, AtocCode, RunningScheduleTrain>(
                     sql,
-                    (tm, ac, ot, dt) =>
+                    (s, d, a) =>
                     {
-                        tm.AtocCode = ac;
-                        tm.Origin = ot;
-                        tm.Destination = dt;
-                        return tm;
+                        s.AtocCode = a;
+                        s.Schedule = new Schedule
+                        {
+                            Monday = d.RunsMonday,
+                            Tuesday = d.RunsTuesday,
+                            Wednesday = d.RunsWednesday,
+                            Thursday = d.RunsThursday,
+                            Friday = d.RunsFriday,
+                            Saturday = d.RunsSaturday,
+                            Sunday = d.RunsSunday,
+                            BankHoliday = d.RunsBankHoliday
+                        };
+                        return s;
                     },
-                    new
-                    {
-                        fromTiplocs,
-                        toTiplocs,
-                        startDate,
-                        endDate,
-                        departureTypeId = TrainMovementEventType.Departure,
-                        arrivalTypeId = TrainMovementEventType.Arrival
-                    },
-                    splitOn: "Code,TiplocId,TiplocId").ToList();
+                    new { scheduleIds },
+                    splitOn: "RunsMonday,Code");
 
-                if (trains.Any())
+                var stops = GetStopsForSchedules(connection, scheduleIds);
+
+                return schedules.Select(s =>
                 {
-                    var trainIds = trains
-                        .Select(t => t.UniqueId)
-                        .Distinct()
-                        .ToArray();
-
-                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
-                    foreach (var cancellation in cancellations)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
-                        train.Cancellation = cancellation;
-                    }
-
-                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
-                    foreach (var reinstatement in reinstatements)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
-                        train.Reinstatement = reinstatement;
-                    }
-
-                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
-                    foreach (var changeOfOrigin in changeOfOrigins)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
-                        train.ChangeOfOrigin = changeOfOrigin;
-                    }
-                }
-
-                return trains
-                    .OrderBy(t => t.Origin.Arrival ?? t.Destination.Departure ?? t.Origin.PublicArrival ?? t.Destination.PublicDeparture ?? t.Pass);
+                    s.DateFor = date;
+                    s.Stops = stops.Where(stop => stop.ScheduleId == s.ScheduleId)
+                        .OrderBy(stop => stop.StopNumber);
+                    return s;
+                });
             }
-
         }
 
-        public IEnumerable<CallingAtTrainMovement> CallingAt(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        private IEnumerable<RunningScheduleRunningStop> GetStopsForSchedules(DbConnection connection, IEnumerable<Guid> scheduleIds)
         {
-            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
-            endDate = endDate ?? DateTime.UtcNow.AddDays(1);
-
-            // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetByStanoxs(stanox)
-                .Select(t => t.TiplocId);
-
-            if (!tiplocs.Any())
-                return Enumerable.Empty<CallingAtTrainMovement>();
+            if (!scheduleIds.Any())
+                return Enumerable.Empty<RunningScheduleRunningStop>();
 
             const string sql = @"
-                SELECT
-                    [LiveTrain].[Id] AS [UniqueId]
-		            ,[LiveTrain].[TrainId] AS Id
-                    ,[LiveTrain].[Headcode] AS HeadCode
-                    ,[LiveTrain].[CreationTimestamp] AS Activated
-                    ,[LiveTrain].[OriginDepartTimestamp] AS SchedOriginDeparture
-                    ,[LiveTrain].[TrainServiceCode] AS ServiceCode
-                    ,[ScheduleTrain].[TrainUid] AS TrainUid
-                    ,[LiveTrain].[ScheduleTrain] AS ScheduleId
-                    ,[ActualDeparture].[ActualTimestamp] AS [ActualDeparture]
-                    ,[ActualArrival].[ActualTimestamp] AS [ActualArrival]
-					,[ScheduleTrainStop].[Pass]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-					,[ScheduleTrainStop].[Platform]
-					,[ScheduleTrainStop].[Arrival]
-					,[ScheduleTrainStop].[PublicArrival]
-                    ,[DestTiploc].[TiplocId]
-                    ,[DestTiploc].[Tiploc]
-                    ,[DestTiploc].[Nalco]
-                    ,[DestTiploc].[Description]
-                    ,[DestTiploc].[Stanox]
-                    ,[DestTiploc].[CRS]
-					,[ScheduleTrainStop].[Platform]
-					,[ScheduleTrainStop].[Departure]
-					,[ScheduleTrainStop].[PublicDeparture]
+                SELECT 
+                    [ScheduleTrainStop].[ScheduleId]
+                    ,[ScheduleTrainStop].[StopNumber]
+                    ,[ScheduleTrainStop].[Arrival]
+                    ,[ScheduleTrainStop].[Departure]
+                    ,[ScheduleTrainStop].[Pass]
+                    ,[ScheduleTrainStop].[PublicArrival]
+                    ,[ScheduleTrainStop].[PublicDeparture]
+                    ,[ScheduleTrainStop].[Line]
+                    ,[ScheduleTrainStop].[Path]
+                    ,[ScheduleTrainStop].[Platform]
+                    ,[ScheduleTrainStop].[EngineeringAllowance]
+                    ,[ScheduleTrainStop].[PathingAllowance]
+                    ,[ScheduleTrainStop].[PerformanceAllowance]
+                    ,[ScheduleTrainStop].[Origin]
+                    ,[ScheduleTrainStop].[Intermediate]
+                    ,[ScheduleTrainStop].[Terminate]
+                    ,[Tiploc].[TiplocId]
+                    ,[Tiploc].[Tiploc]
+                    ,[Tiploc].[Nalco]
+                    ,[Tiploc].[Description]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [ScheduleTrainStop]
                 INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
-                INNER JOIN [ScheduleTrain] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
-                INNER JOIN [LiveTrain] ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
-                INNER JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                INNER JOIN  [Tiploc] [DestTiploc] ON [ScheduleTrain].[DestinationStopTiplocId] = [DestTiploc].[TiplocId]
-                LEFT JOIN [LiveTrainStop] [ActualDeparture] ON [LiveTrain].[Id] = [ActualDeparture].[TrainId] 
-					AND [ActualDeparture].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
-					AND [ActualDeparture].[EventTypeId] = @departureTypeId
-                LEFT JOIN [LiveTrainStop] [ActualArrival] ON [LiveTrain].[Id] = [ActualArrival].[TrainId] 
-					AND [ActualArrival].[ScheduleStopNumber] = [ScheduleTrainStop].[StopNumber]
-					AND [ActualArrival].[EventTypeId] = @arrivalTypeId
-                WHERE    [Tiploc].[TiplocId] IN @tiplocs
-                     AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
-                     AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [Tiploc].[TiplocId]
+                WHERE [ScheduleId] IN @scheduleIds";
 
-            using (DbConnection dbConnection = CreateAndOpenConnection())
-            {
-                List<CallingAtTrainMovement> trains
-                    = dbConnection.Query<CallingAtTrainMovement, AtocCode, ScheduleTiploc, ScheduleTiploc, CallingAtTrainMovement>(
-                    sql,
-                    (tm, ac, ot, dt) =>
-                    {
-                        tm.AtocCode = ac;
-                        tm.Origin = ot;
-                        tm.Destination = dt;
-                        return tm;
-                    },
-                    new
-                    {
-                        tiplocs,
-                        startDate,
-                        endDate,
-                        departureTypeId = TrainMovementEventType.Departure,
-                        arrivalTypeId = TrainMovementEventType.Arrival
-                    },
-                    splitOn: "Code,TiplocId,TiplocId").ToList();
-
-                if (trains.Any())
+            return connection.Query<RunningScheduleRunningStop, StationTiploc, RunningScheduleRunningStop>(
+                sql,
+                (st, t) =>
                 {
-                    var trainIds = trains
-                        .Select(t => t.UniqueId)
-                        .Distinct()
-                        .ToArray();
+                    st.Tiploc = t;
+                    return st;
+                },
+                new { scheduleIds },
+                splitOn: "TiplocId");
+        }
 
-                    IEnumerable<ExtendedCancellation> cancellations = GetCancellations(trainIds, dbConnection);
-                    foreach (var cancellation in cancellations)
+        private IEnumerable<RunningScheduleTrain> GetTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            var scheduleIds = GetDistinctSchedules(GetTerminatingAtSchedules(tiplocs, date));
+
+            return GetSchedules(scheduleIds, date, startTime, endTime);
+        }
+
+        private IEnumerable<RunningScheduleTrain> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            var scheduleIds = GetDistinctSchedules(GetStartingAtSchedules(tiplocs, date));
+
+            return GetSchedules(scheduleIds, date, startTime, endTime);
+        }
+
+        private IEnumerable<RunningScheduleTrain> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            var scheduleIds = GetDistinctSchedules(GetCallingAtSchedules(tiplocs, date));
+
+            return GetSchedules(scheduleIds, date, startTime, endTime);
+        }
+
+        private IEnumerable<RunningScheduleTrain> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            var scheduleIds = GetDistinctSchedules(GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, date));
+
+            return GetSchedules(scheduleIds, date, startTime, endTime);
+        }
+
+        private static readonly TimeSpan EndOfDay = new TimeSpan(23, 59, 59);
+
+        private IEnumerable<RunningScheduleTrain> GetSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        {
+            if (endTime == TimeSpan.Zero)
+                endTime = EndOfDay;
+
+            var filteredScheduleIds = schedules
+                .Where(s => s.AggregateTime >= startTime)
+                .Where(s => s.AggregateTime < endTime)
+                .Select(s => s.ScheduleId);
+
+            return GetSchedules(filteredScheduleIds, date);
+        }
+
+        private IEnumerable<RunningTrainActual> GetActualSchedule(IEnumerable<Guid> scheduleIds, DateTime startDate, DateTime endDate)
+        {
+            if (!scheduleIds.Any())
+                return Enumerable.Empty<RunningTrainActual>();
+
+            const string sql = @"
+                SELECT [LiveTrain].[Id]
+	                ,[LiveTrain].[TrainId]
+	                ,[LiveTrain].[Headcode]
+	                ,[LiveTrain].[CreationTimestamp] AS [Activated]
+	                ,[LiveTrain].[OriginDepartTimestamp]
+	                ,[LiveTrain].[TrainServiceCode]
+	                ,[LiveTrain].[TrainStateId] AS [State]
+                    ,[LiveTrain].[ScheduleTrain] AS [ScheduleId]
+                    ,[Tiploc].[TiplocId]
+                    ,[Tiploc].[Tiploc]
+                    ,[Tiploc].[Nalco]
+                    ,[Tiploc].[Description]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
+                FROM [LiveTrain]
+                INNER JOIN [Tiploc] ON [LiveTrain].[OriginTiplocId] = [Tiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [Tiploc].[TiplocId]
+                WHERE [LiveTrain].[ScheduleTrain] IN @scheduleIds
+	                AND [LiveTrain].[OriginDepartTimestamp] >= @startDate
+	                AND [LiveTrain].[OriginDepartTimestamp] < @endDate";
+
+            using (DbConnection connection = CreateAndOpenConnection())
+            {
+                var actual = connection.Query<RunningTrainActual, StationTiploc, RunningTrainActual>(
+                    sql,
+                    (a, o) =>
                     {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == cancellation.TrainId);
-                        train.Cancellation = cancellation;
-                    }
+                        a.ScheduleOrigin = o;
+                        return a;
+                    },
+                    new { scheduleIds, startDate, endDate },
+                    splitOn: "TiplocId");
 
-                    IEnumerable<Reinstatement> reinstatements = GetReinstatements(trainIds, dbConnection);
-                    foreach (var reinstatement in reinstatements)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == reinstatement.TrainId);
-                        train.Reinstatement = reinstatement;
-                    }
+                var stops = GetActualStops(connection, actual.Select(a => a.Id));
 
-                    IEnumerable<ChangeOfOrigin> changeOfOrigins = GetChangeOfOrigins(trainIds, dbConnection);
-                    foreach (var changeOfOrigin in changeOfOrigins)
-                    {
-                        OriginTrainMovement train = trains.FirstOrDefault(t => t.UniqueId == changeOfOrigin.TrainId);
-                        train.ChangeOfOrigin = changeOfOrigin;
-                    }
-                }
-
-                return trains
-                    .OrderBy(t => t.Origin.Arrival ?? t.Destination.Departure ?? t.Origin.PublicArrival ?? t.Destination.PublicDeparture ?? t.Pass);
+                return actual.Select(s =>
+                {
+                    s.Stops = stops.Where(stop => stop.TrainId == s.Id)
+                        .OrderBy(stop => stop.ActualTimestamp);
+                    return s;
+                });
             }
+        }
+
+        private IEnumerable<RunningTrainActualStop> GetActualStops(DbConnection connection, IEnumerable<Guid> liveTrainIds)
+        {
+            if (!liveTrainIds.Any())
+                return Enumerable.Empty<RunningTrainActualStop>();
+
+            const string sql = @"
+                SELECT [LiveTrainStop].[TrainId]
+	                ,[LiveTrainStop].[EventTypeId] AS [EventType]
+	                ,[LiveTrainStop].[PlannedTimestamp]
+	                ,[LiveTrainStop].[ActualTimestamp]
+	                ,[LiveTrainStop].[Platform]
+	                ,[LiveTrainStop].[Line]
+	                ,[LiveTrainStop].[ScheduleStopNumber]
+                    ,[Tiploc].[TiplocId]
+                    ,[Tiploc].[Tiploc]
+                    ,[Tiploc].[Nalco]
+                    ,[Tiploc].[Description]
+                    ,[Tiploc].[Stanox]
+                    ,[Tiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
+                FROM [LiveTrainStop]
+                INNER JOIN [Tiploc] ON [LiveTrainStop].[ReportingTiplocId] = [Tiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [Tiploc].[TiplocId]
+                WHERE [LiveTrainStop].[TrainId] IN @liveTrainIds";
+
+            return connection.Query<RunningTrainActualStop, StationTiploc, RunningTrainActualStop>(
+                sql,
+                (st, t) =>
+                {
+                    st.Tiploc = t;
+                    return st;
+                },
+                new { liveTrainIds },
+                splitOn: "TiplocId");
+        }
+
+        public IEnumerable<TrainMovementResult> TerminatingAtStation(string crsCode, DateTime? startDate, DateTime? endDate)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByCRSCode(crsCode)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return TerminatingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        public IEnumerable<TrainMovementResult> TerminatingAtLocation(string stanox, DateTime? startDate, DateTime? endDate)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return TerminatingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        private IEnumerable<TrainMovementResult> TerminatingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        {
+            IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
+            if (startDate.Date != endDate.Date)
+            {
+                nextDaySchedules = GetTerminatingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                endDate = startDate.Date.AddDays(1);
+            }
+            else
+            {
+                nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
+            }
+
+            var allSchedules = GetTerminatingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+                .Union(nextDaySchedules)
+                .ToList();
+
+            // need to get live running data between these dates
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
+        }
+
+        public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return StartingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        public IEnumerable<TrainMovementResult> StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByCRSCode(crsCode)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return StartingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        private IEnumerable<TrainMovementResult> StartingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        {
+            IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
+            if (startDate.Date != endDate.Date)
+            {
+                nextDaySchedules = GetStartingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                endDate = startDate.Date.AddDays(1);
+            }
+            else
+            {
+                nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
+            }
+
+            var allSchedules = GetStartingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+                .Union(nextDaySchedules)
+                .ToList();
+
+            // need to get live running data between these dates
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
+        }
+
+        public IEnumerable<TrainMovementResult> CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return CallingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        public IEnumerable<TrainMovementResult> CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByCRSCode(crsCode)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return CallingAt(tiplocs, startDate.Value, endDate.Value);
+        }
+
+        private IEnumerable<TrainMovementResult> CallingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        {
+            IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
+            if (startDate.Date != endDate.Date)
+            {
+                nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                endDate = startDate.Date.AddDays(1);
+            }
+            else
+            {
+                nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
+            }
+
+            var allSchedules = GetCallingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+                .Union(nextDaySchedules)
+                .ToList();
+
+            // need to get live running data between these dates
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => {
+                    if (s.Schedule.Stops == null || !s.Schedule.Stops.Any())
+                        return default(TimeSpan?);
+
+                    var tiplocStops = s.Schedule.Stops.Where(stop => tiplocs.Contains(stop.Tiploc.TiplocId));
+                    if (!tiplocStops.Any())
+                        return default(TimeSpan?);
+
+                    var firstStop = tiplocStops.First();
+                    return firstStop.PublicArrival ?? firstStop.Arrival ?? firstStop.Departure ?? firstStop.PublicDeparture ?? firstStop.Pass;
+                });
+        }
+
+        public IEnumerable<TrainMovementResult> CallingBetweenLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocsFrom = _tiplocRepository.GetAllByStanox(fromStanox)
+                .Select(t => t.TiplocId);
+            var tiplocsTo = _tiplocRepository.GetAllByStanox(toStanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocsFrom.Any() || !tiplocsTo.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value);
+        }
+
+        public IEnumerable<TrainMovementResult> CallingBetweenStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
+            endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
+
+            if ((endDate.Value - startDate.Value) > TimeSpan.FromDays(1))
+            {
+                endDate = startDate.Value.AddDays(1);
+            }
+
+            // get tiploc id to improve query
+            var tiplocsFrom = _tiplocRepository.GetAllByCRSCode(fromCrs)
+                .Select(t => t.TiplocId);
+            var tiplocsTo = _tiplocRepository.GetAllByCRSCode(toCrs)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocsFrom.Any() || !tiplocsTo.Any())
+                return Enumerable.Empty<TrainMovementResult>();
+
+            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value);
+        }
+
+        private IEnumerable<TrainMovementResult> CallingBetween(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime startDate, DateTime endDate)
+        {
+            IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
+            if (startDate.Date != endDate.Date)
+            {
+                nextDaySchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                endDate = startDate.Date.AddDays(1);
+            }
+            else
+            {
+                nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
+            }
+
+            var allSchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+                .Union(nextDaySchedules)
+                .ToList();
+
+            // need to get live running data between these dates
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s =>
+                {
+                    if (s.Schedule.Stops == null || !s.Schedule.Stops.Any())
+                        return default(TimeSpan?);
+
+                    var tiplocStops = s.Schedule.Stops.Where(stop => tiplocsFrom.Contains(stop.Tiploc.TiplocId));
+                    if (!tiplocStops.Any())
+                        return default(TimeSpan?);
+
+                    var firstStop = tiplocStops.First();
+                    return firstStop.Departure ?? firstStop.PublicDeparture ?? firstStop.Pass;
+                });
         }
 
         [Obsolete("Will be removed in future version")]
@@ -525,56 +897,44 @@ namespace TrainNotifier.Service
             }
         }
 
-        public ViewModelTrainMovement GetTrainMovementById(string trainUid, DateTime date)
+        public TrainMovementResult GetTrainMovementById(string trainUid, DateTime date)
         {
             const string sql = @"
-                SELECT TOP 1
-                    [LiveTrain].[Id] AS [UniqueId]
-                    ,[LiveTrain].[TrainId] AS [Id]
-                    ,[LiveTrain].[Headcode] AS [HeadCode]
-                    ,[LiveTrain].[CreationTimestamp] AS [Activated]
-                    ,[LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
-                    ,[LiveTrain].[TrainServiceCode] AS [ServiceCode]
-                    ,[ScheduleTrain].[TrainUid] AS [TrainUid]
-                    ,[AtocCode].[AtocCode] AS [Code]
-                    ,[AtocCode].[Name]
-                    ,[OriginTiploc].[TiplocId]
-                    ,[OriginTiploc].[Tiploc]
-                    ,[OriginTiploc].[Nalco]
-                    ,[OriginTiploc].[Description]
-                    ,[OriginTiploc].[Stanox]
-                    ,[OriginTiploc].[CRS]
-                FROM [LiveTrain]
-                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
-                LEFT JOIN [AtocCode] ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
-                INNER JOIN  [Tiploc] [OriginTiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [OriginTiploc].[TiplocId]
-                WHERE [ScheduleTrain].[TrainUid] = @trainUid AND [LiveTrain].[OriginDepartTimestamp] >= @date
-                ORDER BY [LiveTrain].[OriginDepartTimestamp] ASC";
+                SELECT TOP 1 [ScheduleId]
+                    FROM [ScheduleTrain]
+                    WHERE 
+                        [TrainUid] = @trainUid
+                        AND @date >= [StartDate]
+                        AND @date <= [EndDate]
+                        AND [Deleted] = 0
+                        AND [Runs{0}] = 1
+                    ORDER BY [STPIndicatorId]";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                ViewModelTrainMovement train = dbConnection.Query<ViewModelTrainMovement, AtocCode, ScheduleTiploc, ViewModelTrainMovement>(
-                    sql,
-                    (tm, ac, ot) =>
-                    {
-                        tm.AtocCode = ac;
-                        tm.Origin = ot;
-                        return tm;
-                    },
-                    new
-                    {
-                        trainUid,
-                        date
-                    },
-                    splitOn: "Code,TiplocId").FirstOrDefault();
+                Guid? scheduleId = ExecuteScalar<Guid?>(string.Format(sql, date.DayOfWeek), new { trainUid, date});
 
-                if (train != null)
+                if (scheduleId.HasValue && scheduleId.Value != Guid.Empty)
                 {
-                    train.Cancellation = GetCancellations(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.Reinstatement = GetReinstatements(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.ChangeOfOrigin = GetChangeOfOrigins(new[] { train.UniqueId }, dbConnection).FirstOrDefault();
-                    train.Steps = GetTmSteps(train.UniqueId, dbConnection);
-                    return train;
+                    TrainMovementResult result = new TrainMovementResult();
+                    var scheduleIds = new[] { scheduleId.Value };
+                    result.Schedule = GetSchedules(scheduleIds, date).FirstOrDefault();
+                    result.Actual = GetActualSchedule(scheduleIds, date.Date, date.Date.Add(new TimeSpan(23, 59, 59))).FirstOrDefault();
+                    if (result.Actual != null)
+                    {
+                        var actualIds = new[] { result.Actual.Id };
+                        result.Cancellations = GetCancellations(actualIds, dbConnection);
+                        result.Reinstatements = GetReinstatements(actualIds, dbConnection);
+                        result.ChangeOfOrigins = GetChangeOfOrigins(actualIds, dbConnection);
+                    }
+                    else
+                    {
+                        result.Cancellations = Enumerable.Empty<ExtendedCancellation>();
+                        result.Reinstatements = Enumerable.Empty<Reinstatement>();
+                        result.ChangeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+                    }
+
+                    return result;
                 }
             }
 
@@ -639,12 +999,16 @@ namespace TrainNotifier.Service
                     ,[CancelTiploc].[Description]
                     ,[CancelTiploc].[Stanox]
                     ,[CancelTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainCancellation]
                 LEFT JOIN [DelayAttributionCodes] ON [LiveTrainCancellation].[ReasonCode] = [DelayAttributionCodes].[ReasonCode]
                 LEFT JOIN [Tiploc] AS [CancelTiploc] ON [LiveTrainCancellation].[Stanox] = [CancelTiploc].[Stanox]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [CancelTiploc].[TiplocId]
                 WHERE [LiveTrainCancellation].[TrainId] IN @trainIds";
 
-            return connection.Query<ExtendedCancellation, TiplocCode, ExtendedCancellation>(sql,
+            return connection.Query<ExtendedCancellation, StationTiploc, ExtendedCancellation>(sql,
                 (c, t) =>
                 {
                     c.CancelledAt = t;
@@ -664,11 +1028,15 @@ namespace TrainNotifier.Service
                     ,[ReinstatementTiploc].[Description]
                     ,[ReinstatementTiploc].[Stanox]
                     ,[ReinstatementTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainReinstatement]
                 INNER JOIN [Tiploc] AS [ReinstatementTiploc] ON [LiveTrainReinstatement].[ReinstatedTiplocId] = [ReinstatementTiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [ReinstatementTiploc].[TiplocId]
                 WHERE [LiveTrainReinstatement].[TrainId] IN @trainIds";
 
-            return connection.Query<Reinstatement, TiplocCode, Reinstatement>(sql,
+            return connection.Query<Reinstatement, StationTiploc, Reinstatement>(sql,
                 (r, t) =>
                 {
                     r.NewOrigin = t;
@@ -690,12 +1058,16 @@ namespace TrainNotifier.Service
                     ,[ChangeOfOriginTiploc].[Description]
                     ,[ChangeOfOriginTiploc].[Stanox]
                     ,[ChangeOfOriginTiploc].[CRS]
+                    ,[Station].[StationName]
+                    ,[Station].[Location].[Lat] AS [Lat]
+                    ,[Station].[Location].[Long] AS [Lon]
                 FROM [LiveTrainChangeOfOrigin]
                 INNER JOIN [Tiploc] AS [ChangeOfOriginTiploc] ON [LiveTrainChangeOfOrigin].[NewTiplocId] = [ChangeOfOriginTiploc].[TiplocId]
+                LEFT JOIN [Station] ON [Station].[TiplocId] = [ChangeOfOriginTiploc].[TiplocId]
                 LEFT JOIN [DelayAttributionCodes] [ChangeOfOriginDelay] ON [LiveTrainChangeOfOrigin].[ReasonCode] = [ChangeOfOriginDelay].[ReasonCode]
                 WHERE [LiveTrainChangeOfOrigin].[TrainId] IN @trainIds";
 
-            return connection.Query<ChangeOfOrigin, TiplocCode, ChangeOfOrigin>(sql,
+            return connection.Query<ChangeOfOrigin, StationTiploc, ChangeOfOrigin>(sql,
                 (o, t) =>
                 {
                     o.NewOrigin = t;

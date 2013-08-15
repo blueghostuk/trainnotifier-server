@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Runtime.Serialization;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
     [DataContract]
-    public class TiplocCode
+    public class TiplocCode : IEquatable<TiplocCode>
     {
         [DataMember]
+        [JsonIgnore]
         public short TiplocId { get; set; }
         [DataMember]
         public string Tiploc { get; set; }
@@ -18,6 +20,21 @@ namespace TrainNotifier.Common.Model.Schedule
         public string Stanox { get; set; }
         [DataMember]
         public string CRS { get; set; }
+
+        public bool Equals(TiplocCode other)
+        {
+            return other != null && this.Stanox == other.Stanox;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as TiplocCode);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Stanox.GetHashCode();
+        }
     }
 
     [DataContract]
@@ -42,18 +59,6 @@ namespace TrainNotifier.Common.Model.Schedule
     [DataContract]
     public class StationTiploc : TiplocCode
     {
-        [DataMember]
-        public string Name
-        {
-            get
-            {
-                return Stanox;
-            }
-            set
-            {
-                Stanox = value;
-            }
-        }
         [DataMember]
         public string StationName { get; set; }
         [DataMember]
