@@ -12,6 +12,8 @@ namespace TrainNotifier.Common.Model.Schedule
         [DataMember]
         public string TrainUid { get; set; }
         [DataMember]
+        public string Headcode { get; set; }
+        [DataMember]
         public DateTime StartDate { get; set; }
         [DataMember]
         public DateTime? EndDate { get; set; }
@@ -27,6 +29,13 @@ namespace TrainNotifier.Common.Model.Schedule
         public TiplocCode Origin { get; set; }
         [DataMember]
         public TiplocCode Destination { get; set; }
+
+        [DataMember]
+        public PowerType? PowerType { get; set; }
+        [DataMember]
+        public TrainCategory? TrainCategory { get; set; }
+        [DataMember]
+        public byte? Speed { get; set; }
 
         [IgnoreDataMember]
         public TransactionType TransactionType { get; set; }

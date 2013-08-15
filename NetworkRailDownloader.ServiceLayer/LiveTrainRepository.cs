@@ -55,7 +55,7 @@ namespace TrainNotifier.Service
 
         public void AddActivation(TrainMovement tm, DbConnection existingConnection = null)
         {
-            var tiplocs = _tiplocRepository.GetByStanoxs(tm.SchedOriginStanox);
+            var tiplocs = _tiplocRepository.GetAllByStanox(tm.SchedOriginStanox);
             if (tiplocs.Any())
             {
                 Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
@@ -264,7 +264,7 @@ namespace TrainNotifier.Service
                 }
                 if (!tiplocId.HasValue)
                 {
-                    var tiplocs = _tiplocRepository.GetByStanoxs(tms.Stanox);
+                    var tiplocs = _tiplocRepository.GetAllByStanox(tms.Stanox);
                     if (tiplocs.Any())
                     {
                         if (tiplocs.Count() > 1)

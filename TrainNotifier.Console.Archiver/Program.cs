@@ -18,10 +18,10 @@ namespace TrainNotifier.Console.Archiver
         {
             TraceHelper.SetupTrace();
 
+            DataArchiveRepository dar = new DataArchiveRepository();
             try
             {
-                IEnumerable<Guid> trains = Enumerable.Empty<Guid>();
-                DataArchiveRepository dar = new DataArchiveRepository();
+                IEnumerable<ArchiveTrain> trains = Enumerable.Empty<ArchiveTrain>();
                 DateTime period = DateTime.UtcNow.AddDays(-1 * Convert.ToInt32(ConfigurationManager.AppSettings["archiveDays"]));
                 string filePath = ConfigurationManager.AppSettings["FileArchivePath"];
                 if (!Directory.Exists(filePath))
@@ -40,15 +40,21 @@ namespace TrainNotifier.Console.Archiver
                         Trace.TraceInformation("Got {0} Trains to archive", trains.Count());
                         foreach (var train in trains)
                         {
-                            Trace.TraceInformation("Getting train movements for train id {0}", train);
-                            var tms = dar.GetTrainMovements(train);
-                            Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train);
+                            Trace.TraceInformation("Getting train movements for train id {0}", train.Id);
+                            var tms = dar.GetTrainMovements(train.Id);
+                            Trace.TraceInformation("Archiving {0} train movements for train id {1}", tms.Count(), train.Id);
                             dar.ArchiveTrainMovement(train, tms, filePath);
-                            Trace.TraceInformation("Archived train id {0}", train);
+                            Trace.TraceInformation("Archived train id {0}", train.Id);
                         }
                     }
                 } while (trains.Any());
-                dar.UpdateIndexes();
+
+                Trace.TraceInformation("Archiving unused schedules");
+                dar.CleanSchedules(period);
+                Trace.TraceInformation("Archiving unused associations");
+                dar.CleanAssociations(period);
+                Trace.TraceInformation("Archiving old ppm");
+                dar.CleanPPMRecords(period);
             }
             catch (Exception e)
             {
@@ -56,8 +62,15 @@ namespace TrainNotifier.Console.Archiver
                 Trace.Flush();
                 throw;
             }
+            finally
+            {
+                Trace.TraceInformation("Cleaning Indexes");
+                dar.UpdateIndexes();
+                Trace.Flush();
+            }
 
             Trace.TraceInformation("Completed Archive");
+            Trace.Flush();
         }
     }
 }
