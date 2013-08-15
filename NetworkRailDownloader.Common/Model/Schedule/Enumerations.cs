@@ -117,7 +117,7 @@ namespace TrainNotifier.Common.Model.Schedule
     public enum TrainCategory : byte
     {
         [EnumMember()]
-        LondonUndergroundMetro,
+        LondonUndergroundMetro = 1,
         [EnumMember()]
         UnadvertisedPassenger,
         [EnumMember()]
