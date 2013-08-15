@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="RTTPMDataTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScheduleTest.cs" />
     <Compile Include="VSTPTest.cs" />
   </ItemGroup>
   <ItemGroup>
