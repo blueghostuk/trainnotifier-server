@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.PPM;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
-using System.Linq;
-using System;
-using System.Diagnostics;
 
 namespace TrainNotifier.WcfLibrary
 {
@@ -21,6 +21,7 @@ namespace TrainNotifier.WcfLibrary
         static CacheService()
         {
             _cacheDb.PreLoadActivations();
+            _cacheDb.StartTimer();
             _sectors = _ppmRepository.GetSectors();
         }
 

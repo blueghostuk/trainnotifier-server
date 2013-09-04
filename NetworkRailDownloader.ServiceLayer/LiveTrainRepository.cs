@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Caching;
+using System.Threading;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
-using Dapper;
 
 namespace TrainNotifier.Service
 {
-    public class LiveTrainRepository : DbRepository
+    public class LiveTrainRepository : DbRepository, IDisposable
     {
         private static readonly ObjectCache _trainActivationCache = MemoryCache.Default;
         private static readonly CacheItemPolicy _trainActivationCachePolicy = new CacheItemPolicy
@@ -565,7 +567,45 @@ namespace TrainNotifier.Service
             return ExecuteScalar<string>(sql, new { trainId });
         }
 
-        public void BatchInsertTrainData(IEnumerable<ITrainData> trainData)
+        private ConcurrentQueue<ITrainData> _failedDataCache = new ConcurrentQueue<ITrainData>();
+
+        private Timer _timer;
+
+        public void StartTimer()
+        {
+            _timer = new Timer(
+                this.ProcessQueue,
+                null,
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(1));
+        }
+
+        private void ProcessQueue(object ignored)
+        {
+            Trace.TraceInformation("Processing failed items queue. Item Count - {0}", _failedDataCache.Count);
+            while (!_failedDataCache.IsEmpty)
+            {
+                ITrainData data = null;
+                if (_failedDataCache.TryPeek(out data))
+                {
+                    try
+                    {
+                        BatchInsertTrainData(new[] { data }, false);
+                        _failedDataCache.TryDequeue(out data);
+                    }
+                    catch (SqlException e)
+                    {
+                        // if not timeout then remove from queue
+                        if (e.Number != -2)
+                        {
+                            _failedDataCache.TryDequeue(out data);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void BatchInsertTrainData(IEnumerable<ITrainData> trainData, bool onFailAddToQueue = true)
         {
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
@@ -573,42 +613,65 @@ namespace TrainNotifier.Service
 
                 foreach (var train in trainData)
                 {
-                    TrainMovement tm = train as TrainMovement;
-                    if (tm != null)
+                    try
                     {
-                        AddActivation(tm, dbConnection);
-                    }
-                    else
-                    {
-                        CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
-                        if (ctms != null)
+                        TrainMovement tm = train as TrainMovement;
+                        if (tm != null)
                         {
-                            AddCancellation(ctms, dbConnection);
+                            AddActivation(tm, dbConnection);
                         }
                         else
                         {
-                            TrainMovementStep tms = train as TrainMovementStep;
-                            if (tms != null)
+                            CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
+                            if (ctms != null)
                             {
-                                AddMovement(tms, dbConnection);
-                                trainMovements.Add(tms);
+                                AddCancellation(ctms, dbConnection);
                             }
                             else
                             {
-                                TrainChangeOfOrigin tOrigin = train as TrainChangeOfOrigin;
-                                if (tOrigin != null)
+                                TrainMovementStep tms = train as TrainMovementStep;
+                                if (tms != null)
                                 {
-                                    AddChangeOfOrigin(tOrigin);
+                                    AddMovement(tms, dbConnection);
+                                    trainMovements.Add(tms);
                                 }
                                 else
                                 {
-                                    TrainReinstatement tr = train as TrainReinstatement;
-                                    if (tr != null)
+                                    TrainChangeOfOrigin tOrigin = train as TrainChangeOfOrigin;
+                                    if (tOrigin != null)
                                     {
-                                        AddReinstatement(tr);
+                                        AddChangeOfOrigin(tOrigin);
+                                    }
+                                    else
+                                    {
+                                        TrainReinstatement tr = train as TrainReinstatement;
+                                        if (tr != null)
+                                        {
+                                            AddReinstatement(tr);
+                                        }
                                     }
                                 }
                             }
+                        }
+                    }
+                    catch (SqlException e)
+                    {
+                        // check for timeout only
+                        if (e.Number == -2)
+                        {
+                            Trace.TraceError(e.ToString());
+                            if (onFailAddToQueue)
+                            {
+                                _failedDataCache.Enqueue(train);
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                        else
+                        {
+                            throw;
                         }
                     }
                 }
@@ -634,6 +697,14 @@ namespace TrainNotifier.Service
                 {
                     AddTrainDescriber(train, dbConnection);
                 }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_timer != null)
+            {
+                _timer.Dispose();
             }
         }
     }
