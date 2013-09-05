@@ -26,8 +26,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		SqlReferenceData\dbo.AtocCode.dat = SqlReferenceData\dbo.AtocCode.dat
+		SqlReferenceData\dbo.DelayAttributionCodes.dat = SqlReferenceData\dbo.DelayAttributionCodes.dat
+		SqlReferenceData\dbo.PPMSectors.dat = SqlReferenceData\dbo.PPMSectors.dat
+		SqlReferenceData\dbo.ScheduleSource.dat = SqlReferenceData\dbo.ScheduleSource.dat
+		SqlReferenceData\dbo.ScheduleStatus.dat = SqlReferenceData\dbo.ScheduleStatus.dat
+		SqlReferenceData\dbo.ScheduleTrainCategory.dat = SqlReferenceData\dbo.ScheduleTrainCategory.dat
+		SqlReferenceData\dbo.ScheduleTrainPowerType.dat = SqlReferenceData\dbo.ScheduleTrainPowerType.dat
+		SqlReferenceData\dbo.Station.dat = SqlReferenceData\dbo.Station.dat
+		SqlReferenceData\dbo.STPIndicator.dat = SqlReferenceData\dbo.STPIndicator.dat
+		SqlReferenceData\dbo.Tiploc.dat = SqlReferenceData\dbo.Tiploc.dat
+		SqlReferenceData\dbo.TrainAssociation.dat = SqlReferenceData\dbo.TrainAssociation.dat
 		README.md = README.md
-		Database\sql_server_schema.sql = Database\sql_server_schema.sql
+		sql_azure_data.sql = sql_azure_data.sql
+		Database\sql_azure_schema.sql = Database\sql_azure_schema.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{B34932EA-A87D-441D-93B1-A2E0475008FD}"
