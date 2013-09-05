@@ -10,6 +10,8 @@ using System.Web.Http.SelfHost;
 using TrainNotifier.Common;
 using TrainNotifier.Console.WebApi.Config;
 using TrainNotifier.Console.WebApi.MessageHandlers;
+using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace TrainNotifier.Console.WebApi
 {
@@ -70,7 +72,13 @@ namespace TrainNotifier.Console.WebApi
                 HostNameComparisonMode = HostNameComparisonMode.Exact
             };
 
-            config.MessageHandlers.Add(new CorsHeader());
+            string origins = ConfigurationManager.AppSettings["corsItems"];
+            if (string.IsNullOrEmpty(origins))
+            {
+                origins = "*";
+            }
+            config.EnableCors(new EnableCorsAttribute(origins, "*", "*"));
+
             config.MessageHandlers.Add(new CompressHandler());
 
             RouteConfig.RegisterRoutes(config.Routes);
