@@ -460,101 +460,6 @@ namespace TrainNotifier.Service
             }
         }
 
-        public void AddTrainDescriber(TrainDescriber td, DbConnection existingConnection = null)
-        {
-            Trace.TraceInformation("Saving TD ({0}) to: {1}", td.Type, td.Description);
-
-            switch (td.Type)
-            {
-                case "CA":
-                    CaTD caVal = td as CaTD;
-                    if (caVal != null)
-                    {
-                        const string casql = @"
-                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
-                                               ([TrainId]
-                                               ,[MessageType]
-                                               ,[Timestamp]
-                                               ,[AreaId]
-                                               ,[From]
-                                               ,[To])
-                                         VALUES
-                                               (@trainId
-                                               ,@type
-                                               ,@ts
-                                               ,@area
-                                               ,@from
-                                               ,@to)";
-                        ExecuteNonQuery(casql, new
-                        {
-                            trainId = td.Description,
-                            type = caVal.Type,
-                            ts = caVal.Time,
-                            area = caVal.AreaId,
-                            from = caVal.From,
-                            to = caVal.To
-                        }, existingConnection);
-                    }
-                    break;
-                case "CB":
-                    CbTD cbVal = td as CbTD;
-                    if (cbVal != null)
-                    {
-                        const string cbsql = @"
-                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
-                                               ([TrainId]
-                                               ,[MessageType]
-                                               ,[Timestamp]
-                                               ,[AreaId]
-                                               ,[From])
-                                         VALUES
-                                               (@trainId
-                                               ,@type
-                                               ,@ts
-                                               ,@area
-                                               ,@from)";
-                        ExecuteNonQuery(cbsql, new
-                        {
-                            trainId = td.Description,
-                            type = cbVal.Type,
-                            ts = cbVal.Time,
-                            area = cbVal.AreaId,
-                            from = cbVal.From
-                        }, existingConnection);
-                    }
-                    break;
-                case "CC":
-                    CcTD ccVal = td as CcTD;
-                    if (ccVal != null)
-                    {
-                        const string ccsql = @"
-                                    INSERT INTO [natrail].[dbo].[LiveTrainBerth]
-                                               ([TrainId]
-                                               ,[MessageType]
-                                               ,[Timestamp]
-                                               ,[AreaId]
-                                               ,[To])
-                                         VALUES
-                                               (@trainId
-                                               ,@type
-                                               ,@ts
-                                               ,@area
-                                               ,@to)";
-                        ExecuteNonQuery(ccsql, new
-                        {
-                            trainId = td.Description,
-                            type = ccVal.Type,
-                            ts = ccVal.Time,
-                            area = ccVal.AreaId,
-                            to = ccVal.To
-                        }, existingConnection);
-                    }
-                    break;
-                //case "CT":
-                //default:
-            }
-        }
-
         public string GetHeadCode(string trainId)
         {
             const string sql = @"
@@ -685,17 +590,6 @@ namespace TrainNotifier.Service
                     {
                         UpdateTrainState(groupByTrain.Key, TrainState.Terminated, dbConnection);
                     }
-                }
-            }
-        }
-
-        public void BatchInsertTDData(IEnumerable<TrainDescriber> trainData)
-        {
-            using (DbConnection dbConnection = CreateAndOpenConnection())
-            {
-                foreach (var train in trainData)
-                {
-                    AddTrainDescriber(train, dbConnection);
                 }
             }
         }

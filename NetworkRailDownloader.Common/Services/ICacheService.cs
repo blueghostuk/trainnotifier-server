@@ -26,9 +26,6 @@ namespace TrainNotifier.Common.Services
         void CacheTrainData(IEnumerable<ITrainData> trainData);
 
         [OperationContract]
-        void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData);
-
-        [OperationContract]
         void CacheVSTPSchedule(ScheduleTrain train);
 
         [OperationContract]

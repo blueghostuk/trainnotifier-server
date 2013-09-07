@@ -112,6 +112,7 @@
     <Compile Include="Controllers\PPMController.cs" />
     <Compile Include="Controllers\StanoxController.cs" />
     <Compile Include="Controllers\StationController.cs" />
+    <Compile Include="Controllers\TDController.cs" />
     <Compile Include="Controllers\TrainMovementController.cs" />
     <Compile Include="MessageHandlers\CompressHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

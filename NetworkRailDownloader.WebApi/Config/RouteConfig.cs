@@ -77,6 +77,16 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "Schedule", action = "GetByUid" });
 
             routes.MapHttpRoute(
+                name: "TD-ForTrain",
+                routeTemplate: "Td/Describer/{describer}",
+                defaults: new { controller = "TD", action = "GetTrainPosition" });
+
+            routes.MapHttpRoute(
+                name: "TD-ForBerth",
+                routeTemplate: "Td/Berth/{berth}",
+                defaults: new { controller = "TD", action = "GetBerthDescription" });
+
+            routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }

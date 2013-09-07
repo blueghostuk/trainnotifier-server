@@ -113,20 +113,21 @@ namespace TrainNotifier.Common.NMS
                 using (ISession session = connection.CreateSession())
                 {
                     ITopic topic = session.GetTopic(rtppmTopic);
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "rtppm"))
-                    {
-                        Trace.TraceInformation("Created consumer to {0}", topic);
-                        // dont check expiry
-                        MessageConsumer messageConsumer = consumer as MessageConsumer;
-                        if (messageConsumer != null)
-                        {
-                            messageConsumer.CheckExpiry = false;
-                        }
+                    OpenAndWaitConsumer(session, topic, "rtppm", connectionMonitor, this.rtppm_Listener, cancellationToken);
+                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "rtppm"))
+                    //{
+                    //    Trace.TraceInformation("Created consumer to {0}", topic);
+                    //    // dont check expiry
+                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    //    if (messageConsumer != null)
+                    //    {
+                    //        messageConsumer.CheckExpiry = false;
+                    //    }
 
-                        consumer.Listener += rtppm_Listener;
-                        connectionMonitor.AddMessageConsumer(consumer);
-                        cancellationToken.WaitHandle.WaitOne();
-                    }
+                    //    consumer.Listener += rtppm_Listener;
+                    //    connectionMonitor.AddMessageConsumer(consumer);
+                    //    cancellationToken.WaitHandle.WaitOne();
+                    //}
                 }
             }
         }
@@ -139,20 +140,21 @@ namespace TrainNotifier.Common.NMS
                 using (ISession session = connection.CreateSession())
                 {
                     ITopic topic = session.GetTopic(vstpTopic);
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "vstp"))
-                    {
-                        Trace.TraceInformation("Created consumer to {0}", topic);
-                        // dont check expiry
-                        MessageConsumer messageConsumer = consumer as MessageConsumer;
-                        if (messageConsumer != null)
-                        {
-                            messageConsumer.CheckExpiry = false;
-                        }
+                    OpenAndWaitConsumer(session, topic, "vstp", connectionMonitor, this.vstpConsumer_Listener, ct);
+                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "vstp"))
+                    //{
+                    //    Trace.TraceInformation("Created consumer to {0}", topic);
+                    //    // dont check expiry
+                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    //    if (messageConsumer != null)
+                    //    {
+                    //        messageConsumer.CheckExpiry = false;
+                    //    }
 
-                        consumer.Listener += vstpConsumer_Listener;
-                        connectionMonitor.AddMessageConsumer(consumer);
-                        ct.WaitHandle.WaitOne();
-                    }
+                    //    consumer.Listener += vstpConsumer_Listener;
+                    //    connectionMonitor.AddMessageConsumer(consumer);
+                    //    ct.WaitHandle.WaitOne();
+                    //}
                 }
             }
         }
@@ -165,20 +167,21 @@ namespace TrainNotifier.Common.NMS
                 using (ISession session = connection.CreateSession())
                 {
                     ITopic topic = session.GetTopic(trainMovementTopic /*"TRAIN_MVT_ALL_TOC"*/);
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
-                    {
-                        Trace.TraceInformation("Created consumer to {0}", topic);
-                        // dont check expiry
-                        MessageConsumer messageConsumer = consumer as MessageConsumer;
-                        if (messageConsumer != null)
-                        {
-                            messageConsumer.CheckExpiry = false;
-                        }
+                    OpenAndWaitConsumer(session, topic, "tm", connectionMonitor, this.tmConsumer_Listener, ct);
+                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
+                    //{
+                    //    Trace.TraceInformation("Created consumer to {0}", topic);
+                    //    // dont check expiry
+                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    //    if (messageConsumer != null)
+                    //    {
+                    //        messageConsumer.CheckExpiry = false;
+                    //    }
 
-                        consumer.Listener += new MessageListener(this.tmConsumer_Listener);
-                        connectionMonitor.AddMessageConsumer(consumer);
-                        ct.WaitHandle.WaitOne();
-                    }
+                    //    consumer.Listener += new MessageListener(this.tmConsumer_Listener);
+                    //    connectionMonitor.AddMessageConsumer(consumer);
+                    //    ct.WaitHandle.WaitOne();
+                    //}
                 }
             }
         }
@@ -191,21 +194,40 @@ namespace TrainNotifier.Common.NMS
                 using (ISession session = connection.CreateSession())
                 {
                     ITopic topic = session.GetTopic(trainDescriberTopic/*"TD_LNW_WMC_SIG_AREA"*/);
-                    using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
-                    {
-                        Trace.TraceInformation("Created consumer to {0}", topic);
-                        // dont check expiry
-                        MessageConsumer messageConsumer = consumer as MessageConsumer;
-                        if (messageConsumer != null)
-                        {
-                            messageConsumer.CheckExpiry = false;
-                        }
+                    OpenAndWaitConsumer(session, topic, "td", connectionMonitor, this.tdConsumer_Listener, ct);
+                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
+                    //{
+                    //    Trace.TraceInformation("Created consumer to {0}", topic);
+                    //    // dont check expiry
+                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
+                    //    if (messageConsumer != null)
+                    //    {
+                    //        messageConsumer.CheckExpiry = false;
+                    //    }
 
-                        consumer.Listener += new MessageListener(this.tdConsumer_Listener);
-                        connectionMonitor.AddMessageConsumer(consumer);
-                        ct.WaitHandle.WaitOne();
-                    }
+                    //    consumer.Listener += new MessageListener(this.tdConsumer_Listener);
+                    //    connectionMonitor.AddMessageConsumer(consumer);
+                    //    ct.WaitHandle.WaitOne();
+                    //}
                 }
+            }
+        }
+
+        private void OpenAndWaitConsumer(ISession session, ITopic topic, string appendedText, NMSConnectionMonitor connectionMonitor, MessageListener listener, CancellationToken ct)
+        {
+            using (IMessageConsumer consumer = CreateConsumer(session, topic, appendedText))
+            {
+                Trace.TraceInformation("Created consumer to {0}", topic);
+                // dont check expiry
+                MessageConsumer messageConsumer = consumer as MessageConsumer;
+                if (messageConsumer != null)
+                {
+                    messageConsumer.CheckExpiry = false;
+                }
+
+                consumer.Listener += listener;
+                connectionMonitor.AddMessageConsumer(consumer);
+                ct.WaitHandle.WaitOne();
             }
         }
 

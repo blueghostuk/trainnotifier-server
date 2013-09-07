@@ -2,24 +2,17 @@
 using System.ComponentModel;
 using System.Configuration.Install;
 using System.Diagnostics;
-using System.Net;
 using System.Reflection;
+using System.ServiceModel;
 using System.ServiceProcess;
-using System.Threading;
-using System.Threading.Tasks;
 using TrainNotifier.Common;
+using TrainNotifier.WcfLibrary;
 
-namespace TrainNotifier.Console.WebSocketServer
+namespace TrainNotifier.Console.TDService
 {
     partial class Service : ServiceBase
     {
-        private WebSocketServerWrapper _wsServerWrapper;
-        private UserManager _userManager;
-        private NMSWrapper _nmsWrapper;
-        private CacheController _cacheController;
-
-        private Task _nmsTask;
-        private Timer _nmsTimer;
+        private ServiceHost _serviceHost;
 
         static void Main(string[] args)
         {
@@ -35,8 +28,6 @@ namespace TrainNotifier.Console.WebSocketServer
                 }
                 else if (args[0] == "console")
                 {
-                    // allow cache service to start
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
                     Service service = new Service();
                     service.OnStart(null);
 
@@ -64,65 +55,28 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
                 TraceHelper.FlushLog();
-                ExitCode = -1;
             };
         }
 
         protected override void OnStart(string[] args)
         {
-            _wsServerWrapper = new WebSocketServerWrapper();
-            _userManager = new UserManager(_wsServerWrapper);
-            _wsServerWrapper.Start();
-            Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, 81);
-
-            _nmsWrapper = new NMSWrapper(_userManager);
-            _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
-            _nmsTask = _nmsWrapper.Start();
-
-            _nmsTimer = new Timer((s) =>
-            {
-                if (_nmsTask.IsFaulted)
-                {
-                    Trace.TraceError("NMS Task Faulted: {0}", _nmsTask.Exception);
-                    ExitCode = -1;
-                    throw _nmsTask.Exception;
-                }
-                else if (_nmsTask.IsCompleted)
-                {
-                    Trace.TraceInformation("NMS Task Finished");
-
-                    Stop();
-                }
-            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+            _serviceHost = new ServiceHost(typeof(TDCacheService));
+            _serviceHost.Open();
         }
 
         protected override void OnStop()
         {
-            Trace.TraceInformation("Stopping Service");
-            if (_nmsTimer != null)
+            if (_serviceHost != null)
             {
-                _nmsTimer.Change(-1, -1);
-                _nmsTimer.Dispose();
-            }
-            if (_nmsWrapper != null)
-            {
-                _nmsWrapper.Stop();
-            }
-            if (_wsServerWrapper != null)
-            {
-                _wsServerWrapper.Stop();
-            }
-            if (_cacheController != null)
-            {
-                _cacheController.Dispose();
+                _serviceHost.Close();
             }
         }
     }
 
     [RunInstaller(true)]
-    public class WebSocketServerServiceInstaller : Installer
+    public class WcfServerServiceInstaller : Installer
     {
-        public WebSocketServerServiceInstaller()
+        public WcfServerServiceInstaller()
         {
             var processInstaller = new ServiceProcessInstaller();
             var serviceInstaller = new ServiceInstaller();
@@ -130,12 +84,11 @@ namespace TrainNotifier.Console.WebSocketServer
             //set the privileges
             processInstaller.Account = ServiceAccount.LocalSystem;
 
-            serviceInstaller.DisplayName = "TrainNotifier Web Socket Server";
+            serviceInstaller.DisplayName = "TrainNotifier TD Server";
             serviceInstaller.StartType = ServiceStartMode.Automatic;
-            serviceInstaller.ServicesDependedOn = new[] { "TrainNotifierWcfService", "TrainNotifierTDService" };
 
             //must be the same as what was set in Program's constructor
-            serviceInstaller.ServiceName = "TrainNotiferWsServer";
+            serviceInstaller.ServiceName = "TrainNotifierTDService";
             this.Installers.Add(processInstaller);
             this.Installers.Add(serviceInstaller);
         }

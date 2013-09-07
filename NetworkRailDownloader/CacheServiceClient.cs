@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.PPM;
@@ -16,11 +17,6 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CacheTrainData(trainData);
         }
 
-        public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
-        {
-            base.Channel.CacheTrainDescriberData(trainData);
-        }
-
         public void CacheVSTPSchedule(ScheduleTrain train)
         {
             base.Channel.CacheVSTPSchedule(train);
@@ -31,4 +27,25 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CachePPMData(data);
         }
     }
+
+    internal sealed class TDCacheServiceClient : ClientBase<ITDService>, ITDService
+    {
+        public TDCacheServiceClient() : base("NetTcpBinding_ITDService") { }
+
+        public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
+        {
+            base.Channel.CacheTrainDescriberData(trainData);
+        }
+
+        public Tuple<DateTime,string> GetTrainLocation(string trainDescriber)
+        {
+            return base.Channel.GetTrainLocation(trainDescriber);
+        }
+
+        public Tuple<DateTime, string> GetBerthContents(string berth)
+        {
+            return base.Channel.GetBerthContents(berth);
+        }
+    }
+
 }

@@ -40,14 +40,6 @@ namespace TrainNotifier.WcfLibrary
             });
         }
 
-        public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
-        {
-            Task.Run(() =>
-            {
-                _cacheDb.BatchInsertTDData(trainData);
-            });
-        }
-
         public void CacheVSTPSchedule(ScheduleTrain train)
         {
             Task.Run(() =>
