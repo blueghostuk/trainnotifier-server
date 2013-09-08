@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.TDService", "TrainNotifier.Console.TDService\TrainNotifier.Console.TDService.csproj", "{6C0C6ADE-D648-4880-A9CB-6D615EB4169F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainNotifier.Console.SmartExtract", "TrainNotifier.Console.SmartExtract\TrainNotifier.Console.SmartExtract.csproj", "{9B636F28-66BB-4C70-8259-538658BA90B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Azure|Any CPU = Azure|Any CPU
@@ -195,6 +197,16 @@ Global
 		{6C0C6ADE-D648-4880-A9CB-6D615EB4169F}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
 		{6C0C6ADE-D648-4880-A9CB-6D615EB4169F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C0C6ADE-D648-4880-A9CB-6D615EB4169F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Azure|Any CPU.ActiveCfg = Release|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Azure|Any CPU.Build.0 = Release|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug-Local|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug-Local|Any CPU.Build.0 = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug-Staging|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Debug-Staging|Any CPU.Build.0 = Debug|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B636F28-66BB-4C70-8259-538658BA90B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
