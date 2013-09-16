@@ -79,9 +79,9 @@ namespace TrainNotifier.Console.WebApi
             }
             config.EnableCors(new EnableCorsAttribute(origins, "*", "*"));
 
-            config.MessageHandlers.Add(new CompressHandler());
+            //config.MessageHandlers.Add(new CompressHandler());
 
-            RouteConfig.RegisterRoutes(config.Routes);
+            WebApiConfig.Register(config);
 
             _server = new HttpSelfHostServer(config);
             // Start listening 

@@ -1,92 +1,86 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Http;
+﻿using System.Web.Http;
 
 namespace TrainNotifier.Console.WebApi.Config
 {
-    public static class RouteConfig
+    public static class WebApiConfig
     {
-        public static void RegisterRoutes(HttpRouteCollection routes)
+        public static void Register(HttpConfiguration config)
         {
-            // Train Movements
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-StartingAtLocation",
                 routeTemplate: "TrainMovement/StartingAt/Location/{stanox}",
                 defaults: new { controller = "TrainMovement", action = "StartingAtLocation" });
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-StartingAtStation",
                 routeTemplate: "TrainMovement/StartingAt/Station/{crsCode}",
                 defaults: new { controller = "TrainMovement", action = "StartingAtStation" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-CallingAtLocation",
                 routeTemplate: "TrainMovement/CallingAt/Location/{stanox}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtLocation" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-CallingAtStation",
                 routeTemplate: "TrainMovement/CallingAt/Station/{crsCode}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtStation" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-CallingAtLocations",
                 routeTemplate: "TrainMovement/Between/Location/{fromStanox}/{toStanox}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtLocations" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-CallingAtStations",
                 routeTemplate: "TrainMovement/Between/Station/{fromCrs}/{toCrs}",
                 defaults: new { controller = "TrainMovement", action = "CallingAtStations" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-TerminatingAtLocation",
                 routeTemplate: "TrainMovement/TerminatingAt/Location/{stanox}",
                 defaults: new { controller = "TrainMovement", action = "TerminatingAtLocation" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-TerminatingAtStation",
                 routeTemplate: "TrainMovement/TerminatingAt/Station/{crsCode}",
                 defaults: new { controller = "TrainMovement", action = "TerminatingAtStation" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-ById",
                 routeTemplate: "TrainMovement/{id}",
                 defaults: new { controller = "TrainMovement", action = "GetById" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TM-ForUid",
                 routeTemplate: "TrainMovement/Uid/{trainUid}/{date}",
                 defaults: new { controller = "TrainMovement", action = "GetForUid" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "Assoc-ForTrain",
                 routeTemplate: "Association/{trainUid}/{date}",
                 defaults: new { controller = "Association", action = "GetForTrain" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "Schedule-ForStanox",
                 routeTemplate: "Schedule/stanox/{stanox}/{date}",
                 defaults: new { controller = "Schedule", action = "GetScheduleForDate" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "Schedule-ForUid",
                 routeTemplate: "Schedule/uid/{trainUid}/{date}",
                 defaults: new { controller = "Schedule", action = "GetByUid" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TD-ForTrain",
                 routeTemplate: "Td/Describer/{describer}",
                 defaults: new { controller = "TD", action = "GetTrainPosition" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "TD-ForBerth",
                 routeTemplate: "Td/Berth/{berth}",
                 defaults: new { controller = "TD", action = "GetBerthDescription" });
 
-            routes.MapHttpRoute(
+            config.Routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
