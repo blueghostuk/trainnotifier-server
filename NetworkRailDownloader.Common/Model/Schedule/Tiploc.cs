@@ -33,7 +33,11 @@ namespace TrainNotifier.Common.Model.Schedule
 
         public override int GetHashCode()
         {
-            return this.Stanox.GetHashCode();
+            return
+                !string.IsNullOrEmpty(this.Stanox) ? this.Stanox.GetHashCode() :
+                !string.IsNullOrEmpty(this.CRS) ? this.CRS.GetHashCode() :
+                !string.IsNullOrEmpty(this.Tiploc) ? this.Tiploc.GetHashCode() :
+                -1;
         }
     }
 
