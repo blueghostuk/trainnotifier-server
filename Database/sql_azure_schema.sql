@@ -528,6 +528,91 @@ CREATE NONCLUSTERED INDEX [IX_ScheduleTrain_Lookup_Wednesday] ON [dbo].[Schedule
 	[StartDate] ASC,
 	[EndDate] ASC
 )WITH (STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Friday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Friday] ON [dbo].[ScheduleTrain]
+(
+	[RunsFriday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Saturday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Saturday] ON [dbo].[ScheduleTrain]
+(
+	[RunsSaturday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Sunday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Sunday] ON [dbo].[ScheduleTrain]
+(
+	[RunsSunday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Monday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Monday] ON [dbo].[ScheduleTrain]
+(
+	[RunsMonday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Tuesday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Tuesday] ON [dbo].[ScheduleTrain]
+(
+	[RunsTuesday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Wednesday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Wednesday] ON [dbo].[ScheduleTrain]
+(
+	[RunsWednesday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[dbo].[ScheduleTrain]') AND name = N'IX_ScheduleLookup_Headcode_Thursday')
+CREATE NONCLUSTERED INDEX [IX_ScheduleLookup_Headcode_Thursday] ON [dbo].[ScheduleTrain]
+(
+	[RunsThursday] ASC,
+	[Headcode] ASC,
+	[StartDate] ASC,
+	[EndDate] ASC
+)
+INCLUDE ([ScheduleId],
+	[TrainUid],
+	[STPIndicatorId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+
 GO
 IF NOT EXISTS (SELECT * FROM dbo.sysobjects WHERE id = OBJECT_ID(N'[DF_ScheduleTrain_ScheduleId]') AND type = 'D')
 BEGIN
