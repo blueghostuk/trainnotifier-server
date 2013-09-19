@@ -23,6 +23,13 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
+        public TrainMovementResults GetForHeadcode(string headcode, DateTime date)
+        {
+            return FromResults(_tmRepo.GetTrainMovementByHeadcode(headcode, date));
+        }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
         public SingleTrainMovementResult GetForUid(string trainUid, DateTime date)
         {
             return FromResults(_tmRepo.GetTrainMovementById(trainUid, date));

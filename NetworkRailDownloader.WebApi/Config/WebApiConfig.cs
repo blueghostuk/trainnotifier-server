@@ -56,19 +56,14 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "GetForUid" });
 
             config.Routes.MapHttpRoute(
+                name: "TM-ForHeadcode",
+                routeTemplate: "TrainMovement/Headcode/{headcode}/{date}",
+                defaults: new { controller = "TrainMovement", action = "GetForHeadcode" });
+
+            config.Routes.MapHttpRoute(
                 name: "Assoc-ForTrain",
                 routeTemplate: "Association/{trainUid}/{date}",
                 defaults: new { controller = "Association", action = "GetForTrain" });
-
-            config.Routes.MapHttpRoute(
-                name: "Schedule-ForStanox",
-                routeTemplate: "Schedule/stanox/{stanox}/{date}",
-                defaults: new { controller = "Schedule", action = "GetScheduleForDate" });
-
-            config.Routes.MapHttpRoute(
-                name: "Schedule-ForUid",
-                routeTemplate: "Schedule/uid/{trainUid}/{date}",
-                defaults: new { controller = "Schedule", action = "GetByUid" });
 
             config.Routes.MapHttpRoute(
                 name: "TD-ForTrain",

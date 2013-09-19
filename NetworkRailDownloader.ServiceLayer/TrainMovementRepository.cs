@@ -1126,5 +1126,98 @@ namespace TrainNotifier.Service
                     return o;
                 }, new { trainIds }, splitOn: "TiplocId");
         }
+
+        public IEnumerable<TrainMovementResult> GetTrainMovementByHeadcode(string headcode, DateTime date)
+        {
+            const string getSchedulesSql = @"
+                SELECT [ScheduleTrain].[ScheduleId]
+	                ,[ScheduleTrain].[TrainUid]
+	                ,[ScheduleTrain].[STPIndicatorId]
+                FROM [ScheduleTrain]
+                WHERE [Headcode] = @headcode
+	                AND [ScheduleTrain].[Runs{0}] = 1
+	                AND @date >= [ScheduleTrain].[StartDate]
+	                AND @date <= [ScheduleTrain].[EndDate]";
+
+            var matchingSchedules = Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            {
+                headcode,
+                date = date.Date
+            });
+
+            var schedules = matchingSchedules
+                .GroupBy(s => s.TrainUid)
+                .Select(s =>
+                {
+                    var firstSchedule = s
+                        .OrderBy(sub => sub.STPIndicatorId)
+                        .First();
+                    // if is cancellation then wont have any stops associated, so get previous schedule if applicable
+                    if (firstSchedule.STPIndicatorId == STPIndicator.Cancellation)
+                    {
+                        firstSchedule.StopsScheduleId = s
+                            .Except(new[] { firstSchedule })
+                            .OrderBy(sub => sub.STPIndicatorId)
+                            .Select(sub => sub.ScheduleId)
+                            .FirstOrDefault();
+                    }
+                    return firstSchedule;
+                })
+                .ToList();
+
+            var allSchedules = GetRunningTrainSchedules(schedules, date);
+
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), date.Date, date.Date.AddDays(1));
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s => s.Schedule.DepartureTime);
+        }
     }
 }
