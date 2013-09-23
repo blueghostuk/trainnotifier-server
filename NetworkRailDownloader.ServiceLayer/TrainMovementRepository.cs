@@ -494,7 +494,7 @@ namespace TrainNotifier.Service
             if (startDate.Date != endDate.Date)
             {
                 nextDaySchedules = GetTerminatingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
-                endDate = startDate.Date.AddDays(1);
+                endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
             {
@@ -607,7 +607,7 @@ namespace TrainNotifier.Service
             if (startDate.Date != endDate.Date)
             {
                 nextDaySchedules = GetStartingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
-                endDate = startDate.Date.AddDays(1);
+                endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
             {
@@ -720,7 +720,7 @@ namespace TrainNotifier.Service
             if (startDate.Date != endDate.Date)
             {
                 nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
-                endDate = startDate.Date.AddDays(1);
+                endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
             {
@@ -848,7 +848,7 @@ namespace TrainNotifier.Service
             if (startDate.Date != endDate.Date)
             {
                 nextDaySchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
-                endDate = startDate.Date.AddDays(1);
+                endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
             {
