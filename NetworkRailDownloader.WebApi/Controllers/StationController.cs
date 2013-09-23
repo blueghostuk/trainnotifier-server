@@ -17,7 +17,8 @@ namespace TrainNotifier.Console.WebApi.Controllers
             IEnumerable<StationTiploc> results = _tiplocRepo.Get();
 
             return results
-                .Where(r => !string.IsNullOrEmpty(r.StationName));
+                .Where(r => !string.IsNullOrEmpty(r.StationName))
+                .Where(r => !string.IsNullOrEmpty(r.CRS));
         }
 
         [CachingActionFilterAttribute(604800)]
