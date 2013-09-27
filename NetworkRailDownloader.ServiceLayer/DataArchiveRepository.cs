@@ -94,6 +94,8 @@ namespace TrainNotifier.Service
             }
         }
 
+        private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(20).TotalSeconds;
+
         public void UpdateIndexes()
         {
             const string updateIndexSql = @"DECLARE @TableName varchar(255)
@@ -117,7 +119,7 @@ namespace TrainNotifier.Service
  
                 CLOSE TableCursor
                 DEALLOCATE TableCursor";
-            ExecuteNonQuery(updateIndexSql, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+            ExecuteNonQuery(updateIndexSql, commandTimeout: DefaultLongQueryTimeout);
         }
 
         public void CleanSchedules(DateTime olderThan)
@@ -132,14 +134,14 @@ namespace TrainNotifier.Service
                         LEFT JOIN [LiveTrain] on [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
                         WHERE [LiveTrain].[Id] IS NULL AND [ScheduleTrain].[EndDate] <= @olderThan)";
 
-                ExecuteNonQuery(deleteStopsSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+                ExecuteNonQuery(deleteStopsSql, new { olderThan }, commandTimeout: DefaultLongQueryTimeout);
 
                 const string deleteSchedulesSql = @"
                     DELETE [ScheduleTrain] FROM [ScheduleTrain]
                     LEFT JOIN [LiveTrain] on [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
                     WHERE [LiveTrain].[Id] IS NULL AND [ScheduleTrain].[EndDate] <= @olderThan";
 
-                ExecuteNonQuery(deleteSchedulesSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+                ExecuteNonQuery(deleteSchedulesSql, new { olderThan }, commandTimeout: DefaultLongQueryTimeout);
 
                 ts.Complete();
             }
@@ -153,7 +155,7 @@ namespace TrainNotifier.Service
                     DELETE FROM [TrainAssociation] 
                     WHERE [EndDate] <= @olderThan OR [Deleted] = 1";
 
-                ExecuteNonQuery(deleteAssocSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+                ExecuteNonQuery(deleteAssocSql, new { olderThan }, commandTimeout: DefaultLongQueryTimeout);
 
                 ts.Complete();
             }
@@ -167,7 +169,7 @@ namespace TrainNotifier.Service
                     DELETE FROM [PPMRecord] 
                     WHERE [Timestamp] <= @olderThan";
 
-                ExecuteNonQuery(deletePPMSql, new { olderThan }, commandTimeout: (int)TimeSpan.FromMinutes(10).TotalSeconds);
+                ExecuteNonQuery(deletePPMSql, new { olderThan }, commandTimeout: DefaultLongQueryTimeout);
 
                 ts.Complete();
             }

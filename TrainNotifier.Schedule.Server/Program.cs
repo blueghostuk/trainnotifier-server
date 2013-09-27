@@ -20,6 +20,13 @@ namespace TrainNotifier.Schedule.Server
         static void Main(string[] args)
         {
             TraceHelper.SetupTrace();
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
+                TraceHelper.FlushLog();
+                Environment.Exit(1);
+            };
+
             var options = new Options();
             CommandLine.CommandLineParser.Default.ParseArguments(args, options);
             bool delete = true;

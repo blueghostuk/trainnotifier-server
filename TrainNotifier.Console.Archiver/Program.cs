@@ -18,6 +18,13 @@ namespace TrainNotifier.Console.Archiver
         {
             TraceHelper.SetupTrace();
 
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                Trace.TraceError("Unhandled Exception: {0}", e.ExceptionObject);
+                TraceHelper.FlushLog();
+                Environment.Exit(1);
+            };
+
             DataArchiveRepository dar = new DataArchiveRepository();
             try
             {
