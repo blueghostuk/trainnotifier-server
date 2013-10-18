@@ -114,7 +114,21 @@ namespace TrainNotifier.Service
                     return;
                 }
 
-                Trace.TraceInformation("Associating Schedule for activation {0} with departure date {1:dd/MM/yy}", tm.TrainId, tm.SchedOriginDeparture.Value);
+                Trace.TraceInformation("Associating Schedule for activation {0},{1} with departure date {2:dd/MM/yy}", tm.TrainId, tm.TrainUid, tm.SchedOriginDeparture.Value);
+                // until deleted schedules are understood better include them but order them out
+//                const string sql = @"
+//                    SELECT TOP 1 [ScheduleId]
+//                    FROM [ScheduleTrain]
+//                    WHERE 
+//                            [TrainUid] = @trainUid
+//                        AND @date >= [StartDate]
+//                        AND @date <= [EndDate]
+//                        AND [Deleted] = 0
+//                        {0}
+//                    ORDER BY [STPIndicatorId]";
+
+                // order by deleted first to get non-deleted, then by stp indicator as normal, then by powertype to get the
+                // one (If any) that has a power type
                 const string sql = @"
                     SELECT TOP 1 [ScheduleId]
                     FROM [ScheduleTrain]
@@ -122,9 +136,8 @@ namespace TrainNotifier.Service
                             [TrainUid] = @trainUid
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
-                        AND [Deleted] = 0
                         {0}
-                    ORDER BY [STPIndicatorId]";
+                    ORDER BY [Deleted], [STPIndicatorId], [PowerTypeId] DESC";
 
                 var date = tm.SchedOriginDeparture.Value.Date;
 
@@ -174,7 +187,7 @@ namespace TrainNotifier.Service
                 }
                 else
                 {
-                    Trace.TraceWarning("Could not find matching schedule for activation: {0}", tm.TrainId);
+                    Trace.TraceWarning("Could not find matching schedule for activation: {0}, {1}", tm.TrainId, tm.TrainUid);
                 }
             });
         }

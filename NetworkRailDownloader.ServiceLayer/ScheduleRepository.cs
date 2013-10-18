@@ -25,6 +25,25 @@ namespace TrainNotifier.Service
             ExecuteNonQuery(sql, new { code, name });
         }
 
+        public IEnumerable<ScheduleDetails> GetScheduleDetails(string trainUid)
+        {
+            const string sql = @"
+                SELECT [StartDate]
+                      ,[EndDate]
+                      ,[RunsMonday]
+                      ,[RunsTuesday]
+                      ,[RunsWednesday]
+                      ,[RunsThursday]
+                      ,[RunsFriday]
+                      ,[RunsSaturday]
+                      ,[RunsSunday]
+                      ,[Deleted]
+                FROM [ScheduleTrain]
+                WHERE [TrainUid] = @trainUid";
+
+            return Query<ScheduleDetails>(sql, new { trainUid = trainUid.Trim() });
+        }
+
         public void InsertSchedule(ScheduleTrain train, ScheduleSource source = ScheduleSource.CIF)
         {
             using (var ts = GetTransactionScope())

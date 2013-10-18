@@ -44,13 +44,55 @@ namespace TrainNotifier.Service
         public short InsertTiploc(string tiploc)
         {
             const string sql = @"
-                 INSERT INTO [natrail].[dbo].[Tiploc]
+                 INSERT INTO [Tiploc]
                        ([Tiploc])
                  OUTPUT [inserted].[TiplocId]
                  VALUES
                        (@tiploc)";
 
             return ExecuteScalar<short>(sql, new { tiploc });
+        }
+
+        public void InsertTiploc(TiplocCode tiploc)
+        {
+            const string sql = @"
+                 INSERT INTO [Tiploc]
+                       ([Tiploc]
+                       ,[Nalco]
+                       ,[Description]
+                       ,[Stanox]
+                       ,[CRS])
+                 VALUES
+                       (@tiploc
+                       ,@nalco
+                       ,@description
+                       ,@stanox
+                       ,@crs)";
+
+            Query<short>(sql, new
+            {
+                tiploc = tiploc.Tiploc,
+                nalco = tiploc.Nalco,
+                description = tiploc.Description,
+                stanox = tiploc.Stanox,
+                crs = tiploc.CRS
+            });
+        }
+
+        public TiplocCode GetTiplocByStanox(string stanox)
+        {
+            const string sql = @"
+                SELECT 
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox]
+                FROM [Tiploc]
+                WHERE [Tiploc].[Stanox] = @stanox";
+
+            return Query<TiplocCode>(sql, new { stanox }).FirstOrDefault();
         }
 
         [Obsolete("Update code to use GetAllByStanox")]
@@ -156,7 +198,7 @@ namespace TrainNotifier.Service
                     [Station].[Location].[Long] AS [Lon]
                 FROM [Tiploc]
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
-                WHERE [Tiploc].[CRS] = @crsCode";
+                WHERE [Tiploc].[CRS] = @crsCode OR [Station].[SubsiduaryAlphaCode] = @crsCode";
 
             // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { crsCode });
