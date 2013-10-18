@@ -54,6 +54,7 @@
     <Compile Include="Archive\TrainStopArchive.cs" />
     <Compile Include="Exceptions\TiplocNotFoundException.cs" />
     <Compile Include="IDownloader.cs" />
+    <Compile Include="Model\Schedule\ScheduleDetails.cs" />
     <Compile Include="Services\ITDService.cs" />
     <Compile Include="Model\Api\RunningScheduleRunningStop.cs" />
     <Compile Include="Model\Api\RunningScheduleTrain.cs" />
