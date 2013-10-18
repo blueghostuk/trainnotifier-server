@@ -6,12 +6,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.ServiceModel;
 using System.ServiceProcess;
+using System.Web.Http;
+using System.Web.Http.Cors;
 using System.Web.Http.SelfHost;
 using TrainNotifier.Common;
 using TrainNotifier.Console.WebApi.Config;
-using TrainNotifier.Console.WebApi.MessageHandlers;
-using System.Web.Http;
-using System.Web.Http.Cors;
 
 namespace TrainNotifier.Console.WebApi
 {
