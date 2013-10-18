@@ -172,6 +172,25 @@ namespace TrainNotifier.Common.Model.Schedule
             }) { }
     }
 
+    public class TrainMovementVariationStatusField : EnumField<TrainMovementVariationStatus>
+    {
+        public static readonly TrainMovementVariationStatusField Default = new TrainMovementVariationStatusField();
+        public static TrainMovementVariationStatus ParseDataString(string data)
+        {
+            Default.ParseString(data);
+            return Default.Value;
+        }
+
+        public TrainMovementVariationStatusField()
+            : base(3, new Dictionary<string, TrainMovementVariationStatus>
+            {
+                { "ON TIME", TrainMovementVariationStatus.OnTime },
+                { "EARLY", TrainMovementVariationStatus.Early },
+                { "LATE", TrainMovementVariationStatus.Late },
+                { "OFF ROUTE", TrainMovementVariationStatus.OffRoute },
+            }) { }
+    }
+
     public abstract class DateTimeBaseField<T> : RecordField<T>
     {
         private readonly string _format;
@@ -398,6 +417,29 @@ namespace TrainNotifier.Common.Model.Schedule
     {
         public HeadCodeField()
             : base(4) { }
+    }
+
+    public sealed class TrainIdTranslator : StringField
+    {
+        public TrainIdTranslator()
+            : base(10)
+        { }
+
+        public string OriginTiploc { get; set; }
+
+        public string Headcode { get; set; }
+        public string TSpeed { get; set; }
+        public string CallCode { get; set; }
+        public byte DayOfMonth { get; set; }
+
+        public override void ParseString(string data)
+        {
+            OriginTiploc = new string(data.Take(2).ToArray());
+            Headcode = new string(data.Skip(2).Take(4).ToArray());
+            TSpeed = new string(data.Skip(6).Take(1).ToArray());
+            CallCode = new string(data.Skip(7).Take(1).ToArray());
+            DayOfMonth = Convert.ToByte(new string(data.Skip(8).Take(2).ToArray()));
+        }
     }
 
     public sealed class SpeedField : ByteField

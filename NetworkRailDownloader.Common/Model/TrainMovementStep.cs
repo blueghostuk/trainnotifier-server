@@ -17,6 +17,9 @@ namespace TrainNotifier.Common.Model
         public string EventType { get; set; }
 
         [DataMember]
+        public string VariationStatus { get; set; }
+
+        [DataMember]
         public DateTime? PlannedTime { get; set; }
 
         [DataMember]
@@ -99,6 +102,7 @@ namespace TrainNotifier.Common.Model
                 tm.PlannedTime = plannedTime;
 
                 tm.EventType = (string)body.event_type;
+                tm.VariationStatus = (string)body.variation_status;
                 tm.Line = (string)body.line_ind;
                 tm.ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp));
                 tm.Platform = (string)body.platform;

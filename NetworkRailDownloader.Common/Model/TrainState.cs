@@ -23,4 +23,17 @@ namespace TrainNotifier.Common.Model
         [EnumMember]
         Arrival = 2
     }
+
+    [DataContract]
+    public enum TrainMovementVariationStatus : byte
+    {
+        [EnumMember]
+        OnTime = 1,
+        [EnumMember]
+        Early = 2,
+        [EnumMember]
+        Late = 3,
+        [EnumMember]
+        OffRoute = 4
+    }
 }
