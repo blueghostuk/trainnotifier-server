@@ -1223,34 +1223,32 @@ namespace TrainNotifier.Service
         private sealed class NearestStationResult
         {
             public Guid ScheduleTrain { get; set; }
-            public int ReportingTiplocId { get; set; }
         }
 
         public IEnumerable<TrainMovementResult> NearestTrains(double lat, double lon, int limit)
         {
             DateTime endDate = DateTime.Now;
-            DateTime startDate = endDate.AddHours(-1);
+            DateTime startDate = endDate.AddMinutes(-15);
+
+            var tiplocs = _tiplocRepository.GetByLocation(lat, lon, 5)
+                .Select(t => t.TiplocId)
+                .ToList();
+            if (!tiplocs.Any())
+            {
+                return Enumerable.Empty<TrainMovementResult>();
+            }
 
             const string sql = @"
-                DECLARE @g geography = 'POINT({0} {1})';
-                SELECT DISTINCT TOP({2}) 
-	                [LiveTrain].[ScheduleTrain], [LiveTrainStop].[ReportingTiplocId], [LiveTrainStop].[ActualTimestamp]
+                SELECT DISTINCT TOP({0}) 
+	                [LiveTrain].[ScheduleTrain], [LiveTrainStop].[ActualTimestamp]
                 FROM [LiveTrainStop] 
                 INNER JOIN [LiveTrain] ON [LiveTrainStop].[TrainId] = [LiveTrain].[Id]
-                WHERE [LiveTrainStop].[ReportingTiplocId] IN (
-                    SELECT TOP(5)
-                        [Tiploc].[TiplocId]
-                    FROM [Tiploc]
-                    INNER JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
-                    WHERE [Station].[Location].STDistance(@g) IS NOT NULL
-                    ORDER BY [Station].[Location].STDistance(@g))
+                WHERE [LiveTrainStop].[ReportingTiplocId] IN @tiplocs
                 AND [LiveTrainStop].[ActualTimestamp] BETWEEN @startDate AND @endDate
                 AND [LiveTrain].[ScheduleTrain] IS NOT NULL
                 ORDER BY [LiveTrainStop].[ActualTimestamp] DESC";
 
-            var schedules = Query<NearestStationResult>(string.Format(sql, lon, lat, limit), new { startDate, endDate });
-
-            var tiplocs = schedules.Select(s => s.ReportingTiplocId).Distinct();
+            var schedules = Query<NearestStationResult>(string.Format(sql, limit), new { startDate, endDate, tiplocs });
 
             var allSchedules = GetSchedules(schedules.Select(s => s.ScheduleTrain).Distinct(), startDate.Date);
 
