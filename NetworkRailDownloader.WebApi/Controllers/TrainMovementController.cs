@@ -106,6 +106,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
             return FromResults(_tmRepo.TerminatingAtStation(crsCode, startDate, endDate));
         }
+
+        [HttpGet]
+        [CachingActionFilterAttribute(120)]
+        public TrainMovementResults GetNearestTrain(double lat, double lon, int limit = 5)
+        {
+            return FromResults(_tmRepo.NearestTrains(lat, lon, limit));
+        }
+
         private static SingleTrainMovementResult FromResults(TrainMovementResult result)
         {
             if (result == null)

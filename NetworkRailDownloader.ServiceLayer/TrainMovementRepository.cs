@@ -1219,5 +1219,106 @@ namespace TrainNotifier.Service
                 .OrderBy(s => s.Schedule.DateFor)
                 .ThenBy(s => s.Schedule.DepartureTime);
         }
+
+        private sealed class NearestStationResult
+        {
+            public Guid ScheduleTrain { get; set; }
+            public int ReportingTiplocId { get; set; }
+        }
+
+        public IEnumerable<TrainMovementResult> NearestTrains(double lat, double lon, int limit)
+        {
+            DateTime endDate = DateTime.Now;
+            DateTime startDate = endDate.AddHours(-1);
+
+            const string sql = @"
+                DECLARE @g geography = 'POINT({0} {1})';
+                SELECT DISTINCT TOP({2}) 
+	                [LiveTrain].[ScheduleTrain], [LiveTrainStop].[ReportingTiplocId], [LiveTrainStop].[ActualTimestamp]
+                FROM [LiveTrainStop] 
+                INNER JOIN [LiveTrain] ON [LiveTrainStop].[TrainId] = [LiveTrain].[Id]
+                WHERE [LiveTrainStop].[ReportingTiplocId] IN (
+                    SELECT TOP(5)
+                        [Tiploc].[TiplocId]
+                    FROM [Tiploc]
+                    INNER JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
+                    WHERE [Station].[Location].STDistance(@g) IS NOT NULL
+                    ORDER BY [Station].[Location].STDistance(@g))
+                AND [LiveTrainStop].[ActualTimestamp] BETWEEN @startDate AND @endDate
+                AND [LiveTrain].[ScheduleTrain] IS NOT NULL
+                ORDER BY [LiveTrainStop].[ActualTimestamp] DESC";
+
+            var schedules = Query<NearestStationResult>(string.Format(sql, lon, lat, limit), new { startDate, endDate });
+
+            var tiplocs = schedules.Select(s => s.ReportingTiplocId).Distinct();
+
+            var allSchedules = GetSchedules(schedules.Select(s => s.ScheduleTrain).Distinct(), startDate.Date);
+
+            // need to get live running data between these dates
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
+            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+
+            IEnumerable<ExtendedCancellation> cancellations = null;
+            IEnumerable<Reinstatement> reinstatements = null;
+            IEnumerable<ChangeOfOrigin> changeOfOrigins = null;
+
+            if (allActualData.Any())
+            {
+                using (DbConnection connection = CreateAndOpenConnection())
+                {
+                    cancellations = GetCancellations(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    reinstatements = GetReinstatements(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                    changeOfOrigins = GetChangeOfOrigins(allActualData.Select(s => s.Id), connection)
+                        .ToList();
+                }
+            }
+            else
+            {
+                cancellations = Enumerable.Empty<ExtendedCancellation>();
+                reinstatements = Enumerable.Empty<Reinstatement>();
+                changeOfOrigins = Enumerable.Empty<ChangeOfOrigin>();
+            }
+
+            ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
+            foreach (var schedule in allSchedules)
+            {
+                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var can = actual != null ?
+                    cancellations.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ExtendedCancellation>();
+                var rein = actual != null ?
+                    reinstatements.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<Reinstatement>();
+                var coo = actual != null ?
+                    changeOfOrigins.Where(c => c.TrainId == actual.Id).ToList() :
+                    Enumerable.Empty<ChangeOfOrigin>();
+                results.Add(new TrainMovementResult
+                {
+                    Schedule = schedule,
+                    Actual = actual,
+                    Cancellations = can,
+                    Reinstatements = rein,
+                    ChangeOfOrigins = coo
+                });
+            }
+
+            return results
+                .OrderBy(s => s.Schedule.DateFor)
+                .ThenBy(s =>
+                {
+                    if (s.Schedule.Stops == null || !s.Schedule.Stops.Any())
+                        return default(TimeSpan?);
+
+                    var tiplocStops = s.Schedule.Stops.Where(stop => tiplocs.Contains(stop.Tiploc.TiplocId));
+                    if (!tiplocStops.Any())
+                        return default(TimeSpan?);
+
+                    var firstStop = tiplocStops.First();
+                    return firstStop.PublicArrival ?? firstStop.Arrival ?? firstStop.Departure ?? firstStop.PublicDeparture ?? firstStop.Pass;
+                });
+        }
     }
 }

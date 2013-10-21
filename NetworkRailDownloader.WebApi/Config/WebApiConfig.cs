@@ -46,6 +46,11 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "TerminatingAtStation" });
 
             config.Routes.MapHttpRoute(
+                name: "TM-Nearest",
+                routeTemplate: "TrainMovement/Nearest/",
+                defaults: new { controller = "TrainMovement", action = "GetNearestTrain" });
+
+            config.Routes.MapHttpRoute(
                 name: "TM-ById",
                 routeTemplate: "TrainMovement/{id}",
                 defaults: new { controller = "TrainMovement", action = "GetById" });
