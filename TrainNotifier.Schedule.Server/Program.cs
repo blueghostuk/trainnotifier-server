@@ -42,7 +42,7 @@ namespace TrainNotifier.Schedule.Server
             bool fail = false;
             try
             {
-                if (options.Force || !File.Exists(gzFile))
+                if (options.ForceDownload || !File.Exists(gzFile))
                 {
                     ScheduleService.DownloadSchedule(gzFile,
                         // defaults to all
@@ -56,7 +56,7 @@ namespace TrainNotifier.Schedule.Server
                 {
                     Trace.TraceInformation("File {0} already exists", gzFile);
                 }
-                if (options.Force || !File.Exists(jsonFile))
+                if (options.ForceDownload || !File.Exists(jsonFile))
                 {
                     using (FileStream originalFileStream = File.OpenRead(gzFile))
                     {
@@ -86,7 +86,7 @@ namespace TrainNotifier.Schedule.Server
                                 && options.ScheduleType == ScheduleType.DailyUpdate
                                 && !options.Day.HasValue)
                             {
-                                if (!options.Force)
+                                if (!options.IgnoreWrongDate)
                                 {
                                     // defaults to previous day (e.g. on monday download sunday - http://nrodwiki.rockshore.net/index.php/Schedule)
                                     DateTime dateCheck = DateTime.Today.AddDays(-1);

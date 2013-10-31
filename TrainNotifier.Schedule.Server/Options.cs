@@ -15,7 +15,10 @@ namespace TrainNotifier.Schedule.Server
         public Common.ScheduleType ScheduleType { get; set; }
 
         [Option("f", "force", DefaultValue = false)]
-        public bool Force { get; set; }
+        public bool ForceDownload { get; set; }
+
+        [Option("i", "ignoredate", DefaultValue = false)]
+        public bool IgnoreWrongDate { get; set; }
 
         [Option("n", "delete", DefaultValue = false)]
         public bool Delete { get; set; }
