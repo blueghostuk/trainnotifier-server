@@ -11,6 +11,8 @@ namespace TrainNotifier.Service
 {
     public class TrainMovementRepository : DbRepository
     {
+        private const string _atocCodeFilter = " AND [ScheduleTrain].[AtocCode] = @atocCode";
+
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
 
         private sealed class ScheduleHolder
@@ -21,7 +23,7 @@ namespace TrainNotifier.Service
             public STPIndicator STPIndicatorId { get; set; }
         }
 
-        private IEnumerable<ScheduleHolder> GetRunningTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<ScheduleHolder> GetRunningTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
             if (!tiplocs.Any())
                 return Enumerable.Empty<ScheduleHolder>();
@@ -40,19 +42,20 @@ namespace TrainNotifier.Service
 	                AND @date <= [ScheduleTrain].[EndDate]
                     AND COALESCE(Arrival, Departure, Pass) >= @startTime
                     AND COALESCE(Arrival, Departure, Pass) < @endTime
-	                AND [ScheduleTrain].[Deleted] = 0
+	                AND [ScheduleTrain].[Deleted] = 0{1}
                     ORDER BY COALESCE(Arrival, Departure, Pass)";
 
-            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek, (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty)), new
             {
                 tiplocs,
                 date = date.Date,
                 startTime,
-                endTime
+                endTime,
+                atocCode
             });
         }
 
-        private IEnumerable<ScheduleHolder> GetRunningStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<ScheduleHolder> GetRunningStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
             if (!tiplocs.Any())
                 return Enumerable.Empty<ScheduleHolder>();
@@ -71,19 +74,20 @@ namespace TrainNotifier.Service
 	                AND @date <= [ScheduleTrain].[EndDate]
                     AND COALESCE(Arrival, Departure, Pass) >= @startTime
                     AND COALESCE(Arrival, Departure, Pass) < @endTime
-	                AND [ScheduleTrain].[Deleted] = 0
+	                AND [ScheduleTrain].[Deleted] = 0{1}
                     ORDER BY COALESCE(Arrival, Departure, Pass)";
 
-            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek, (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty)), new
             {
                 tiplocs,
                 date = date.Date,
                 startTime,
-                endTime
+                endTime,
+                atocCode
             });
         }
 
-        private IEnumerable<ScheduleHolder> GetRunningAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<ScheduleHolder> GetRunningAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
             if (!tiplocs.Any())
                 return Enumerable.Empty<ScheduleHolder>();
@@ -100,19 +104,20 @@ namespace TrainNotifier.Service
                     AND @date <= [ScheduleTrain].[EndDate]
                     AND COALESCE(Arrival, Departure, Pass) >= @startTime
                     AND COALESCE(Arrival, Departure, Pass) < @endTime
-                    AND [ScheduleTrain].[Deleted] = 0
+                    AND [ScheduleTrain].[Deleted] = 0{1}
                     ORDER BY COALESCE(Arrival, Departure, Pass)";
 
-            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek, (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty)), new
             {
                 tiplocs,
                 date = date.Date,
                 startTime,
-                endTime
+                endTime,
+                atocCode
             });
         }
 
-        private IEnumerable<ScheduleHolder> GetRunningCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<ScheduleHolder> GetRunningCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
             if (!tiplocsFrom.Any() || !tiplocsTo.Any())
                 return Enumerable.Empty<ScheduleHolder>();
@@ -132,26 +137,27 @@ namespace TrainNotifier.Service
                     AND @date <= [ScheduleTrain].[EndDate]
                     AND COALESCE([FromStop].[Arrival], [FromStop].[Departure], [FromStop].[Pass]) >= @startTime
                     AND COALESCE([FromStop].[Arrival], [FromStop].[Departure], [FromStop].[Pass]) < @endTime
-                    AND [ScheduleTrain].[Deleted] = 0
+                    AND [ScheduleTrain].[Deleted] = 0{1}
                     ORDER BY COALESCE([FromStop].[Arrival], [FromStop].[Departure], [FromStop].[Pass])";
 
-            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            return Query<ScheduleHolder>(string.Format(getSchedulesSql, date.DayOfWeek, (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty)), new
             {
                 tiplocsFrom,
                 tiplocsTo,
                 date = date.Date,
                 startTime,
-                endTime
+                endTime,
+                atocCode
             });
         }
 
-        private IEnumerable<ScheduleHolder> GetDistinctSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date)
+        private IEnumerable<ScheduleHolder> GetDistinctSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date, string atocCode)
         {
             if (!schedules.Any())
                 return Enumerable.Empty<ScheduleHolder>();
 
             return schedules
-                .Union(GetMatchingSchedules(schedules, date))
+                .Union(GetMatchingSchedules(schedules, date, atocCode))
                 .GroupBy(s => s.TrainUid)
                 .Select(s => 
                 {
@@ -175,7 +181,7 @@ namespace TrainNotifier.Service
         /// <summary>
         /// this will pick up cancelled schedules which dont have any stops
         /// </summary>
-        private IEnumerable<ScheduleHolder> GetMatchingSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date)
+        private IEnumerable<ScheduleHolder> GetMatchingSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date, string atocCode)
         {
             if (!schedules.Any())
                 return Enumerable.Empty<ScheduleHolder>();
@@ -190,13 +196,14 @@ namespace TrainNotifier.Service
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
                         AND [Deleted] = 0
-                        AND [Runs{0}] = 1
+                        AND [Runs{0}] = 1{1}
                     ORDER BY [STPIndicatorId]";
 
-            return Query<ScheduleHolder>(string.Format(sql, date.DayOfWeek), new
+            return Query<ScheduleHolder>(string.Format(sql, date.DayOfWeek, (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty)), new
             {
                 trainUids = schedules.Select(t => t.TrainUid).Distinct(),
-                date = date.Date
+                date = date.Date,
+                atocCode
             });
         }
 
@@ -314,30 +321,30 @@ namespace TrainNotifier.Service
                 splitOn: "TiplocId");
         }
 
-        private IEnumerable<RunningScheduleTrain> GetTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<RunningScheduleTrain> GetTerminatingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
-            var schedules = GetDistinctSchedules(GetRunningTerminatingAtSchedules(tiplocs, date, startTime, endTime), date);
+            var schedules = GetDistinctSchedules(GetRunningTerminatingAtSchedules(tiplocs, date, startTime, endTime, atocCode), date, atocCode);
 
             return GetRunningTrainSchedules(schedules, date);
         }
 
-        private IEnumerable<RunningScheduleTrain> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<RunningScheduleTrain> GetStartingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
-            var schedules = GetDistinctSchedules(GetRunningStartingAtSchedules(tiplocs, date, startTime, endTime), date);
+            var schedules = GetDistinctSchedules(GetRunningStartingAtSchedules(tiplocs, date, startTime, endTime, atocCode), date, atocCode);
 
             return GetRunningTrainSchedules(schedules, date);
         }
 
-        private IEnumerable<RunningScheduleTrain> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<RunningScheduleTrain> GetCallingAtSchedules(IEnumerable<short> tiplocs, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
-            var schedules = GetDistinctSchedules(GetRunningAtSchedules(tiplocs, date, startTime, endTime), date);
+            var schedules = GetDistinctSchedules(GetRunningAtSchedules(tiplocs, date, startTime, endTime, atocCode), date, atocCode);
 
             return GetRunningTrainSchedules(schedules, date);
         }
 
-        private IEnumerable<RunningScheduleTrain> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime)
+        private IEnumerable<RunningScheduleTrain> GetCallingBetweenSchedules(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime date, TimeSpan startTime, TimeSpan endTime, string atocCode)
         {
-            var schedules = GetDistinctSchedules(GetRunningCallingBetweenSchedules(tiplocsFrom, tiplocsTo, date, startTime, endTime), date);
+            var schedules = GetDistinctSchedules(GetRunningCallingBetweenSchedules(tiplocsFrom, tiplocsTo, date, startTime, endTime, atocCode), date, atocCode);
 
             return GetRunningTrainSchedules(schedules, date);
         }
@@ -448,7 +455,7 @@ namespace TrainNotifier.Service
                 splitOn: "TiplocId");
         }
 
-        public IEnumerable<TrainMovementResult> TerminatingAtStation(string crsCode, DateTime? startDate, DateTime? endDate)
+        public IEnumerable<TrainMovementResult> TerminatingAtStation(string crsCode, DateTime? startDate, DateTime? endDate, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -468,7 +475,7 @@ namespace TrainNotifier.Service
             return TerminatingAt(tiplocs, startDate.Value, endDate.Value);
         }
 
-        public IEnumerable<TrainMovementResult> TerminatingAtLocation(string stanox, DateTime? startDate, DateTime? endDate)
+        public IEnumerable<TrainMovementResult> TerminatingAtLocation(string stanox, DateTime? startDate, DateTime? endDate, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -485,15 +492,15 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return TerminatingAt(tiplocs, startDate.Value, endDate.Value);
+            return TerminatingAt(tiplocs, startDate.Value, endDate.Value, atocCode);
         }
 
-        private IEnumerable<TrainMovementResult> TerminatingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        private IEnumerable<TrainMovementResult> TerminatingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate, string atocCode = null)
         {
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Date != endDate.Date)
             {
-                nextDaySchedules = GetTerminatingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                nextDaySchedules = GetTerminatingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode);
                 endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
@@ -501,7 +508,7 @@ namespace TrainNotifier.Service
                 nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
             }
 
-            var allSchedules = GetTerminatingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+            var allSchedules = GetTerminatingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay, atocCode)
                 .Union(nextDaySchedules)
                 .ToList();
 
@@ -561,7 +568,7 @@ namespace TrainNotifier.Service
                 .ThenBy(s => s.Schedule.DepartureTime);
         }
 
-        public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -578,10 +585,10 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return StartingAt(tiplocs, startDate.Value, endDate.Value);
+            return StartingAt(tiplocs, startDate.Value, endDate.Value, atocCode);
         }
 
-        public IEnumerable<TrainMovementResult> StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -598,15 +605,15 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return StartingAt(tiplocs, startDate.Value, endDate.Value);
+            return StartingAt(tiplocs, startDate.Value, endDate.Value, atocCode);
         }
 
-        private IEnumerable<TrainMovementResult> StartingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        private IEnumerable<TrainMovementResult> StartingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate, string atocCode)
         {
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Date != endDate.Date)
             {
-                nextDaySchedules = GetStartingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                nextDaySchedules = GetStartingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode);
                 endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
@@ -614,7 +621,7 @@ namespace TrainNotifier.Service
                 nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
             }
 
-            var allSchedules = GetStartingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+            var allSchedules = GetStartingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay, atocCode)
                 .Union(nextDaySchedules)
                 .ToList();
 
@@ -674,7 +681,7 @@ namespace TrainNotifier.Service
                 .ThenBy(s => s.Schedule.DepartureTime);
         }
 
-        public IEnumerable<TrainMovementResult> CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -691,10 +698,10 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return CallingAt(tiplocs, startDate.Value, endDate.Value);
+            return CallingAt(tiplocs, startDate.Value, endDate.Value, atocCode);
         }
 
-        public IEnumerable<TrainMovementResult> CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -711,15 +718,15 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return CallingAt(tiplocs, startDate.Value, endDate.Value);
+            return CallingAt(tiplocs, startDate.Value, endDate.Value, atocCode);
         }
 
-        private IEnumerable<TrainMovementResult> CallingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate)
+        private IEnumerable<TrainMovementResult> CallingAt(IEnumerable<short> tiplocs, DateTime startDate, DateTime endDate, string atocCode)
         {
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Date != endDate.Date)
             {
-                nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode);
                 endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
@@ -727,7 +734,7 @@ namespace TrainNotifier.Service
                 nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
             }
 
-            var allSchedules = GetCallingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+            var allSchedules = GetCallingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay, atocCode)
                 .Union(nextDaySchedules)
                 .ToList();
 
@@ -798,7 +805,7 @@ namespace TrainNotifier.Service
                 });
         }
 
-        public IEnumerable<TrainMovementResult> CallingBetweenLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingBetweenLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -817,10 +824,10 @@ namespace TrainNotifier.Service
             if (!tiplocsFrom.Any() || !tiplocsTo.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value);
+            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value, atocCode);
         }
 
-        public IEnumerable<TrainMovementResult> CallingBetweenStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null)
+        public IEnumerable<TrainMovementResult> CallingBetweenStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
         {
             startDate = startDate ?? DateTime.UtcNow.AddDays(-1);
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -839,15 +846,15 @@ namespace TrainNotifier.Service
             if (!tiplocsFrom.Any() || !tiplocsTo.Any())
                 return Enumerable.Empty<TrainMovementResult>();
 
-            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value);
+            return CallingBetween(tiplocsFrom, tiplocsTo, startDate.Value, endDate.Value, atocCode);
         }
 
-        private IEnumerable<TrainMovementResult> CallingBetween(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime startDate, DateTime endDate)
+        private IEnumerable<TrainMovementResult> CallingBetween(IEnumerable<short> tiplocsFrom, IEnumerable<short> tiplocsTo, DateTime startDate, DateTime endDate, string atocCode)
         {
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Date != endDate.Date)
             {
-                nextDaySchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay);
+                nextDaySchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode);
                 endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
@@ -855,7 +862,7 @@ namespace TrainNotifier.Service
                 nextDaySchedules = Enumerable.Empty<RunningScheduleTrain>();
             }
 
-            var allSchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay)
+            var allSchedules = GetCallingBetweenSchedules(tiplocsFrom, tiplocsTo, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay, atocCode)
                 .Union(nextDaySchedules)
                 .ToList();
 
