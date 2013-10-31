@@ -114,20 +114,6 @@ namespace TrainNotifier.Common.NMS
                 {
                     ITopic topic = session.GetTopic(rtppmTopic);
                     OpenAndWaitConsumer(session, topic, "rtppm", connectionMonitor, this.rtppm_Listener, cancellationToken);
-                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "rtppm"))
-                    //{
-                    //    Trace.TraceInformation("Created consumer to {0}", topic);
-                    //    // dont check expiry
-                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    //    if (messageConsumer != null)
-                    //    {
-                    //        messageConsumer.CheckExpiry = false;
-                    //    }
-
-                    //    consumer.Listener += rtppm_Listener;
-                    //    connectionMonitor.AddMessageConsumer(consumer);
-                    //    cancellationToken.WaitHandle.WaitOne();
-                    //}
                 }
             }
         }
@@ -141,20 +127,6 @@ namespace TrainNotifier.Common.NMS
                 {
                     ITopic topic = session.GetTopic(vstpTopic);
                     OpenAndWaitConsumer(session, topic, "vstp", connectionMonitor, this.vstpConsumer_Listener, ct);
-                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "vstp"))
-                    //{
-                    //    Trace.TraceInformation("Created consumer to {0}", topic);
-                    //    // dont check expiry
-                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    //    if (messageConsumer != null)
-                    //    {
-                    //        messageConsumer.CheckExpiry = false;
-                    //    }
-
-                    //    consumer.Listener += vstpConsumer_Listener;
-                    //    connectionMonitor.AddMessageConsumer(consumer);
-                    //    ct.WaitHandle.WaitOne();
-                    //}
                 }
             }
         }
@@ -168,20 +140,6 @@ namespace TrainNotifier.Common.NMS
                 {
                     ITopic topic = session.GetTopic(trainMovementTopic /*"TRAIN_MVT_ALL_TOC"*/);
                     OpenAndWaitConsumer(session, topic, "tm", connectionMonitor, this.tmConsumer_Listener, ct);
-                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "tm"))
-                    //{
-                    //    Trace.TraceInformation("Created consumer to {0}", topic);
-                    //    // dont check expiry
-                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    //    if (messageConsumer != null)
-                    //    {
-                    //        messageConsumer.CheckExpiry = false;
-                    //    }
-
-                    //    consumer.Listener += new MessageListener(this.tmConsumer_Listener);
-                    //    connectionMonitor.AddMessageConsumer(consumer);
-                    //    ct.WaitHandle.WaitOne();
-                    //}
                 }
             }
         }
@@ -195,20 +153,6 @@ namespace TrainNotifier.Common.NMS
                 {
                     ITopic topic = session.GetTopic(trainDescriberTopic/*"TD_LNW_WMC_SIG_AREA"*/);
                     OpenAndWaitConsumer(session, topic, "td", connectionMonitor, this.tdConsumer_Listener, ct);
-                    //using (IMessageConsumer consumer = CreateConsumer(session, topic, "td"))
-                    //{
-                    //    Trace.TraceInformation("Created consumer to {0}", topic);
-                    //    // dont check expiry
-                    //    MessageConsumer messageConsumer = consumer as MessageConsumer;
-                    //    if (messageConsumer != null)
-                    //    {
-                    //        messageConsumer.CheckExpiry = false;
-                    //    }
-
-                    //    consumer.Listener += new MessageListener(this.tdConsumer_Listener);
-                    //    connectionMonitor.AddMessageConsumer(consumer);
-                    //    ct.WaitHandle.WaitOne();
-                    //}
                 }
             }
         }
@@ -260,12 +204,18 @@ namespace TrainNotifier.Common.NMS
             }
         }
 
+        private static readonly bool LogVstp = bool.Parse(ConfigurationManager.AppSettings["VSTPLogging"]);
+
         private void vstpConsumer_Listener(IMessage message)
         {
             string text = ParseData(message);
             if (!string.IsNullOrEmpty(text))
             {
                 RaiseDataRecd(Feed.VSTP, text);
+                if (LogVstp)
+                {
+                    Trace.TraceInformation("VSTP:{0}", text);
+                }
             }
         }
 
