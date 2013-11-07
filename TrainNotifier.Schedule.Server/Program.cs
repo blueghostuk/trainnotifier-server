@@ -89,7 +89,7 @@ namespace TrainNotifier.Schedule.Server
                                 if (!options.IgnoreWrongDate)
                                 {
                                     // defaults to previous day (e.g. on monday download sunday - http://nrodwiki.rockshore.net/index.php/Schedule)
-                                    DateTime dateCheck = DateTime.Today.AddDays(-1);
+                                    DateTime dateCheck = DateTime.Today;
                                     DateTime unixTs = new DateTime(1970, 1, 1);
                                     DateTime date = unixTs.AddSeconds((double)rowData.JsonTimetableV1.timestamp);
                                     if (date.Date != dateCheck)
