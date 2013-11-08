@@ -48,6 +48,22 @@ namespace TrainNotifier.Service
         {
             using (var ts = GetTransactionScope())
             {
+                if (train.AtocCode == null || string.IsNullOrEmpty(train.AtocCode.Code))
+                {
+                    const string atocCodeLookup = @"
+                        SELECT TOP 1 
+	                        [AtocCode] 
+                        FROM [ScheduleTrain]
+                        WHERE [TrainUid] = @trainUid
+	                        AND [AtocCode] IS NOT NULL";
+
+                    string atocCode = ExecuteScalar<string>(atocCodeLookup, new { trainUid = train.TrainUid });
+                    train.AtocCode = new AtocCode
+                    {
+                        Code = atocCode
+                    };
+                }
+
                 const string sql = @"
                 INSERT INTO [natrail].[dbo].[ScheduleTrain]
                        ([TrainUid]
