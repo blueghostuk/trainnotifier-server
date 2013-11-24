@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
-using TrainNotifier.Common;
+using TrainNotifier.Common.Model;
 
 namespace TrainNotifier.ScheduleLibrary
 {

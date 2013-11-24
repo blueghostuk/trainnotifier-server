@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace TrainNotifier.Common.Archive
+namespace TrainNotifier.Common.Model.Archive
 {
     [DataContract]
     public class TrainStopArchive

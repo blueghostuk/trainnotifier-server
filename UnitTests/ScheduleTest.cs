@@ -3,9 +3,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Service;
 using Newtonsoft.Json;
-using TrainNotifier.Common.Exceptions;
 using System.Diagnostics;
 using System.Linq;
+using TrainNotifier.Common.Model.Exceptions;
 
 namespace UnitTests
 {

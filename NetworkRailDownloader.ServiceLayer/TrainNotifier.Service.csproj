@@ -69,6 +69,10 @@
       <Project>{55f15444-39a6-4b55-aa31-ced7a996de47}</Project>
       <Name>TrainNotifier.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TrainNotifier.Common.Model\TrainNotifier.Common.Model.csproj">
+      <Project>{c1027696-dbd0-4e90-abbf-848dab6938b4}</Project>
+      <Name>TrainNotifier.Common.Model</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

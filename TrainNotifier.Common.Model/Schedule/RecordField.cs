@@ -212,7 +212,7 @@ namespace TrainNotifier.Common.Model.Schedule
             }
 
             string dataToParse = _lastCharHalf ?
-                new string(data.Take(FieldLength - 1).ToArray()) :
+                new string(data.ToCharArray().Take(FieldLength -1).ToArray()) :
                 data;
 
             DateTime dt;
@@ -225,7 +225,7 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 if (_lastCharHalf)
                 {
-                    if (data.Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
+                    if (data.ToCharArray().Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
                     {
                         SetValue(dt.Add(Constants.HalfMinuteAmount));
                         return;
@@ -346,7 +346,7 @@ namespace TrainNotifier.Common.Model.Schedule
             }
 
             string dataToParse = _lastCharHalf ?
-                new string(data.Take(FieldLength - 1).ToArray()) :
+                new string(data.ToCharArray().Take(FieldLength - 1).ToArray()) :
                 data;
 
             TimeSpan ts;
@@ -359,7 +359,7 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 if (_lastCharHalf)
                 {
-                    if (data.Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
+                    if (data.ToCharArray().Skip(FieldLength - 1).Take(1).FirstOrDefault().Equals(Constants.HalfMinute))
                     {
                         Value = ts.Add(Constants.HalfMinuteAmount);
                         return;
@@ -434,11 +434,11 @@ namespace TrainNotifier.Common.Model.Schedule
 
         public override void ParseString(string data)
         {
-            OriginTiploc = new string(data.Take(2).ToArray());
-            Headcode = new string(data.Skip(2).Take(4).ToArray());
-            TSpeed = new string(data.Skip(6).Take(1).ToArray());
-            CallCode = new string(data.Skip(7).Take(1).ToArray());
-            DayOfMonth = Convert.ToByte(new string(data.Skip(8).Take(2).ToArray()));
+            OriginTiploc = new string(data.ToCharArray().Take(2).ToArray());
+            Headcode = new string(data.ToCharArray().Skip(2).Take(4).ToArray());
+            TSpeed = new string(data.ToCharArray().Skip(6).Take(1).ToArray());
+            CallCode = new string(data.ToCharArray().Skip(7).Take(1).ToArray());
+            DayOfMonth = Convert.ToByte(new string(data.ToCharArray().Skip(8).Take(2).ToArray()));
         }
     }
 
@@ -496,8 +496,8 @@ namespace TrainNotifier.Common.Model.Schedule
 
         public override void ParseString(string data)
         {
-            Tiploc = new string(data.Take(7).ToArray()).Trim();
-            Suffix = new string(data.Skip(7).Take(1).ToArray()).Trim();
+            Tiploc = new string(data.ToCharArray().Take(7).ToArray()).Trim();
+            Suffix = new string(data.ToCharArray().Skip(7).Take(1).ToArray()).Trim();
 
             Value = Tiploc;
         }
@@ -576,7 +576,7 @@ namespace TrainNotifier.Common.Model.Schedule
 
         public override void ParseString(string data)
         {
-            Value = data.Equals("E", StringComparison.InvariantCultureIgnoreCase);
+            Value = data.Equals("E", StringComparison.CurrentCultureIgnoreCase);
         }
     }
 

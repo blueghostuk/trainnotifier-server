@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TrainNotifier.Common.Exceptions;
+using TrainNotifier.Common.Model.Exceptions;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Model
@@ -17,7 +17,7 @@ namespace TrainNotifier.Common.Model
             a.AssocTrainUid = StringField.ParseDataString(DynamicValueToString(s.assoc_train_uid));
             a.StartDate = DynamicValueToDateTime(s.assoc_start_date);
             string tiplocCode = DynamicValueToString(s.location);
-            TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
+            TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.CurrentCultureIgnoreCase));
             if (tiploc == null)
             {
                 throw new TiplocNotFoundException(tiplocCode)

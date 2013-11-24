@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters;
-using TrainNotifier.Common.Archive;
+using TrainNotifier.Common.Model.Archive;
 
 namespace TrainNotifier.Service
 {

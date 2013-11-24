@@ -107,7 +107,7 @@ namespace TrainNotifier.Common.Model
                 tm.ActualTimeStamp = UnixTsToDateTime(double.Parse((string)body.actual_timestamp));
                 tm.Platform = (string)body.platform;
                 tm.State = GetState(body);
-                tm.OffRoute = ((string)body.offroute_ind).Equals(bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
+                tm.OffRoute = ((string)body.offroute_ind).Equals(bool.TrueString, StringComparison.CurrentCultureIgnoreCase);
                 tm.NextStanox = (string)body.next_report_stanox;
 
                 string nextReportTime = (string)body.next_report_run_time;
@@ -127,7 +127,7 @@ namespace TrainNotifier.Common.Model
 
         private static State GetState(dynamic body)
         {
-            if (((string)body.train_terminated).Equals("true", StringComparison.InvariantCultureIgnoreCase))
+            if (((string)body.train_terminated).Equals("true", StringComparison.CurrentCultureIgnoreCase))
                 return State.Terminated;
 
             return State.Normal;

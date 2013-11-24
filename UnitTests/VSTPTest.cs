@@ -2,11 +2,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.VSTP;
-using TrainNotifier.Common.Exceptions;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using TrainNotifier.Service;
 using System.Linq;
+using TrainNotifier.Common.Model.Exceptions;
 
 namespace UnitTests
 {

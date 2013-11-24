@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TrainNotifier.Common.Exceptions;
+using TrainNotifier.Common.Model.Exceptions;
 
 namespace TrainNotifier.Common.Model.Schedule
 {
@@ -61,7 +61,7 @@ namespace TrainNotifier.Common.Model.Schedule
                 dynamic stop = stops.ElementAt(i);
                 StopType st = StopTypeField.ParseDataString(DynamicValueToString(stop.location_type));
                 string tiplocCode = DynamicValueToString(stop.tiploc_code);
-                TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
+                TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.CurrentCultureIgnoreCase));
                 if (tiploc == null)
                 {
                     throw new TiplocNotFoundException(tiplocCode)
@@ -147,7 +147,7 @@ namespace TrainNotifier.Common.Model.Schedule
             {
                 dynamic stop = stops.ElementAt(i);
                 string tiplocCode = DynamicValueToString(stop.location.tiploc.tiploc_id);
-                TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.InvariantCultureIgnoreCase));
+                TiplocCode tiploc = tiplocs.FirstOrDefault(t => t.Tiploc.Equals(tiplocCode, StringComparison.CurrentCultureIgnoreCase));
                 if (tiploc == null)
                 {
                     throw new TiplocNotFoundException(tiplocCode)
