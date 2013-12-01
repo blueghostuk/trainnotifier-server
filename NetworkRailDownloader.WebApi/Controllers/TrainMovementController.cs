@@ -37,74 +37,82 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.StartingAtLocation(stanox, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.StartingAtLocation(stanox, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.StartingAtStation(crsCode, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.StartingAtStation(crsCode, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.CallingAtLocation(stanox, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.CallingAtLocation(stanox, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.CallingAtStation(crsCode, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.CallingAtStation(crsCode, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults CallingAtLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.CallingBetweenLocations(fromStanox, toStanox, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.CallingBetweenLocations(fromStanox, toStanox, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults CallingAtStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.CallingBetweenStations(fromCrs, toCrs, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.CallingBetweenStations(fromCrs, toCrs, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults TerminatingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults TerminatingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.TerminatingAtLocation(stanox, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.TerminatingAtLocation(stanox, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults TerminatingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null)
+        public TrainMovementResults TerminatingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
-            return FromResults(_tmRepo.TerminatingAtStation(crsCode, startDate, endDate, atocCode));
+            PowerType? pt = PowerTypeField.ParseDataString(powerType);
+            return FromResults(_tmRepo.TerminatingAtStation(crsCode, startDate, endDate, atocCode, pt));
         }
 
         [HttpGet]
