@@ -154,6 +154,7 @@ namespace TrainNotifier.Service
                     ORDER BY COALESCE([FromStop].[Arrival], [FromStop].[Departure], [FromStop].[Pass])";
 
             return Query<ScheduleHolder>(string.Format(getSchedulesSql,
+                date.DayOfWeek,
                 (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty),
                 (powerType.HasValue ? _powerTypeFilter : string.Empty)), new
                 {
@@ -376,7 +377,9 @@ namespace TrainNotifier.Service
 
             foreach (var schedule in runningSchedules)
             {
-                schedule.ScheduleId = schedules.Where(s => s.StopsScheduleId == schedule.ScheduleId || s.ScheduleId == schedule.ScheduleId).Single().ScheduleId;
+                var actualSchedule = schedules.Where(s => s.StopsScheduleId == schedule.ScheduleId || s.ScheduleId == schedule.ScheduleId).Single();
+                schedule.ScheduleId = actualSchedule.ScheduleId;
+                schedule.STPIndicatorId = actualSchedule.STPIndicatorId;
             }
 
             return runningSchedules;
