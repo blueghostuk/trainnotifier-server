@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Configuration;
 using System.Configuration.Install;
 using System.Diagnostics;
 using System.Net;
@@ -70,10 +71,11 @@ namespace TrainNotifier.Console.WebSocketServer
 
         protected override void OnStart(string[] args)
         {
-            _wsServerWrapper = new WebSocketServerWrapper();
+            int port = int.Parse(ConfigurationManager.AppSettings["WebSocketServerPort"]);
+            _wsServerWrapper = new WebSocketServerWrapper(port: port);
             _userManager = new UserManager(_wsServerWrapper);
             _wsServerWrapper.Start();
-            Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, 81);
+            Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, port);
 
             _nmsWrapper = new NMSWrapper(_userManager);
             _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);

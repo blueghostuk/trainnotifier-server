@@ -4,6 +4,7 @@ using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.PPM;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.Model.TDCache;
 using TrainNotifier.Common.Services;
 
 namespace TrainNotifier.Console.WebSocketServer
@@ -37,9 +38,9 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CacheTrainDescriberData(trainData);
         }
 
-        public Tuple<DateTime,string> GetTrainLocation(string trainDescriber)
+        public TDTrain GetTrain(string trainDescriber)
         {
-            return base.Channel.GetTrainLocation(trainDescriber);
+            return base.Channel.GetTrain(trainDescriber);
         }
 
         public Tuple<DateTime, string> GetBerthContents(string berth)

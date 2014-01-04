@@ -119,9 +119,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\NetworkRailDownloader.WebApi\ActionFilters\CacheableItemFilterAttribute.cs">
-      <Link>ActionFilters\CacheableItemFilterAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\NetworkRailDownloader.WebApi\ActionFilters\CachingActionFilterAttribute.cs">
       <Link>ActionFilters\CachingActionFilterAttribute.cs</Link>
     </Compile>

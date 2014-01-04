@@ -103,7 +103,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActionFilters\CacheableItemFilterAttribute.cs" />
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
     <Compile Include="Config\WebApiConfig.cs" />
     <Compile Include="Controllers\AssociationController.cs" />

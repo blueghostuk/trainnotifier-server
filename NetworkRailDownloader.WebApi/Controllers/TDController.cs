@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.TDCache;
 using TrainNotifier.Common.Services;
+using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
@@ -19,9 +21,9 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 throw new NotImplementedException();
             }
 
-            public Tuple<DateTime, string> GetTrainLocation(string trainDescriber)
+            public TDTrain GetTrain(string trainDescriber)
             {
-                return base.Channel.GetTrainLocation(trainDescriber);
+                return base.Channel.GetTrain(trainDescriber);
             }
 
             public Tuple<DateTime, string> GetBerthContents(string berth)
@@ -31,14 +33,14 @@ namespace TrainNotifier.Console.WebApi.Controllers
         }
 
         [HttpGet]
-        public Tuple<DateTime, string> GetTrainPosition(string describer)
+        public TDTrain GetTrain(string describer)
         {
             TDCacheServiceClient cacheService = null;
             try
             {
                 cacheService = new TDCacheServiceClient();
                 cacheService.Open();
-                return cacheService.GetTrainLocation(describer);
+                return cacheService.GetTrain(describer);
             }
             catch (Exception e)
             {
