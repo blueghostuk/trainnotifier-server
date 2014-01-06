@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters;
@@ -96,30 +97,29 @@ namespace TrainNotifier.Service
 
         private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(20).TotalSeconds;
 
+        private static readonly string[] _indexTables = new[] 
+            {
+                "ScheduleTrainStop",
+                "LiveTrainStop",
+                "LiveTrain",
+                "ScheduleTrain",
+                "PPMRecord"
+            };
         public void UpdateIndexes()
         {
-            const string updateIndexSql = @"DECLARE @TableName varchar(255)
- 
-                DECLARE TableCursor CURSOR FOR
-                (
-                      SELECT '[' + IST.TABLE_SCHEMA + '].[' + IST.TABLE_NAME + ']' AS [TableName]
-                      FROM INFORMATION_SCHEMA.TABLES IST
-                      WHERE IST.TABLE_TYPE = 'BASE TABLE'
-                )
- 
-                OPEN TableCursor
-                FETCH NEXT FROM TableCursor INTO @TableName
-                WHILE @@FETCH_STATUS = 0
- 
-                BEGIN
-                      PRINT('Rebuilding Indexes on ' + @TableName)
-                      EXEC('ALTER INDEX ALL ON ' + @TableName + ' REBUILD')
-                      FETCH NEXT FROM TableCursor INTO @TableName
-                END
- 
-                CLOSE TableCursor
-                DEALLOCATE TableCursor";
-            ExecuteNonQuery(updateIndexSql, commandTimeout: DefaultLongQueryTimeout);
+            const string updateIndexSqlFormat = "ALTER INDEX ALL ON [{0}] REBUILD";
+
+            foreach (string table in _indexTables)
+            {
+                try
+                {
+                    ExecuteNonQuery(string.Format(updateIndexSqlFormat, table), commandTimeout: DefaultLongQueryTimeout);
+                }
+                catch (Exception e)
+                {
+                    Trace.TraceError("Error updating index for table {0}", table);
+                }
+            }
         }
 
         public void CleanSchedules(DateTime olderThan)
