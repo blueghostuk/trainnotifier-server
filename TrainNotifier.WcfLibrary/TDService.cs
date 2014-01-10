@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,9 +8,12 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Api;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.SmartExtract;
 using TrainNotifier.Common.Model.TDCache;
 using TrainNotifier.Common.Services;
+using TrainNotifier.Service;
 
 namespace TrainNotifier.WcfLibrary
 {
@@ -22,6 +26,10 @@ namespace TrainNotifier.WcfLibrary
         };
 
         private static readonly IDictionary<string, TDElement> _smartData;
+        private static readonly ConcurrentDictionary<string, TiplocCode> _tiplocCache = new ConcurrentDictionary<string, TiplocCode>();
+
+        private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
+        private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         static TDCacheService ()
 	    {            
@@ -41,6 +49,31 @@ namespace TrainNotifier.WcfLibrary
             catch (Exception e)
             {
                 Trace.TraceError("{0}", e);
+            }
+
+            const string sql = @"
+                SELECT 
+                    [Id]
+                    ,[TrainId]
+                    ,[ScheduleTrain]
+                FROM [LiveTrain] 
+                WHERE [TrainStateId] = @activated
+                    AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
+
+            var activeTrains = Query<dynamic>(sql, new { TrainState.Activated });
+
+            Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
+
+            Trace.Flush();
+
+            foreach (var activeTrain in activeTrains)
+            {
+                _trainActivationCache.Add(activeTrain.TrainId, new TrainMovementSchedule
+                {
+                    Id = activeTrain.Id,
+                    Schedule = activeTrain.ScheduleTrain,
+                    StopNumber = 0
+                }, _trainActivationCachePolicy);
             }
         }
 
@@ -88,60 +121,142 @@ namespace TrainNotifier.WcfLibrary
             }
         }
 
-        private void UpdateTrain(CaTD caTD)
+        private static void UpdateTrain(CaTD caTD)
         {
             TDElement element;
             _smartData.TryGetValue(string.Format("{0}-{1}", caTD.AreaId, caTD.To), out element);
-            TDBerth berth = new TDBerth(caTD.AreaId, caTD.To, element);
-            TDTrain train = GetTrainDescriber(caTD.Description);
-            if (train == null)
-            {
-                _tdCache.Set(caTD.Description, new TDTrain(caTD.Description, berth), _tdCachePolicy);
-            }
-            else
-            {
-                _smartData.TryGetValue(string.Format("{0}-{1}", caTD.AreaId, caTD.From), out element);
-                train.Exited(new TDBerth(caTD.AreaId, caTD.From, element));
-                train.UpdatePosition(berth);
-            }
+            TiplocCode tiploc = GetTiplocCode(element);
+            TDBerth berth = new TDBerth(caTD.AreaId, caTD.To, element, tiploc);
+            TDTrain train = GetTrainDescriber(caTD.Description, berth, tiploc);
+            _smartData.TryGetValue(string.Format("{0}-{1}", caTD.AreaId, caTD.From), out element);
+            train.Exited(new TDBerth(caTD.AreaId, caTD.From, element, tiploc));
+            train.UpdatePosition(berth);
         }
 
-        private void UpdateTrain(CbTD cbTD)
+        private static void UpdateTrain(CbTD cbTD)
         {
             TDElement element;
             _smartData.TryGetValue(string.Format("{0}-{1}", cbTD.AreaId, cbTD.From), out element);
-            TDBerth berth = new TDBerth(cbTD.AreaId, cbTD.From, element);
-            TDTrain train = GetTrainDescriber(cbTD.Description);
+            TiplocCode tiploc = GetTiplocCode(element);
+            TDBerth berth = new TDBerth(cbTD.AreaId, cbTD.From, element, tiploc);
+            TDTrain train = GetTrainDescriber(cbTD.Description, berth, tiploc);
             if (train != null)
             {
                 train.Exited(berth);
             }
         }
 
-        private void UpdateTrain(CcTD ccTd)
+        private static void UpdateTrain(CcTD ccTd)
         {
             TDElement element;
             _smartData.TryGetValue(string.Format("{0}-{1}", ccTd.AreaId, ccTd.To), out element);
-            TDBerth berth = new TDBerth(ccTd.AreaId, ccTd.To, element);
-            TDTrain train = GetTrainDescriber(ccTd.Description);
-            if (train == null)
+            TiplocCode tiploc = GetTiplocCode(element);
+            TDBerth berth = new TDBerth(ccTd.AreaId, ccTd.To, element, tiploc);
+            TDTrain train = GetTrainDescriber(ccTd.Description, berth, tiploc);
+            train.UpdatePosition(berth);
+        }
+        private static TiplocCode GetTiplocCode(TDElement element)
+        {
+            if (element == null)
+                return null;
+
+            TiplocCode code = null;
+            if (!_tiplocCache.TryGetValue(element.STANOX, out code))
             {
-                _tdCache.Set(ccTd.Description, new TDTrain(ccTd.Description, berth), _tdCachePolicy);
+                code = _tiplocRepo.GetTiplocByStanox(element.STANOX);
+                _tiplocCache.AddOrUpdate(element.STANOX, code, (key, tiploc) => { return code; });
+            }
+            return code;
+        }
+
+        private static TDTrain GetTrainDescriber(string describer, TDBerth berth, TiplocCode tiploc)
+        {
+            TDTrains trains = _tdCache[describer] as TDTrains;
+            TrainMovementResult schedule = GetTrainSchedule(describer, tiploc);
+            if (trains == null)
+            {
+                trains = new TDTrains { Describer = describer };
+                TDTrain train = new TDTrain(describer, berth);
+                train.Schedule = schedule;
+                trains.Trains.Add(train);
+                _tdCache.Add(describer, trains, _tdCachePolicy);
+                return train;
             }
             else
             {
-                train.UpdatePosition(berth);
+                var matching = trains.Trains.Where(t => t.Berths.ContainsKey(berth.AreaId));
+                if (matching.Count() > 1)
+                {
+                    if (schedule == null)
+                    {
+                        TDTrain train = matching.OrderByDescending(t => t.LastAt(berth.AreaId))
+                            .First();
+
+                        if (train.Schedule == null)
+                            train.Schedule = GetTrainSchedule(describer, tiploc);
+                        return train;
+                    }
+                    else
+                    {
+                        TDTrain train = trains.Trains.FirstOrDefault(t => t.Schedule == schedule);
+                        if (train != null)
+                            return train;
+
+                        train = new TDTrain(describer, berth);
+                        train.Schedule = schedule;
+                        trains.Trains.Add(train);
+                        return train;
+                    }
+                }
+                else if (matching.Count() == 1)
+                {
+                    TDTrain train = matching.Single();
+                    if (train.Schedule == null)
+                        train.Schedule = GetTrainSchedule(describer, tiploc);
+                    return train;
+                }
+                else
+                {
+                    TDTrain train = trains.Trains.FirstOrDefault(t => t.Schedule == schedule);
+                    if (train != null)
+                        return train;
+
+                    train = new TDTrain(describer, berth);
+                    train.Schedule = schedule;
+                    trains.Trains.Add(train);
+                    return train;
+                }
             }
         }
 
-        private TDTrain GetTrainDescriber(string describer)
+        private static TrainMovementResult GetTrainSchedule(string describer, TiplocCode tiploc)
         {
-            return _tdCache[describer] as TDTrain;
+            if (tiploc == null)
+                return null;
+
+            IEnumerable<TrainMovementResult> results = _tmRepo.GetTrainMovementByHeadcode(describer, DateTime.UtcNow);
+            if (!results.Any())
+                return null;
+
+            var filteredResults = results
+                .Where(r => r.Schedule.Stops.Any(s => s.Tiploc.Tiploc == tiploc.Tiploc));
+
+            if (!filteredResults.Any())
+                return null;
+
+            if (filteredResults.Count() == 0)
+                return filteredResults.Single();
+
+            var currentResults = results
+                .Where(r => r.Actual != null)
+                .Where(r => r.Actual.State == TrainState.Activated);
+
+            return currentResults.ElementAtOrDefault(0);
         }
 
-        public TDTrain GetTrain(string describer)
+        public TDTrains GetTrain(string describer)
         {
-            return GetTrainDescriber(describer);
+            return _tdCache[describer] as TDTrains;
         }
 
 

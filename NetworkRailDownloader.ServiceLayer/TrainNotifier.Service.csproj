@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="AssociationRepository.cs" />
     <Compile Include="DataArchiveRepository.cs" />
+    <Compile Include="LiveTrainLookupRepository.cs" />
     <Compile Include="LiveTrainRepository.cs" />
     <Compile Include="DbRepository.cs" />
     <Compile Include="PPMDataRepository.cs" />

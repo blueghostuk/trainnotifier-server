@@ -3,15 +3,32 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using TrainNotifier.Common.Model.Api;
 
 namespace TrainNotifier.Common.Model.TDCache
 {
+    [DataContract]
+    public class TDTrains
+    {
+        [DataMember]
+        public List<TDTrain> Trains { get; set; }
+
+        [DataMember]
+        public string Describer { get; set; }
+
+        public TDTrains()
+        {
+            Trains = new List<TDTrain>();
+        }
+    }
+
     [DataContract]
     public class TDTrain
     {
         private readonly ConcurrentDictionary<string, ConcurrentBag<TDBerth>> _berths = new ConcurrentDictionary<string, ConcurrentBag<TDBerth>>();
 
         private Dictionary<string, List<TDBerth>> _berthsLookup;
+
         [DataMember]
         public Dictionary<string, List<TDBerth>> Berths
         {
@@ -38,6 +55,9 @@ namespace TrainNotifier.Common.Model.TDCache
 
         [DataMember]
         public DateTime FirstSeen { get; set; }
+
+        [DataMember]
+        public TrainMovementResult Schedule { get; set; }
 
         public TDTrain(string describer, TDBerth initialBerth)
         {

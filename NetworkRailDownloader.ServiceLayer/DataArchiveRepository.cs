@@ -95,7 +95,7 @@ namespace TrainNotifier.Service
             }
         }
 
-        private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(20).TotalSeconds;
+        private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(30).TotalSeconds;
 
         private static readonly string[] _indexTables = new[] 
             {

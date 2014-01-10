@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.ServiceModel;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.SmartExtract;
 using TrainNotifier.Common.Model.TDCache;
 
 namespace TrainNotifier.Common.Services
 {
     [ServiceContract]
+    [ServiceKnownType(typeof(TiplocCode))]
+    [ServiceKnownType(typeof(TDTrains))]
     [ServiceKnownType(typeof(TDTrain))]
     [ServiceKnownType(typeof(TDBerth))]
     [ServiceKnownType(typeof(TDElement))]
@@ -24,7 +27,7 @@ namespace TrainNotifier.Common.Services
         void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData);
 
         [OperationContract]
-        TDTrain GetTrain(string describer);
+        TDTrains GetTrain(string describer);
 
         [OperationContract]
         Tuple<DateTime, string> GetBerthContents(string berth);

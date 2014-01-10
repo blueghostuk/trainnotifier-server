@@ -6,7 +6,7 @@ using TrainNotifier.Common.Model.Schedule;
 namespace TrainNotifier.Common.Model.Api
 {
     [DataContract]
-    public class TrainMovementResult
+    public class TrainMovementResult : IEquatable<TrainMovementResult>
     {
         [DataMember]
         public RunningTrainActual Actual { get; set; }
@@ -19,6 +19,17 @@ namespace TrainNotifier.Common.Model.Api
         public IEnumerable<Reinstatement> Reinstatements { get; set; }
         [DataMember]
         public IEnumerable<ChangeOfOrigin> ChangeOfOrigins { get; set; }
+
+        public bool Equals(TrainMovementResult other)
+        {
+            return other != null && 
+                other.Schedule.TrainUid == this.Schedule.TrainUid;
+        }
+
+        public override int GetHashCode()
+        {
+            return Schedule.TrainUid.GetHashCode();
+        }
     }
 
     [DataContract]

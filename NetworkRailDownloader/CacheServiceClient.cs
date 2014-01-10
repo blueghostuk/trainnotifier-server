@@ -38,7 +38,7 @@ namespace TrainNotifier.Console.WebSocketServer
             base.Channel.CacheTrainDescriberData(trainData);
         }
 
-        public TDTrain GetTrain(string trainDescriber)
+        public TDTrains GetTrain(string trainDescriber)
         {
             return base.Channel.GetTrain(trainDescriber);
         }

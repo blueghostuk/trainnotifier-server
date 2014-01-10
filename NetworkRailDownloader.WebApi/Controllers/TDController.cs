@@ -21,7 +21,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 throw new NotImplementedException();
             }
 
-            public TDTrain GetTrain(string trainDescriber)
+            public TDTrains GetTrain(string trainDescriber)
             {
                 return base.Channel.GetTrain(trainDescriber);
             }
@@ -33,7 +33,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
         }
 
         [HttpGet]
-        public TDTrain GetTrain(string describer)
+        public TDTrains GetTrain(string describer)
         {
             TDCacheServiceClient cacheService = null;
             try
