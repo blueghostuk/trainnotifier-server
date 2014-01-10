@@ -50,31 +50,6 @@ namespace TrainNotifier.WcfLibrary
             {
                 Trace.TraceError("{0}", e);
             }
-
-            const string sql = @"
-                SELECT 
-                    [Id]
-                    ,[TrainId]
-                    ,[ScheduleTrain]
-                FROM [LiveTrain] 
-                WHERE [TrainStateId] = @activated
-                    AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
-
-            var activeTrains = Query<dynamic>(sql, new { TrainState.Activated });
-
-            Trace.TraceInformation("Pre loading {0} trains", activeTrains.Count());
-
-            Trace.Flush();
-
-            foreach (var activeTrain in activeTrains)
-            {
-                _trainActivationCache.Add(activeTrain.TrainId, new TrainMovementSchedule
-                {
-                    Id = activeTrain.Id,
-                    Schedule = activeTrain.ScheduleTrain,
-                    StopNumber = 0
-                }, _trainActivationCachePolicy);
-            }
         }
 
         public void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData)
