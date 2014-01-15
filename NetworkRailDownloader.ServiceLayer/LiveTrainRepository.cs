@@ -23,6 +23,7 @@ namespace TrainNotifier.Service
 
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
         private static readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
+        private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
 
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
@@ -184,6 +185,21 @@ namespace TrainNotifier.Service
                             }
                         }
                     }
+                    if (!string.IsNullOrEmpty(tm.TocId))
+                    {
+                        // if VSTP update toc
+                        const string vstpTocSql = @"
+                        UPDATE [ScheduleTrain]
+                        SET [AtocCode] = @atocCode
+                        WHERE [ScheduleId] = @scheduleId
+                        AND [Source] = 1";
+
+                        ExecuteNonQuery(vstpTocSql, new
+                        {
+                            scheduleId,
+                            atocCode = tm.TocId
+                        });
+                    }
                 }
                 else
                 {
@@ -213,20 +229,13 @@ namespace TrainNotifier.Service
             tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
             if (tm == null)
             {
-                //                tm = ExecuteScalar<TrainMovementSchedule>(@"
-                //                    SELECT 
-                //                        [Id]
-                //                        ,[TrainId]
-                //                        ,[ScheduleTrain] AS [Schedule]
-                //                    FROM [LiveTrain] 
-                //                    WHERE [TrainId] = @trainId
-                //                        AND [Activated] = 1  
-                //                        AND [Terminated] = 0  
-                //                        AND [Archived] = 0", new { trainId }, existingConnection);
-                //                if (tm != null)
-                //                {
-                //                    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-                //                }
+                //TrainIdTranslator details = TrainIdTranslator.ParseDataString(trainId);
+                //var trains = _tmRepo.GetTrainMovementByHeadcode(details.Headcode, DateTime.UtcNow.);
+                
+                //if (tm != null)
+                //{
+                //    _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
+                //}
             }
             return tm != null && tm.Id != Guid.Empty;
         }

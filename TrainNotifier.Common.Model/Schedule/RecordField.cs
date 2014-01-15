@@ -424,9 +424,14 @@ namespace TrainNotifier.Common.Model.Schedule
         public TrainIdTranslator()
             : base(10)
         { }
+        public static TrainIdTranslator ParseDataString(string data)
+        {
+            var trans = new TrainIdTranslator();
+            trans.ParseString(data);
+            return trans;
+        }
 
         public string OriginTiploc { get; set; }
-
         public string Headcode { get; set; }
         public string TSpeed { get; set; }
         public string CallCode { get; set; }
@@ -434,11 +439,12 @@ namespace TrainNotifier.Common.Model.Schedule
 
         public override void ParseString(string data)
         {
-            OriginTiploc = new string(data.ToCharArray().Take(2).ToArray());
-            Headcode = new string(data.ToCharArray().Skip(2).Take(4).ToArray());
-            TSpeed = new string(data.ToCharArray().Skip(6).Take(1).ToArray());
-            CallCode = new string(data.ToCharArray().Skip(7).Take(1).ToArray());
-            DayOfMonth = Convert.ToByte(new string(data.ToCharArray().Skip(8).Take(2).ToArray()));
+            char[] charArray = data.ToCharArray();
+            OriginTiploc = new string(charArray.Take(2).ToArray());
+            Headcode = new string(charArray.Skip(2).Take(4).ToArray());
+            TSpeed = new string(charArray.Skip(6).Take(1).ToArray());
+            CallCode = new string(charArray.Skip(7).Take(1).ToArray());
+            DayOfMonth = Convert.ToByte(new string(charArray.Skip(8).Take(2).ToArray()));
         }
     }
 
