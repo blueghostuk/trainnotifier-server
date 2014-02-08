@@ -26,7 +26,7 @@ namespace TrainNotifier.Common.Model.SmartExtract
     }
 
     [DataContract]
-    public class TDElement
+    public class TDElement : IEquatable<TrainDescriber>
     {
         public override string ToString()
         {
@@ -46,8 +46,35 @@ namespace TrainNotifier.Common.Model.SmartExtract
         public string TD { get; set; }
         [DataMember]
         public string FROMBERTH { get; set; }
+
+        [DataMember]
+        public string FromBerth
+        {
+            get
+            {
+                return FROMBERTH.PadLeft(4, '0');
+            }
+            set
+            {
+                FROMBERTH = value;
+            }
+        }
+
         [DataMember]
         public string TOBERTH { get; set; }
+
+        [DataMember]
+        public string ToBerth
+        {
+            get
+            {
+                return TOBERTH.PadLeft(4, '0');
+            }
+            set
+            {
+                TOBERTH = value;
+            }
+        }
         [DataMember]
         public string FROMLINE { get; set; }
         [DataMember]
@@ -167,6 +194,20 @@ namespace TrainNotifier.Common.Model.SmartExtract
                 }
             }
         }
+
+        public bool Equals(TrainDescriber other)
+        {
+            if (!other.AreaId.Equals(this.TD, StringComparison.CurrentCultureIgnoreCase))
+                return false;
+
+            if (other is IFrom && !((IFrom)other).From.Equals(this.FromBerth, StringComparison.CurrentCultureIgnoreCase))
+                return false;
+
+            if (other is ITo && !((ITo)other).To.Equals(this.ToBerth, StringComparison.CurrentCultureIgnoreCase))
+                return false;
+
+            return true;
+        }
     }
 
     [DataContract]
@@ -182,6 +223,24 @@ namespace TrainNotifier.Common.Model.SmartExtract
         ArriveDown,
         [EnumMember]
         DepartDown
+    }
+
+    public static class EventTypeHelper
+    {
+        public static string ToDisplayString(this EventType et)
+        {
+            switch (et)
+            {
+                case EventType.ArriveDown:
+                case EventType.ArriveUp:
+                    return "Arrival";
+                case EventType.DepartDown:
+                case EventType.DepartUp:
+                    return "Departure";
+                default:
+                    return string.Empty;
+            }
+        }
     }
 
     [DataContract]

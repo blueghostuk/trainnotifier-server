@@ -453,6 +453,7 @@ namespace TrainNotifier.Service
 	                ,[LiveTrainStop].[Platform]
 	                ,[LiveTrainStop].[Line]
 	                ,[LiveTrainStop].[ScheduleStopNumber]
+	                ,[LiveTrainStop].[LiveTrainStopSourceId] AS [Source]
                     ,[Tiploc].[TiplocId]
                     ,[Tiploc].[Tiploc]
                     ,[Tiploc].[Nalco]
@@ -1200,7 +1201,7 @@ namespace TrainNotifier.Service
 
             var allSchedules = GetRunningTrainSchedules(schedules, date);
 
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), date.Date, date.Date.AddDays(1));
+            var allActualData = GetActualSchedule(matchingSchedules.Select(s => s.ScheduleId).Distinct(), date.Date, date.Date.AddDays(1));
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -1228,7 +1229,10 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var potentialScheduleIds = matchingSchedules
+                    .Where(s => s.TrainUid == schedule.TrainUid)
+                    .Select(s => s.ScheduleId);
+                var actual = allActualData.SingleOrDefault(a => potentialScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();

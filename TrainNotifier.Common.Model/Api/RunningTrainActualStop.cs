@@ -26,5 +26,8 @@ namespace TrainNotifier.Common.Model.Api
         public StationTiploc Tiploc { get; set; }
         [DataMember]
         public string TiplocStanoxCode { get; set; }
+
+        [DataMember]
+        public LiveTrainStopSource Source { get; set; }
     }
 }

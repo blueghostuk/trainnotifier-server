@@ -987,4 +987,13 @@ namespace TrainNotifier.Common.Model.Schedule
                 { "LT", StopType.Terminate }
             }, defaultValue: StopType.Intermediate) { }
     }
+
+    [DataContract]
+    public enum LiveTrainStopSource : byte
+    {
+        [EnumMember]
+        Trust = 0,
+        [EnumMember]
+        TD = 1
+    }
 }

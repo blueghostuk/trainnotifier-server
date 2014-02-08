@@ -42,7 +42,7 @@ namespace TrainNotifier.Console.SmartExtract
                 }
 
                 results = results
-                    .OrderBy(t => t.STANOX)
+                    .OrderBy(t => t.STANME)
                     .ThenBy(t => string.IsNullOrEmpty(t.PLATFORM) ? -1 : int.Parse(t.PLATFORM))
                     .ThenBy(t => t.EventType);
 
