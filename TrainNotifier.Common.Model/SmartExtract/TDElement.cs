@@ -35,10 +35,11 @@ namespace TrainNotifier.Common.Model.SmartExtract
                 TOBERTH.PadRight(6) +
                 FROMLINE.PadRight(4) +
                 TOLINE.PadRight(4) +
-                STANOX.PadRight(8) +
+                STANME.PadRight(10) +
                 PLATFORM.PadRight(4) +
                 EventType.ToString().PadRight(12) +
-                StepType.ToString().PadRight(18);
+                StepType.ToString().PadRight(10) + 
+                BERTHOFFSET.ToString().PadRight(6);
         }
 
         [DataMember]

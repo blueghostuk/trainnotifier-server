@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 using System.Linq;
+using TrainNotifier.Common.Model.CorpusExtract;
 using TrainNotifier.Service;
 
 namespace TrainNotifier.Console.CorpusExtract

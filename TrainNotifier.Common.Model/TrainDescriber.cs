@@ -22,8 +22,18 @@ namespace TrainNotifier.Common.Model
         public string Type { get; set; }
     }
 
+    public interface IFrom
+    {
+        string From { get; set; }
+    }
+
+    public interface ITo
+    {
+        string To { get; set; }
+    }
+
     [DataContract]
-    public sealed class CaTD : TrainDescriber
+    public sealed class CaTD : TrainDescriber, IFrom, ITo
     {
         [DataMember]
         public string From { get; set; }
@@ -32,14 +42,14 @@ namespace TrainNotifier.Common.Model
     }
 
     [DataContract]
-    public sealed class CbTD : TrainDescriber
+    public sealed class CbTD : TrainDescriber, IFrom
     {
         [DataMember]
         public string From { get; set; }
     }
 
     [DataContract]
-    public sealed class CcTD : TrainDescriber
+    public sealed class CcTD : TrainDescriber, ITo
     {
         [DataMember]
         public string To { get; set; }

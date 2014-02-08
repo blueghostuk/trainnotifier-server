@@ -792,7 +792,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => a.ScheduleId == schedule.ScheduleId);
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();

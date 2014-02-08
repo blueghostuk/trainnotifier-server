@@ -92,15 +92,23 @@ namespace TrainNotifier.Common.NMS
                     Task vstpDataTask = Task.Factory.StartNew(() => GetVSTPData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
                     Task rtppmTask = Task.Factory.StartNew(() => GetRtPPMData(connection, _cancellationTokenSource.Token, connectionMonitor), _cancellationTokenSource.Token);
 
-                    Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask, rtppmTask }, _cancellationTokenSource.Token);
-                    if (!connectionMonitor.QuitOk)
+                    try
                     {
-                        Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
-                        TraceHelper.FlushLog();
-                        throw new RetryException();
+                        Task.WaitAll(new[] { tmDataTask, tdDataTask, vstpDataTask, rtppmTask }, _cancellationTokenSource.Token);
+                        if (!connectionMonitor.QuitOk)
+                        {
+                            Trace.TraceError("Connection Monitor did not quit OK. Retrying Connection");
+                            TraceHelper.FlushLog();
+                            throw new RetryException();
+                        }
+                        _cancellationTokenSource.Cancel();
+                        Trace.TraceInformation("Closing connection to: {0}", connection);
                     }
-                    _cancellationTokenSource.Cancel();
-                    Trace.TraceInformation("Closing connection to: {0}", connection);
+                    catch (OperationCanceledException)
+                    {
+                        Trace.TraceError("Connection Monitor cancelled");
+                        TraceHelper.FlushLog();
+                    }
                 }
             }
         }

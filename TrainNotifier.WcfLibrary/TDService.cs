@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
+using TrainNotifier.Common;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Api;
 using TrainNotifier.Common.Model.Schedule;
@@ -49,6 +50,7 @@ namespace TrainNotifier.WcfLibrary
             catch (Exception e)
             {
                 Trace.TraceError("{0}", e);
+                TraceHelper.FlushLog();
             }
         }
 

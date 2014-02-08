@@ -46,6 +46,7 @@
     <Compile Include="Cancellation.cs" />
     <Compile Include="ChangeOfOrigin.cs" />
     <Compile Include="CommandResponse.cs" />
+    <Compile Include="CorpusExtract\Tiploc.cs" />
     <Compile Include="Exceptions\TiplocNotFoundException.cs" />
     <Compile Include="ExtendedTrainMovement.cs" />
     <Compile Include="ITrainData.cs" />
@@ -78,7 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\portable-net45+wp80+win8\Newtonsoft.Json.dll</HintPath>
+      <HintPath>c:\users\blueg_000\Documents\Visual Studio 2012\Projects\TDCache\packages\Newtonsoft.Json.6.0.1\lib\portable-net45+wp80+win8\Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

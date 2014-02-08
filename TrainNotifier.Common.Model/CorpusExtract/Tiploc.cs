@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using TrainNotifier.Common.Model.Schedule;
 
-namespace TrainNotifier.Console.CorpusExtract
+namespace TrainNotifier.Common.Model.CorpusExtract
 {
     public class TiplocContainer
     {

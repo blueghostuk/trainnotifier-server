@@ -60,6 +60,8 @@ namespace TrainNotifier.Console.TDService
 
         protected override void OnStart(string[] args)
         {
+            Trace.TraceInformation("Started TD Service @ {0}", DateTime.UtcNow);
+            TraceHelper.FlushLog();
             _serviceHost = new ServiceHost(typeof(TDCacheService));
             _serviceHost.Open();
         }
