@@ -16,10 +16,15 @@ namespace TrainNotifier.Console.WebApi.ActionFilters
 
         public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
         {
-            actionExecutedContext.Response.Headers.CacheControl = new CacheControlHeaderValue
+            if (actionExecutedContext != null &&
+                actionExecutedContext.Response != null &&
+                actionExecutedContext.Response.Headers != null)
             {
-                MaxAge = _timespan
-            };
+                actionExecutedContext.Response.Headers.CacheControl = new CacheControlHeaderValue
+                {
+                    MaxAge = _timespan
+                };
+            }
             //base.OnActionExecuted(actionExecutedContext);
         }
     }

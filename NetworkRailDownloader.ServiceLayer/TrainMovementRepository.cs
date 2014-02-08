@@ -981,25 +981,28 @@ namespace TrainNotifier.Service
 
         public TrainMovementResult GetTrainMovementById(string trainUid, DateTime date)
         {
+            // activated schedule may have been deleted by the daily schedule update
+            // so include deleted ones
             const string sql = @"
-                SELECT TOP 1 [ScheduleId]
+                SELECT [ScheduleId]
                     FROM [ScheduleTrain]
                     WHERE 
                         [TrainUid] = @trainUid
                         AND @date >= [StartDate]
                         AND @date <= [EndDate]
-                        AND [Deleted] = 0
                         AND [Runs{0}] = 1
-                    ORDER BY [STPIndicatorId]";
+                    ORDER BY [Deleted], [STPIndicatorId], [PowerTypeId] DESC";
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                Guid? scheduleId = ExecuteScalar<Guid?>(string.Format(sql, date.DayOfWeek), new { trainUid, date });
+                IEnumerable<Guid> scheduleIds = Query<Guid>(string.Format(sql, date.DayOfWeek), new { trainUid, date });
 
-                if (scheduleId.HasValue && scheduleId.Value != Guid.Empty)
+                // the current schedule will be the first
+                Guid scheduleId = scheduleIds.FirstOrDefault();
+
+                if (scheduleId != Guid.Empty)
                 {
                     TrainMovementResult result = new TrainMovementResult();
-                    var scheduleIds = new[] { scheduleId.Value };
                     result.Schedule = GetSchedules(scheduleIds, date).FirstOrDefault();
                     result.Actual = GetActualSchedule(scheduleIds, date.Date, date.Date.Add(new TimeSpan(23, 59, 59))).FirstOrDefault();
                     if (result.Actual != null)
