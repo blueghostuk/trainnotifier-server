@@ -589,7 +589,7 @@ namespace TrainNotifier.Service
 
             return results
                 .OrderBy(s => s.Schedule.DateFor)
-                .ThenBy(s => s.Schedule.DepartureTime);
+                .ThenBy(s => s.Schedule.Stops.Last().Arrival);
         }
 
         public IEnumerable<TrainMovementResult> StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, PowerType? powerType = null)
