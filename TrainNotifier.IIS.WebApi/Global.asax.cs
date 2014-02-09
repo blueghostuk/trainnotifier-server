@@ -3,7 +3,6 @@ using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Web.Mvc;
 using System.Web.Routing;
-using TrainNotifier.Console.WebApi.Config;
 
 namespace TrainNotifier.IIS.WebApi
 {
@@ -15,7 +14,6 @@ namespace TrainNotifier.IIS.WebApi
         {
             AreaRegistration.RegisterAllAreas();
 
-            WebApiConfig.Register(GlobalConfiguration.Configuration);
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
 

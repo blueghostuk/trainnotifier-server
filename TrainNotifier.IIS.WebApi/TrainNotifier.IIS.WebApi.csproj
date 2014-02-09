@@ -123,9 +123,6 @@
     <Compile Include="..\NetworkRailDownloader.WebApi\ActionFilters\CachingActionFilterAttribute.cs">
       <Link>ActionFilters\CachingActionFilterAttribute.cs</Link>
     </Compile>
-    <Compile Include="..\NetworkRailDownloader.WebApi\Config\WebApiConfig.cs">
-      <Link>App_Start\WebApiConfig.cs</Link>
-    </Compile>
     <Compile Include="..\NetworkRailDownloader.WebApi\Controllers\AssociationController.cs">
       <Link>Controllers\AssociationController.cs</Link>
     </Compile>

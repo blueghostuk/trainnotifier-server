@@ -1,11 +1,18 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using TrainNotifier.Common.Model;
+using TrainNotifier.Common.Model.CorpusExtract;
 using TrainNotifier.Common.Model.PPM;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.Model.SmartExtract;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
 

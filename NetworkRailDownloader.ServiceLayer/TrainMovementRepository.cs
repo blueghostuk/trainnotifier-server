@@ -1199,9 +1199,9 @@ namespace TrainNotifier.Service
                 })
                 .ToList();
 
-            var allSchedules = GetRunningTrainSchedules(schedules, date);
+            IEnumerable<RunningScheduleTrain> allSchedules = GetRunningTrainSchedules(schedules, date);
 
-            var allActualData = GetActualSchedule(matchingSchedules.Select(s => s.ScheduleId).Distinct(), date.Date, date.Date.AddDays(1));
+            IEnumerable<RunningTrainActual> allActualData =  GetActualSchedule(matchingSchedules.Select(s => s.ScheduleId).Distinct(), date.Date, date.Date.AddDays(1));
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -1255,6 +1255,45 @@ namespace TrainNotifier.Service
             return results
                 .OrderBy(s => s.Schedule.DateFor)
                 .ThenBy(s => s.Schedule.DepartureTime);
+        }
+
+        /// <summary>
+        /// Get an activated train id that calls at the given location
+        /// </summary>
+        /// <param name="headcode">headcode of train</param>
+        /// <param name="date">date train started on</param>
+        /// <param name="stanox">location called at</param>
+        /// <returns>the id if found or null</returns>
+        public Guid? GetActivatedTrainMovementByHeadcodeAndStop(string headcode, DateTime date, string stanox)
+        {
+            // get tiploc id to improve query
+            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+                .Select(t => t.TiplocId);
+
+            if (!tiplocs.Any())
+                return null;
+
+            const string getSchedulesSql = @"
+                SELECT 
+                    [LiveTrain].[Id]
+                FROM [ScheduleTrain]
+                INNER JOIN [ScheduleTrainStop] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
+                INNER JOIN [LiveTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                WHERE   [ScheduleTrainStop].[TiplocId] IN @tiplocs
+                    AND [ScheduleTrain].[Headcode] = @headcode
+	                AND [ScheduleTrain].[Runs{0}] = 1
+	                AND @date >= [ScheduleTrain].[StartDate]
+	                AND @date <= [ScheduleTrain].[EndDate]
+				ORDER BY [OriginDepartTimeStamp] DESC";
+
+            return Query<Guid?>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            {
+                headcode,
+                date = date.Date,
+                tiplocs
+            })
+            .Where(g => g.HasValue && g.Value != Guid.Empty)
+            .FirstOrDefault();
         }
 
         private sealed class NearestStationResult

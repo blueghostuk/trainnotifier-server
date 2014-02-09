@@ -4,9 +4,7 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
-using TrainNotifier.Common.Model.TDCache;
 using TrainNotifier.Common.Services;
-using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
@@ -21,44 +19,10 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 throw new NotImplementedException();
             }
 
-            public TDTrains GetTrain(string trainDescriber)
-            {
-                return base.Channel.GetTrain(trainDescriber);
-            }
-
             public Tuple<DateTime, string> GetBerthContents(string berth)
             {
                 return base.Channel.GetBerthContents(berth);
             }
-        }
-
-        [HttpGet]
-        public TDTrains GetTrain(string describer)
-        {
-            TDCacheServiceClient cacheService = null;
-            try
-            {
-                cacheService = new TDCacheServiceClient();
-                cacheService.Open();
-                return cacheService.GetTrain(describer);
-            }
-            catch (Exception e)
-            {
-                Trace.TraceError("Error In Cache Connection: {0}", e);
-            }
-            finally
-            {
-                try
-                {
-                    if (cacheService != null)
-                        cacheService.Close();
-                }
-                catch (CommunicationObjectFaultedException e)
-                {
-                    Trace.TraceError("Error Closing Cache Connection: {0}", e);
-                }
-            }
-            return null;
         }
 
         [HttpGet]

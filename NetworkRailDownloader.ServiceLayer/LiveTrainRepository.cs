@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.Model.SmartExtract;
 
 namespace TrainNotifier.Service
 {
@@ -240,6 +241,41 @@ namespace TrainNotifier.Service
             return tm != null && tm.Id != Guid.Empty;
         }
 
+        /// <summary>
+        /// Update a train movement
+        /// </summary>
+        /// <param name="trainId">id of live train</param>
+        /// <param name="tiplocIds">reporting tiploc(s)</param>
+        /// <param name="eventType">arrival or departure to update</param>
+        /// <param name="actualTime">actual time to set</param>
+        /// <param name="source">source of data</param>
+        /// <returns>true if a row updated</returns>
+        public bool UpdateMovement(Guid trainId, IEnumerable<short> tiplocIds, TrainMovementEventType eventType, DateTime actualTime, LiveTrainStopSource source = LiveTrainStopSource.TD)
+        {
+            const string sql = @"
+                UPDATE [dbo].[LiveTrainStop]
+                SET  [ActualTimestamp] = @actualTime
+                    ,[LiveTrainStopSourceId] = @source
+                WHERE   [TrainId] = @trainId
+                    AND [ReportingTiplocId] IN @tiplocIds
+                    AND [EventTypeId] = @eventType
+                    AND [LiveTrainStopSourceId] != @source
+                    AND [ActualTimeStamp] >= @minusTen 
+                    AND [ActualTimeStamp] <= @plusTen";
+            // search within 20 minutes of now.
+
+            return ExecuteNonQuery(sql, new
+            {
+                trainId,
+                tiplocIds,
+                eventType,
+                actualTime,
+                source,
+                minusTen = actualTime.AddMinutes(-10),
+                plusTen = actualTime.AddMinutes(10)
+            }) > 0;
+        }
+
         public bool AddMovement(TrainMovementStep tms, DbConnection existingConnection = null)
         {
             TrainMovementSchedule trainId = null;
@@ -327,12 +363,7 @@ namespace TrainNotifier.Service
                         line = (string.IsNullOrEmpty(tms.Line) ? default(string) : tms.Line),
                         stopNumber = stopNumber
                     }, existingConnection);
-
-                    if (tms.State == State.Terminated)
-                    {
-                        _trainActivationCache.Remove(tms.TrainId);
-                    }
-
+                    
                     return true;
                 }
             }

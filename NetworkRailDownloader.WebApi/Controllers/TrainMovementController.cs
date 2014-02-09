@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web.Http;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Api;
+using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Service;
-using System.Linq;
-using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
