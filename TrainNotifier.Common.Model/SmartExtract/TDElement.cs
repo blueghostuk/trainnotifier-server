@@ -31,8 +31,8 @@ namespace TrainNotifier.Common.Model.SmartExtract
         public override string ToString()
         {
             return TD.PadRight(4) +
-                FROMBERTH.PadRight(6) +
-                TOBERTH.PadRight(6) +
+                FromBerth.PadRight(6) +
+                ToBerth.PadRight(6) +
                 FROMLINE.PadRight(4) +
                 TOLINE.PadRight(4) +
                 STANME.PadRight(10) +
