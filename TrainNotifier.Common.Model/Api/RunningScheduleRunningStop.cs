@@ -45,5 +45,14 @@ namespace TrainNotifier.Common.Model.Api
         public bool Intermediate { get; set; }
         [DataMember]
         public bool Terminate { get; set; }
+
+        [IgnoreDataMember]
+        public TimeSpan WttTime
+        {
+            get
+            {
+                return Arrival ?? Pass ?? Departure ?? TimeSpan.Zero;
+            }
+        }
     }
 }

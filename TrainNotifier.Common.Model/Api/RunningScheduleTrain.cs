@@ -53,6 +53,9 @@ namespace TrainNotifier.Common.Model.Api
 
         [IgnoreDataMember]
         public DateTime DateFor { get; set; }
+
+        [IgnoreDataMember]
+        public bool IsNextDay { get; set; }
     }
 
     [DataContract]
