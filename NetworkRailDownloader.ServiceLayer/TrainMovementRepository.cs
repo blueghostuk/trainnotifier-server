@@ -101,6 +101,9 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<ScheduleHolder>();
 
+            const string sameDayTimeQuery = "AND COALESCE(Arrival, Departure, Pass) >= @startTime AND COALESCE(Arrival, Departure, Pass) < @endTime";
+            const string diffDayTimeQuery = "AND (COALESCE(Arrival, Departure, Pass) >= @startTime OR COALESCE(Arrival, Departure, Pass) < @endTime)";
+
             const string getSchedulesSql = @"
                 SELECT [ScheduleTrain].[ScheduleId]
                     ,[ScheduleTrain].[TrainUid]
@@ -111,13 +114,13 @@ namespace TrainNotifier.Service
                     AND [ScheduleTrain].[Runs{0}] = 1
                     AND @date >= [ScheduleTrain].[StartDate]
                     AND @date <= [ScheduleTrain].[EndDate]
-                    AND COALESCE(Arrival, Departure, Pass) >= @startTime
-                    AND COALESCE(Arrival, Departure, Pass) < @endTime
-                    AND [ScheduleTrain].[Deleted] = 0{1}{2}
+                    {1}
+                    AND [ScheduleTrain].[Deleted] = 0{2}{3}
                     ORDER BY COALESCE(Arrival, Departure, Pass)";
 
             return Query<ScheduleHolder>(string.Format(getSchedulesSql,
                 date.DayOfWeek,
+                endTime < startTime ? diffDayTimeQuery : sameDayTimeQuery,
                 (!string.IsNullOrEmpty(atocCode) ? _atocCodeFilter : string.Empty),
                 (powerType.HasValue ? _powerTypeFilter : string.Empty)), new
                 {
@@ -750,8 +753,16 @@ namespace TrainNotifier.Service
             IEnumerable<RunningScheduleTrain> nextDaySchedules = null;
             if (startDate.Date != endDate.Date)
             {
-                nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode, powerType);
-                endDate = startDate.Date.AddDays(1).AddMinutes(-1);
+                nextDaySchedules = GetCallingAtSchedules(tiplocs, endDate.Date, endDate.Date.TimeOfDay, endDate.TimeOfDay, atocCode, powerType)
+                    // exclude stops that span the next day
+                    .Where(s => s.Stops.First().WttTime < s.Stops.Last().WttTime)
+                    .Select(s =>
+                    {
+                        s.IsNextDay = true;
+                        return s;
+                    })
+                    .ToList();
+                //endDate = startDate.Date.AddDays(1).AddMinutes(-1);
             }
             else
             {
@@ -759,6 +770,18 @@ namespace TrainNotifier.Service
             }
 
             var allSchedules = GetCallingAtSchedules(tiplocs, startDate.Date, startDate.TimeOfDay, endDate.TimeOfDay, atocCode, powerType)
+                .Select(s =>
+                {
+                    if (s.Stops != null && s.Stops.Any())
+                    {
+                        var tiplocStops = s.Stops.Where(stop => tiplocs.Contains(stop.Tiploc.TiplocId));
+                        if (tiplocStops.Any())
+                        {
+                            s.IsNextDay = tiplocStops.First().WttTime < startDate.TimeOfDay;
+                        }
+                    }
+                    return s;
+                })
                 .Union(nextDaySchedules)
                 .ToList();
 
@@ -814,7 +837,7 @@ namespace TrainNotifier.Service
             }
 
             return results
-                .OrderBy(s => s.Schedule.DateFor)
+                .OrderBy(s => s.Schedule.IsNextDay)
                 .ThenBy(s =>
                 {
                     if (s.Schedule.Stops == null || !s.Schedule.Stops.Any())
@@ -824,8 +847,7 @@ namespace TrainNotifier.Service
                     if (!tiplocStops.Any())
                         return default(TimeSpan?);
 
-                    var firstStop = tiplocStops.First();
-                    return firstStop.PublicArrival ?? firstStop.Arrival ?? firstStop.Departure ?? firstStop.PublicDeparture ?? firstStop.Pass;
+                    return tiplocStops.First().WttTime;
                 });
         }
 
