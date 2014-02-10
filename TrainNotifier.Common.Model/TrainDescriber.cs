@@ -115,7 +115,7 @@ namespace TrainNotifier.Common.Model
                             };
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     //Trace.TraceError("Error constructing TrainDescriber: {0}", e);
                 }

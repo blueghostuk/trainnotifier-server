@@ -115,7 +115,7 @@ namespace TrainNotifier.Service
                 {
                     ExecuteNonQuery(string.Format(updateIndexSqlFormat, table), commandTimeout: DefaultLongQueryTimeout);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     Trace.TraceError("Error updating index for table {0}", table);
                 }
