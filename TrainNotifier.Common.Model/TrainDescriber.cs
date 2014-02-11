@@ -1,7 +1,11 @@
-﻿using System;
+﻿using Microsoft.CSharp.RuntimeBinder;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.ServiceModel;
+using System.Linq;
 
 namespace TrainNotifier.Common.Model
 {
@@ -125,26 +129,24 @@ namespace TrainNotifier.Common.Model
 
         private static dynamic GetBody(dynamic body)
         {
-            try
+            var dyn = (IDictionary<string, JToken>)body;
+            if (dyn.ContainsKey("CA_MSG"))
             {
                 return body.CA_MSG;
             }
-            catch { }
-            try
+            else if (dyn.ContainsKey("CB_MSG"))
             {
                 return body.CB_MSG;
             }
-            catch { }
-            try
+            else if (dyn.ContainsKey("CC_MSG"))
             {
                 return body.CC_MSG;
             }
-            catch { }
-            try
+            else if (dyn.ContainsKey("CT_MSG"))
             {
                 return body.CT_MSG;
             }
-            catch { }
+
             return null;
         }
 
