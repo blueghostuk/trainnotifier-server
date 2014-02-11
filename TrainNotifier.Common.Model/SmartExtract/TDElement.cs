@@ -42,11 +42,30 @@ namespace TrainNotifier.Common.Model.SmartExtract
                 BERTHOFFSET.ToString().PadRight(6);
         }
 
+        public TDElement()
+        {
+            ROUTE = string.Empty;
+            TD = string.Empty;
+            FROMBERTH = string.Empty;
+            TOBERTH = string.Empty;
+            FROMLINE = string.Empty;
+            TOLINE = string.Empty;
+            BERTHOFFSET = "0";
+            PLATFORM = string.Empty;
+            EVENT = string.Empty;
+            ROUTE = string.Empty;
+            STANOX = string.Empty;
+            STANME = string.Empty;
+            STEPTYPE = string.Empty;
+            COMMENT = string.Empty;
+        }
+
         [DataMember]
         public string TD { get; set; }
         [DataMember]
         public string FROMBERTH { get; set; }
 
+        [JsonIgnore]
         [DataMember]
         public string FromBerth
         {
@@ -56,13 +75,15 @@ namespace TrainNotifier.Common.Model.SmartExtract
             }
             set
             {
-                FROMBERTH = value;
+                if (!string.IsNullOrEmpty(value))
+                    FROMBERTH = value.PadLeft(4, '0');
             }
         }
 
         [DataMember]
         public string TOBERTH { get; set; }
 
+        [JsonIgnore]
         [DataMember]
         public string ToBerth
         {
@@ -72,7 +93,8 @@ namespace TrainNotifier.Common.Model.SmartExtract
             }
             set
             {
-                TOBERTH = value;
+                if (!string.IsNullOrEmpty(value))
+                    TOBERTH = value.PadLeft(4, '0');
             }
         }
         [DataMember]
