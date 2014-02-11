@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TrainNotifier.Common.Model.SmartExtract;
@@ -11,9 +13,19 @@ namespace TrainNotifier.Console.SmartExtract
         static void Main(string[] args)
         {
             // this data is fetchable via http://nrodwiki.rockshore.net/index.php/ReferenceData
-            string jsonData = File.ReadAllText("SMARTExtract.json");
+            List<TDElement> allSmartData = new List<TDElement>();
 
-            TDContainer container = JsonConvert.DeserializeObject<TDContainer>(jsonData);
+            foreach (string smartExtract in Directory.GetFiles(".", "SMARTExtract*.json"))
+            {
+                Trace.TraceInformation("Loading SMART data from {0}", smartExtract);
+                string smartData = File.ReadAllText(smartExtract);
+                allSmartData.AddRange(JsonConvert.DeserializeObject<TDContainer>(smartData).BERTHDATA);
+            }
+
+            TDContainer container = new TDContainer
+            {
+                BERTHDATA = allSmartData
+            };
 
             if (args.Length > 0 && args[0].Equals("extract", System.StringComparison.InvariantCultureIgnoreCase))
             {
