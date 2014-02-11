@@ -43,10 +43,17 @@ namespace TrainNotifier.WcfLibrary
         static TDCacheService()
         {
             // this data is fetchable via http://nrodwiki.rockshore.net/index.php/ReferenceData
-            string smartData = File.ReadAllText("..\\SMARTExtract.json");
             string tiplocData = File.ReadAllText("..\\CORPUSExtract.json");
 
-            _tdElementsByArea = JsonConvert.DeserializeObject<TDContainer>(smartData).BERTHDATA
+            List<TDElement> allSmartData = new List<TDElement>();
+
+            foreach (string smartExtract in Directory.GetFiles("..\\", "SMARTExtract*.json"))
+            {
+                Trace.TraceInformation("Loading SMART data from {0}", smartExtract);
+                string smartData = File.ReadAllText(smartExtract);
+                allSmartData.AddRange(JsonConvert.DeserializeObject<TDContainer>(smartData).BERTHDATA);
+            }
+            _tdElementsByArea = allSmartData
                 .Where(td => !string.IsNullOrEmpty(td.STANOX))
                 .ToLookup(td => td.TD);
 
@@ -152,7 +159,7 @@ namespace TrainNotifier.WcfLibrary
 
         private static Guid? GetTrainSchedule(string describer, TiplocCode tiploc)
         {
-            if (tiploc == null)
+            if (string.IsNullOrEmpty(describer) || tiploc == null)
                 return null;
 
             return _tmRepo.GetActivatedTrainMovementByHeadcodeAndStop(describer, DateTime.UtcNow, tiploc.Stanox);
