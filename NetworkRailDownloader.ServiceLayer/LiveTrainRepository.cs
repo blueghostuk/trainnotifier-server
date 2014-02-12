@@ -167,7 +167,7 @@ namespace TrainNotifier.Service
                     ((TrainMovementSchedule)_trainActivationCache[tm.Id]).Schedule = scheduleId.Value;
 
                     IEnumerable<ScheduleStop> stops = _scheduleRepository.GetStopsById(scheduleId.Value);
-                    AddFirstArrivalMovement(tm.UniqueId, stops.ElementAt(0));
+                    AddFirstArrivalMovement(tm.UniqueId, tm.SchedOriginDeparture.GetValueOrDefault(DateTime.UtcNow), stops.ElementAt(0));
 
                     // if there was more than 1 tiploc see if we can find the correct one
                     if (tiplocs.Count() > 1)
@@ -209,7 +209,7 @@ namespace TrainNotifier.Service
             });
         }
 
-        private void AddFirstArrivalMovement(Guid trainId, ScheduleStop scheduleStop)
+        private void AddFirstArrivalMovement(Guid trainId, DateTime departureTime, ScheduleStop scheduleStop)
         {
             try
             {
@@ -237,8 +237,8 @@ namespace TrainNotifier.Service
                 {
                     trainId,
                     eventTypeId = TrainMovementEventType.Arrival,
-                    plannedTs = scheduleStop.Departure,
-                    actualTs = scheduleStop.Departure,
+                    plannedTs = departureTime,
+                    actualTs = departureTime,
                     reportingTiplocId = scheduleStop.Tiploc.TiplocId,
                     platform = scheduleStop.Platform,
                     line = scheduleStop.Line,
@@ -289,11 +289,12 @@ namespace TrainNotifier.Service
         /// <param name="actualTime">actual time to set</param>
         /// <param name="source">source of data</param>
         /// <returns>true if a row updated</returns>
-        public bool UpdateMovement(Guid trainId, IEnumerable<short> tiplocIds, TrainMovementEventType eventType, DateTime actualTime, LiveTrainStopSource source = LiveTrainStopSource.TD)
+        public bool UpdateMovement(Guid trainId, TDElement td, IEnumerable<short> tiplocIds, TrainMovementEventType eventType, DateTime actualTime, LiveTrainStopSource source = LiveTrainStopSource.TD)
         {
             const string sql = @"
                 UPDATE [dbo].[LiveTrainStop]
                 SET  [ActualTimestamp] = @actualTime
+                    ,[Platform] = @platform
                     ,[LiveTrainStopSourceId] = @source
                 WHERE   [TrainId] = @trainId
                     AND [ReportingTiplocId] IN @tiplocIds
@@ -305,6 +306,7 @@ namespace TrainNotifier.Service
             return ExecuteNonQuery(sql, new
             {
                 trainId,
+                platform = td.PLATFORM,
                 tiplocIds,
                 eventType,
                 actualTime,

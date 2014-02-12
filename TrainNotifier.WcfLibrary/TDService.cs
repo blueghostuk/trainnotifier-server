@@ -43,7 +43,6 @@ namespace TrainNotifier.WcfLibrary
         static TDCacheService()
         {
             // this data is fetchable via http://nrodwiki.rockshore.net/index.php/ReferenceData
-            string tiplocData = File.ReadAllText("..\\CORPUSExtract.json");
 
             List<TDElement> allSmartData = new List<TDElement>();
 
@@ -59,6 +58,7 @@ namespace TrainNotifier.WcfLibrary
 
             var dbTiplocs = _tiplocRepo.Get();
 
+            string tiplocData = File.ReadAllText("..\\CORPUSExtract.json");
             _tiplocByStanox = JsonConvert.DeserializeObject<TiplocContainer>(tiplocData).TIPLOCDATA
                 .Select(t => t.ToTiplocCode())
                 .ToLookup(t => t.Stanox);
@@ -120,6 +120,7 @@ namespace TrainNotifier.WcfLibrary
                         case EventType.ArriveUp:
                             if (!_liveTrainRepo.UpdateMovement(
                                 tmr.Value,
+                                td.Item2,
                                 _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
                                 TrainMovementEventType.Arrival,
                                 td.Item1.Time.AddSeconds(int.Parse(td.Item2.BERTHOFFSET))) && doRetry)
@@ -131,6 +132,7 @@ namespace TrainNotifier.WcfLibrary
                         case EventType.DepartUp:
                             if (!_liveTrainRepo.UpdateMovement(
                                 tmr.Value,
+                                td.Item2,
                                 _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
                                 TrainMovementEventType.Departure,
                                 td.Item1.Time.AddSeconds(int.Parse(td.Item2.BERTHOFFSET))) && doRetry)
