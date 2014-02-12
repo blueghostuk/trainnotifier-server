@@ -217,15 +217,29 @@ namespace TrainNotifier.Common.Model.SmartExtract
             }
         }
 
+        private bool FromEquals(IFrom otherFrom)
+        {
+            return otherFrom != null &&
+                otherFrom.From != null &&
+                otherFrom.From.PadLeft(4, '0').Equals(this.FromBerth, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private bool ToEquals(ITo otherTo)
+        {
+            return otherTo != null &&
+                otherTo.To != null &&
+                otherTo.To.PadLeft(4, '0').Equals(this.ToBerth, StringComparison.CurrentCultureIgnoreCase);
+        }
+
         public bool Equals(TrainDescriber other)
         {
             if (!other.AreaId.Equals(this.TD, StringComparison.CurrentCultureIgnoreCase))
                 return false;
 
-            if (other is IFrom && !((IFrom)other).From.Equals(this.FromBerth, StringComparison.CurrentCultureIgnoreCase))
+            if (other is IFrom && !FromEquals((IFrom)other))
                 return false;
 
-            if (other is ITo && !((ITo)other).To.Equals(this.ToBerth, StringComparison.CurrentCultureIgnoreCase))
+            if (other is ITo && !ToEquals((ITo)other))
                 return false;
 
             return true;
