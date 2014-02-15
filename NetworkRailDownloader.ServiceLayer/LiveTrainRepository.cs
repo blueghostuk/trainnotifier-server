@@ -311,7 +311,7 @@ namespace TrainNotifier.Service
                 eventType,
                 actualTime,
                 source,
-                timeBefore = actualTime.AddMinutes(-75),
+                timeBefore = actualTime.AddMinutes(-145),
                 timeAfter = actualTime.AddMinutes(30)
             }) > 0;
         }
