@@ -29,6 +29,13 @@ namespace TrainNotifier.Console.WebApi.Controllers
         }
 
         [HttpGet]
+        [CachingActionFilterAttribute(30)]
+        public TrainMovementLink GetForHeadcodeByLocation(string headcode, string crsCode, string platform)
+        {
+            return _tmRepo.GetTrainMovementByHeadcodeAndLocation(headcode, crsCode, platform);
+        }
+
+        [HttpGet]
         [CachingActionFilterAttribute(120)]
         public SingleTrainMovementResult GetForUid(string trainUid, DateTime date)
         {

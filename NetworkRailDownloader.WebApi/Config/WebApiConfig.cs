@@ -66,6 +66,11 @@ namespace TrainNotifier.Console.WebApi.Config
                 defaults: new { controller = "TrainMovement", action = "GetForHeadcode" });
 
             config.Routes.MapHttpRoute(
+                name: "TM-ForHeadcodeAndLocation",
+                routeTemplate: "TrainMovement/Headcode/{headcode}/{crsCode}/{platform}",
+                defaults: new { controller = "TrainMovement", action = "GetForHeadcodeByLocation" });
+
+            config.Routes.MapHttpRoute(
                 name: "Assoc-ForTrain",
                 routeTemplate: "Association/{trainUid}/{date}",
                 defaults: new { controller = "Association", action = "GetForTrain" });

@@ -1279,6 +1279,35 @@ namespace TrainNotifier.Service
                 .ThenBy(s => s.Schedule.DepartureTime);
         }
 
+        public TrainMovementLink GetTrainMovementByHeadcodeAndLocation(string headcode, string crsCode, string platform)
+        {
+            var tiplocs = _tiplocRepository.GetAllByCRSCode(crsCode)
+                .Select(t => t.TiplocId)
+                .ToList();
+
+            platform = string.Format("{0}%", platform);
+
+            const string getTmLinkSql = @"
+                SELECT TOP 1 
+	                 [ScheduleTrain].[TrainUid]
+	                ,[LiveTrain].[OriginDepartTimestamp]
+                FROM [LiveTrainStop] 
+                INNER JOIN [LiveTrain] ON [LiveTrainStop].[TrainId] = [LiveTrain].[Id]
+                INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
+                WHERE 
+                    [LiveTrainStop].[ReportingTiplocId] IN @tiplocs
+                    AND [LiveTrainStop].[Platform] LIKE @platform
+                    AND [LiveTrain].[HeadCode] = @headcode
+                ORDER BY [LiveTrainStop].[ActualTimestamp] DESC";
+
+            return ExecuteScalar<TrainMovementLink>(getTmLinkSql, new
+            {
+                tiplocs,
+                platform,
+                headcode
+            });
+        }
+
         /// <summary>
         /// Get an activated train id that calls at the given location
         /// </summary>
