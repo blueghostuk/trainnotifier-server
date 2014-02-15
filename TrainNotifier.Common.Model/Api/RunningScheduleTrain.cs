@@ -11,6 +11,8 @@ namespace TrainNotifier.Common.Model.Api
     {
         [IgnoreDataMember]
         public Guid ScheduleId { get; set; }
+        [IgnoreDataMember]
+        public IEnumerable<Guid> ScheduleIds { get; set; }
         [DataMember]
         public string TrainUid { get; set; }
         [DataMember]

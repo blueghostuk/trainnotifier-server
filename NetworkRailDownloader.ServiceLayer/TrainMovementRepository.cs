@@ -19,6 +19,7 @@ namespace TrainNotifier.Service
         private sealed class ScheduleHolder
         {
             public Guid ScheduleId { get; set; }
+            public IEnumerable<Guid> ScheduleIds { get; set; }
             public Guid? StopsScheduleId { get; set; }
             public string TrainUid { get; set; }
             public STPIndicator STPIndicatorId { get; set; }
@@ -101,8 +102,8 @@ namespace TrainNotifier.Service
             if (!tiplocs.Any())
                 return Enumerable.Empty<ScheduleHolder>();
 
-            const string sameDayTimeQuery = "AND COALESCE(Arrival, Departure, Pass) >= @startTime AND COALESCE(Arrival, Departure, Pass) < @endTime";
-            const string diffDayTimeQuery = "AND (COALESCE(Arrival, Departure, Pass) >= @startTime OR COALESCE(Arrival, Departure, Pass) < @endTime)";
+            const string sameDayTimeQuery = " AND COALESCE(Arrival, Departure, Pass) >= @startTime AND COALESCE(Arrival, Departure, Pass) < @endTime";
+            const string diffDayTimeQuery = " AND (COALESCE(Arrival, Departure, Pass) >= @startTime OR COALESCE(Arrival, Departure, Pass) < @endTime)";
 
             const string getSchedulesSql = @"
                 SELECT [ScheduleTrain].[ScheduleId]
@@ -114,8 +115,7 @@ namespace TrainNotifier.Service
                     AND [ScheduleTrain].[Runs{0}] = 1
                     AND @date >= [ScheduleTrain].[StartDate]
                     AND @date <= [ScheduleTrain].[EndDate]
-                    {1}
-                    AND [ScheduleTrain].[Deleted] = 0{2}{3}
+                    {1}{2}{3}
                     ORDER BY COALESCE(Arrival, Departure, Pass)";
 
             return Query<ScheduleHolder>(string.Format(getSchedulesSql,
@@ -193,6 +193,8 @@ namespace TrainNotifier.Service
                             .Select(sub => sub.ScheduleId)
                             .FirstOrDefault();
                     }
+                    // store all potential schedule ids
+                    firstSchedule.ScheduleIds = s.Select(sc => sc.ScheduleId).ToList();
                     return firstSchedule;
                 })
                 .ToList();
@@ -288,6 +290,7 @@ namespace TrainNotifier.Service
 
                 return trains.Select(sc =>
                 {
+                    sc.ScheduleIds = new[] { sc.ScheduleId };
                     sc.DateFor = date;
                     sc.Stops = stops.Where(stop => stop.ScheduleId == sc.ScheduleId)
                         .OrderBy(stop => stop.StopNumber)
@@ -375,14 +378,15 @@ namespace TrainNotifier.Service
 
         private IEnumerable<RunningScheduleTrain> GetRunningTrainSchedules(IEnumerable<ScheduleHolder> schedules, DateTime date)
         {
-            var runningSchedules = GetSchedules(schedules.Select(s => s.StopsScheduleId ?? s.ScheduleId), date)
+            IEnumerable<RunningScheduleTrain> runningSchedules = GetSchedules(schedules.Select(s => s.StopsScheduleId ?? s.ScheduleId), date)
                 .ToList();
 
             foreach (var schedule in runningSchedules)
             {
-                var actualSchedule = schedules.Where(s => s.StopsScheduleId == schedule.ScheduleId || s.ScheduleId == schedule.ScheduleId).Single();
+                ScheduleHolder actualSchedule = schedules.Where(s => s.StopsScheduleId == schedule.ScheduleId || s.ScheduleId == schedule.ScheduleId).Single();
                 schedule.ScheduleId = actualSchedule.ScheduleId;
                 schedule.STPIndicatorId = actualSchedule.STPIndicatorId;
+                schedule.ScheduleIds = actualSchedule.ScheduleIds;
             }
 
             return runningSchedules;
@@ -542,7 +546,7 @@ namespace TrainNotifier.Service
             // need to get live running data between these dates
             startDate = startDate.Date;
             endDate = endDate.Date.AddDays(1);
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+            var allActualData = GetActualSchedule(allSchedules.SelectMany(s => s.ScheduleIds).Distinct(), startDate, endDate);
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -570,7 +574,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
@@ -591,6 +595,10 @@ namespace TrainNotifier.Service
             }
 
             return results
+                .Where(s =>
+                {
+                    return s.Schedule.Stops != null && s.Schedule.Stops.Any(st => tiplocs.Contains(st.Tiploc.TiplocId));
+                })
                 .OrderBy(s => s.Schedule.DateFor)
                 .ThenBy(s => s.Schedule.Stops.Last().Arrival);
         }
@@ -655,7 +663,7 @@ namespace TrainNotifier.Service
             // need to get live running data between these dates
             startDate = startDate.Date;
             endDate = endDate.Date.AddDays(1);
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+            var allActualData = GetActualSchedule(allSchedules.SelectMany(s => s.ScheduleIds).Distinct(), startDate, endDate);
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -683,7 +691,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
@@ -704,6 +712,10 @@ namespace TrainNotifier.Service
             }
 
             return results
+                .Where(s =>
+                {
+                    return s.Schedule.Stops != null && s.Schedule.Stops.Any(st => tiplocs.Contains(st.Tiploc.TiplocId));
+                })
                 .OrderBy(s => s.Schedule.DateFor)
                 .ThenBy(s => s.Schedule.DepartureTime);
         }
@@ -788,7 +800,7 @@ namespace TrainNotifier.Service
             // need to get live running data between these dates
             startDate = startDate.Date;
             endDate = endDate.Date.AddDays(1);
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+            var allActualData = GetActualSchedule(allSchedules.SelectMany(s => s.ScheduleIds).Distinct(), startDate, endDate);
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -816,7 +828,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.FirstOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
@@ -837,6 +849,10 @@ namespace TrainNotifier.Service
             }
 
             return results
+                .Where(s =>
+                {
+                    return s.Schedule.Stops != null && s.Schedule.Stops.Any(st => tiplocs.Contains(st.Tiploc.TiplocId));
+                })
                 .OrderBy(s => s.Schedule.IsNextDay)
                 .ThenBy(s =>
                 {
@@ -915,7 +931,7 @@ namespace TrainNotifier.Service
             // need to get live running data between these dates
             startDate = startDate.Date;
             endDate = endDate.Date.AddDays(1);
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+            var allActualData = GetActualSchedule(allSchedules.SelectMany(s => s.ScheduleIds).Distinct(), startDate, endDate);
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -943,7 +959,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
@@ -964,6 +980,12 @@ namespace TrainNotifier.Service
             }
 
             return results
+                .Where(s =>
+                {
+                    return s.Schedule.Stops != null && (
+                        s.Schedule.Stops.Any(st => tiplocsFrom.Contains(st.Tiploc.TiplocId)) &&
+                        s.Schedule.Stops.Any(st => tiplocsTo.Contains(st.Tiploc.TiplocId)));
+                })
                 .OrderBy(s => s.Schedule.DateFor)
                 .ThenBy(s =>
                 {
@@ -1217,6 +1239,7 @@ namespace TrainNotifier.Service
                             .Select(sub => sub.ScheduleId)
                             .FirstOrDefault();
                     }
+                    firstSchedule.ScheduleIds = s.Select(sc => sc.ScheduleId).ToList();
                     return firstSchedule;
                 })
                 .ToList();
@@ -1251,10 +1274,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var potentialScheduleIds = matchingSchedules
-                    .Where(s => s.TrainUid == schedule.TrainUid)
-                    .Select(s => s.ScheduleId);
-                var actual = allActualData.SingleOrDefault(a => potentialScheduleIds.Contains(a.ScheduleId));
+                var actual = allActualData.SingleOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
@@ -1367,7 +1387,8 @@ namespace TrainNotifier.Service
 
             const string sql = @"
                 SELECT DISTINCT TOP({0}) 
-	                [LiveTrain].[ScheduleTrain], [LiveTrainStop].[ActualTimestamp]
+	                [LiveTrain].[ScheduleTrain]
+                    ,[LiveTrainStop].[ActualTimestamp]
                 FROM [LiveTrainStop] 
                 INNER JOIN [LiveTrain] ON [LiveTrainStop].[TrainId] = [LiveTrain].[Id]
                 WHERE [LiveTrainStop].[ReportingTiplocId] IN @tiplocs
@@ -1382,7 +1403,7 @@ namespace TrainNotifier.Service
             // need to get live running data between these dates
             startDate = startDate.Date;
             endDate = endDate.Date.AddDays(1);
-            var allActualData = GetActualSchedule(allSchedules.Select(s => s.ScheduleId).Distinct(), startDate, endDate);
+            var allActualData = GetActualSchedule(allSchedules.SelectMany(s => s.ScheduleIds).Distinct(), startDate, endDate);
 
             IEnumerable<ExtendedCancellation> cancellations = null;
             IEnumerable<Reinstatement> reinstatements = null;
@@ -1410,7 +1431,7 @@ namespace TrainNotifier.Service
             ICollection<TrainMovementResult> results = new List<TrainMovementResult>(allSchedules.Count());
             foreach (var schedule in allSchedules)
             {
-                var actual = allActualData.SingleOrDefault(a => a.ScheduleId == schedule.ScheduleId);
+                var actual = allActualData.FirstOrDefault(a => schedule.ScheduleIds.Contains(a.ScheduleId));
                 var can = actual != null ?
                     cancellations.Where(c => c.TrainId == actual.Id).ToList() :
                     Enumerable.Empty<ExtendedCancellation>();
