@@ -18,6 +18,7 @@ namespace TrainNotifier.Console.WebApi.ActionFilters
         {
             if (actionExecutedContext != null &&
                 actionExecutedContext.Response != null &&
+                actionExecutedContext.Response.IsSuccessStatusCode &&
                 actionExecutedContext.Response.Headers != null)
             {
                 actionExecutedContext.Response.Headers.CacheControl = new CacheControlHeaderValue
