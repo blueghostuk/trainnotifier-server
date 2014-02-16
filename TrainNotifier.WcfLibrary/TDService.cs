@@ -93,13 +93,29 @@ namespace TrainNotifier.WcfLibrary
 
         private void UpdateTrainMovements(IEnumerable<TrainDescriber> trainData)
         {
-            var data = trainData
+            // filter out anything with no area
+            var trainDescribers = trainData
                 .Where(tdesc => _tdElementsByArea.Contains(tdesc.AreaId))
-                .Select(tdesc => Tuple.Create(tdesc, _tdElementsByArea[tdesc.AreaId].FirstOrDefault(td => td.Equals(tdesc))))
-                .Where(t => t.Item2 != null)
-                .Select(t => Tuple.Create(t.Item1, t.Item2, _tiplocByStanox[t.Item2.STANOX].FirstOrDefault()))
-                .Where(t => t.Item3 != null)
                 .ToList();
+
+            ICollection<Tuple<TrainDescriber, TDElement, TiplocCode>> data = new List<Tuple<TrainDescriber, TDElement, TiplocCode>>();
+            foreach (var tdesc in trainDescribers)
+            {
+                // get all matching elements in that area
+                var tdElements = _tdElementsByArea[tdesc.AreaId].Where(td => td.Equals(tdesc)).ToList();
+                if (tdElements.Any())
+                {
+                    foreach (var area in tdElements)
+                    {
+                         //find the matching location
+                        TiplocCode tiploc = _tiplocByStanox[area.STANOX].FirstOrDefault();
+                        if (tiploc != null)
+                        {
+                            data.Add(Tuple.Create(tdesc, area, tiploc));
+                        }
+                    }
+                }
+            }
 
             foreach (var td in data)
             {
