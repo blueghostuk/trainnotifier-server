@@ -3,6 +3,7 @@ using System.Web.Http;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Console.WebApi.ActionFilters;
 using TrainNotifier.Service;
+using System.Linq;
 
 namespace TrainNotifier.Console.WebApi.Controllers
 {
@@ -11,21 +12,45 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
         [CachingActionFilterAttribute(604800)]
-        public IEnumerable<StationTiploc> Get()
+        public IHttpActionResult Get()
         {
-            return _tiplocRepo.Get();
+            IEnumerable<StationTiploc> tiplocs = _tiplocRepo.Get();
+            if (tiplocs.Any())
+            {
+                return Ok(tiplocs);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [CachingActionFilterAttribute(604800)]
-        public StationTiploc Get(string id)
+        public IHttpActionResult Get(string id)
         {
-            return _tiplocRepo.GetByStanox(id);
+            StationTiploc tiploc = _tiplocRepo.GetByStanox(id);
+            if (tiploc != null)
+            {
+                return Ok(tiploc);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [CachingActionFilterAttribute(604800)]
-        public StationTiploc GetByCrs(string crsCode)
+        public IHttpActionResult GetByCrs(string crsCode)
         {
-            return _tiplocRepo.GetByCRSCode(crsCode);
+            StationTiploc tiploc = _tiplocRepo.GetByCRSCode(crsCode);
+            if (tiploc != null)
+            {
+                return Ok(tiploc);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
     }
 }

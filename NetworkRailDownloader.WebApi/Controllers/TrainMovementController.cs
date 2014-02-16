@@ -16,35 +16,44 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [Obsolete("Will be removed in future version")]
-        public ViewModelTrainMovement GetById(string id)
+        public IHttpActionResult GetById(string id)
         {
-            return _tmRepo.GetTrainMovementById(id);
+            ViewModelTrainMovement tm = _tmRepo.GetTrainMovementById(id);
+            if (tm != null)
+                return Ok(tm);
+            else
+                return NotFound();
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults GetForHeadcode(string headcode, DateTime date)
+        public IHttpActionResult GetForHeadcode(string headcode, DateTime date)
         {
             return FromResults(_tmRepo.GetTrainMovementByHeadcode(headcode, date));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(30)]
-        public TrainMovementLink GetForHeadcodeByLocation(string headcode, string crsCode, string platform)
+        public IHttpActionResult GetForHeadcodeByLocation(string headcode, string crsCode, string platform)
         {
-            return _tmRepo.GetTrainMovementByHeadcodeAndLocation(headcode, crsCode, platform);
+            TrainMovementLink link = _tmRepo.GetTrainMovementByHeadcodeAndLocation(headcode, crsCode, platform);
+
+            if (link != null)
+                return Ok(link);
+            else
+                return NotFound();
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public SingleTrainMovementResult GetForUid(string trainUid, DateTime date)
+        public IHttpActionResult GetForUid(string trainUid, DateTime date)
         {
             return FromResults(_tmRepo.GetTrainMovementById(trainUid, date));
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult StartingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -54,7 +63,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult StartingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -64,7 +73,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult CallingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -74,7 +83,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult CallingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -84,7 +93,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult CallingAtLocations(string fromStanox, string toStanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -94,7 +103,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults CallingAtStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult CallingAtStations(string fromCrs, string toCrs, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -104,7 +113,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults TerminatingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult TerminatingAtLocation(string stanox, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -114,7 +123,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults TerminatingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
+        public IHttpActionResult TerminatingAtStation(string crsCode, DateTime? startDate = null, DateTime? endDate = null, string atocCode = null, string powerType = null)
         {
             startDate = startDate ?? DateTime.UtcNow.Date;
             endDate = endDate ?? DateTime.UtcNow.Date.Add(new TimeSpan(23, 59, 59));
@@ -124,15 +133,15 @@ namespace TrainNotifier.Console.WebApi.Controllers
 
         [HttpGet]
         [CachingActionFilterAttribute(120)]
-        public TrainMovementResults GetNearestTrain(double lat, double lon, int limit = 5)
+        public IHttpActionResult GetNearestTrain(double lat, double lon, int limit = 5)
         {
             return FromResults(_tmRepo.NearestTrains(lat, lon, limit));
         }
 
-        private static SingleTrainMovementResult FromResults(TrainMovementResult result)
+        private IHttpActionResult FromResults(TrainMovementResult result)
         {
             if (result == null)
-                return null;
+                return NotFound();
 
             SingleTrainMovementResult actual = new SingleTrainMovementResult
             {
@@ -211,13 +220,13 @@ namespace TrainNotifier.Console.WebApi.Controllers
             }
             actual.Tiplocs = tiplocs;
 
-            return actual;
+            return Ok(actual);
         }
 
-        private static TrainMovementResults FromResults(IEnumerable<TrainMovementResult> results)
+        private IHttpActionResult FromResults(IEnumerable<TrainMovementResult> results)
         {
             if (!results.Any())
-                return null;
+                return NotFound();
 
             TrainMovementResults actual = new TrainMovementResults();
             HashSet<StationTiploc> tiplocs = new HashSet<StationTiploc>();
@@ -298,7 +307,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
             });
             actual.Tiplocs = tiplocs;
 
-            return actual;
+            return Ok(actual);
         }
     }
 }

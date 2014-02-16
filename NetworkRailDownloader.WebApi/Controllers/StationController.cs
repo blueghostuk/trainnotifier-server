@@ -12,26 +12,48 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private static readonly TiplocRepository _tiplocRepo = new TiplocRepository();
 
         [CachingActionFilterAttribute(604800)]
-        public IEnumerable<StationTiploc> Get()
+        public IHttpActionResult Get()
         {
             IEnumerable<StationTiploc> results = _tiplocRepo.Get();
 
-            return results
+            var filtered = results
                 .Where(r => !string.IsNullOrEmpty(r.StationName))
-                .Where(r => !string.IsNullOrEmpty(r.CRS));
+                .Where(r => !string.IsNullOrEmpty(r.CRS))
+                .ToList();
+
+            if (filtered.Any())
+            {
+                return Ok(filtered);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [CachingActionFilterAttribute(604800)]
-        public StationTiploc Get(string id)
+        public IHttpActionResult Get(string id)
         {
-            return _tiplocRepo.GetByStationName(id);
+            StationTiploc tiploc = _tiplocRepo.GetByStationName(id);
+            if (tiploc != null)
+            {
+                return Ok(tiploc);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [HttpGet]
         [CachingActionFilterAttribute(604800)]
-        public IEnumerable<StationTiploc> GeoLookup(double lat, double lon, int limit = 5)
+        public IHttpActionResult GeoLookup(double lat, double lon, int limit = 5)
         {
-            return _tiplocRepo.GetByLocation(lat, lon, limit);
+            IEnumerable<StationTiploc> results = _tiplocRepo.GetByLocation(lat, lon, limit);
+            if (results.Any())
+                return Ok(results);
+            else
+                return NotFound();
         }
     }
 }

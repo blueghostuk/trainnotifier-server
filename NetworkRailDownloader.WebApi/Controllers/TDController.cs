@@ -26,18 +26,23 @@ namespace TrainNotifier.Console.WebApi.Controllers
         }
 
         [HttpGet]
-        public Tuple<DateTime, string> GetBerthDescription(string berth)
+        public IHttpActionResult GetBerthDescription(string berth)
         {
             TDCacheServiceClient cacheService = null;
             try
             {
                 cacheService = new TDCacheServiceClient();
                 cacheService.Open();
-                return cacheService.GetBerthContents(berth);
+                Tuple<DateTime, string> result = cacheService.GetBerthContents(berth);
+                if (result != null)
+                    return Ok(result);
+                else
+                    return Ok();
             }
             catch (Exception e)
             {
                 Trace.TraceError("Error In Cache Connection: {0}", e);
+                return InternalServerError(e);
             }
             finally
             {
@@ -51,7 +56,6 @@ namespace TrainNotifier.Console.WebApi.Controllers
                     Trace.TraceError("Error Closing Cache Connection: {0}", e);
                 }
             }
-            return null;
         }
     }
 }
