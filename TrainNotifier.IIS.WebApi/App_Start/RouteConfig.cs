@@ -9,6 +9,15 @@ namespace TrainNotifier.IIS.WebApi
         public static void RegisterRoutes(RouteCollection routes)
         {
             routes.MapHttpRoute(
+                name: "Stanox-FindByCrs",
+                routeTemplate: "Stanox/Single/{crsCode}",
+                defaults: new { controller = "Stanox", action = "GetByCrs" });
+            routes.MapHttpRoute(
+                name: "Stanox-AllByCRS",
+                routeTemplate: "Stanox/Find/{crsCode}",
+                defaults: new { controller = "Stanox", action = "AllByCrs" });
+
+            routes.MapHttpRoute(
                    name: "TM-StartingAtLocation",
                    routeTemplate: "TrainMovement/StartingAt/Location/{stanox}",
                    defaults: new { controller = "TrainMovement", action = "StartingAtLocation" });

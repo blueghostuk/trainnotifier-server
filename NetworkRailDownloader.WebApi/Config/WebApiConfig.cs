@@ -7,6 +7,16 @@ namespace TrainNotifier.Console.WebApi.Config
         public static void Register(HttpConfiguration config)
         {
             config.Routes.MapHttpRoute(
+                name: "Stanox-FindByCrs",
+                routeTemplate: "Stanox/Single/{crsCode}",
+                defaults: new { controller = "Stanox", action = "GetByCrs" });
+
+            config.Routes.MapHttpRoute(
+                name: "Stanox-AllByCRS",
+                routeTemplate: "Stanox/Find/{crsCode}",
+                defaults: new { controller = "Stanox", action = "AllByCrs" });
+
+            config.Routes.MapHttpRoute(
                 name: "TM-StartingAtLocation",
                 routeTemplate: "TrainMovement/StartingAt/Location/{stanox}",
                 defaults: new { controller = "TrainMovement", action = "StartingAtLocation" });

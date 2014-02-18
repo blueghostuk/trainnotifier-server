@@ -40,12 +40,28 @@ namespace TrainNotifier.Console.WebApi.Controllers
         }
 
         [CachingActionFilterAttribute(604800)]
+        [HttpGet]
         public IHttpActionResult GetByCrs(string crsCode)
         {
             StationTiploc tiploc = _tiplocRepo.GetByCRSCode(crsCode);
             if (tiploc != null)
             {
                 return Ok(tiploc);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [CachingActionFilterAttribute(604800)]
+        [HttpGet]
+        public IHttpActionResult AllByCrs(string crsCode)
+        {
+            IEnumerable<StationTiploc> tiplocs = _tiplocRepo.GetAllByCRSCode(crsCode);
+            if (tiplocs.Any())
+            {
+                return Ok(tiplocs);
             }
             else
             {
