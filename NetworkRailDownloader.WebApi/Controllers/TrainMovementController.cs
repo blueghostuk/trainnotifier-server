@@ -141,7 +141,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private IHttpActionResult FromResults(TrainMovementResult result)
         {
             if (result == null)
-                return NotFound();
+                return Ok();
 
             SingleTrainMovementResult actual = new SingleTrainMovementResult
             {
@@ -226,7 +226,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
         private IHttpActionResult FromResults(IEnumerable<TrainMovementResult> results)
         {
             if (!results.Any())
-                return NotFound();
+                return Ok<object>(null);
 
             TrainMovementResults actual = new TrainMovementResults();
             HashSet<StationTiploc> tiplocs = new HashSet<StationTiploc>();
