@@ -75,7 +75,7 @@ namespace TrainNotifier.Service
                         coo > 0 ? "CO_" : string.Empty,
                         reinstate > 0 ? "RN_" : string.Empty,
                         "SD_",
-                        train.ScheduleTrain.HasValue && train.ScheduleTrain != Guid.Empty ? train.ScheduleTrain.ToString() : "NS",  "_ID_" + train.Id.ToString(), ".json"));
+                        train.ScheduleTrain.HasValue && train.ScheduleTrain != Guid.Empty ? train.ScheduleTrain.ToString() : "NS", "_ID_" + train.Id.ToString(), ".json"));
 
                     string dir = Path.GetDirectoryName(path);
                     if (!Directory.Exists(dir))
@@ -97,27 +97,39 @@ namespace TrainNotifier.Service
 
         private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(30).TotalSeconds;
 
-        private static readonly string[] _indexTables = new[] 
+        private static readonly IDictionary<string, IEnumerable<string>> _indexTables = new Dictionary<string, IEnumerable<string>>
             {
-                "ScheduleTrainStop",
-                "LiveTrainStop",
-                "LiveTrain",
-                "ScheduleTrain",
-                "PPMRecord"
+                {"ScheduleTrainStop", new[] { "PK_ScheduleTrainStop", "IX_Schedule_At_Tiploc" } },
+                {"LiveTrainStop", new[] { "IX_LiveTrainStop", "IX_LiveTrainStop_Tiploc_Platform", "IX_NearTrainLookup" }},
+                {"LiveTrain", new[] { "IX_LiveTrain_Lookup", "PK_LiveTrain" }},
+                {"ScheduleTrain", new[] { 
+                    "IX_Schedule_Term_Tiploc", "IX_ScheduleLookup_Friday", "IX_ScheduleLookup_Headcode_Friday", 
+                    "IX_ScheduleLookup_Headcode_Monday", "IX_ScheduleLookup_Headcode_Saturday", "IX_ScheduleLookup_Headcode_Sunday", 
+                    "IX_ScheduleLookup_Headcode_Thursday", "IX_ScheduleLookup_Headcode_Tuesday", "IX_ScheduleLookup_Headcode_Wednesday", 
+                    "IX_ScheduleLookup_Monday", "IX_ScheduleLookup_Saturday", "IX_ScheduleLookup_Sunday", "IX_ScheduleLookup_Thursday", 
+                    "IX_ScheduleLookup_Tuesday", "IX_ScheduleLookup_Wednesday", "IX_ScheduleTrain_Lookup_Friday", "IX_ScheduleTrain_Lookup_Monday", 
+                    "IX_ScheduleTrain_Lookup_Saturday", "IX_ScheduleTrain_Lookup_Sunday", "IX_ScheduleTrain_Lookup_Thursday", 
+                    "IX_ScheduleTrain_Lookup_Tuesday", "IX_ScheduleTrain_Lookup_Wednesday", "PK_ScheduleTrain"}},
+                {"PPMRecord", new[] { "PK_PPMRecord" }},
+                {"TrainAssociation", new[] { "PK_TrainAssociation" }}
             };
+
         public void UpdateIndexes()
         {
-            const string updateIndexSqlFormat = "ALTER INDEX ALL ON [{0}] REBUILD";
+            const string updateIndexSqlFormat = "ALTER INDEX [{0}] ON [{1}] REBUILD";
 
-            foreach (string table in _indexTables)
+            foreach (var table in _indexTables)
             {
-                try
+                foreach (var index in table.Value)
                 {
-                    ExecuteNonQuery(string.Format(updateIndexSqlFormat, table), commandTimeout: DefaultLongQueryTimeout);
-                }
-                catch (Exception)
-                {
-                    Trace.TraceError("Error updating index for table {0}", table);
+                    try
+                    {
+                        ExecuteNonQuery(string.Format(updateIndexSqlFormat, index, table.Key), commandTimeout: DefaultLongQueryTimeout);
+                    }
+                    catch (Exception)
+                    {
+                        Trace.TraceError("Error updating index {0} for table {1}", index, table);
+                    }
                 }
             }
         }
