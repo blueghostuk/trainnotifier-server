@@ -221,14 +221,24 @@ namespace TrainNotifier.Common.Model.SmartExtract
         {
             return otherFrom != null &&
                 otherFrom.From != null &&
-                otherFrom.From.PadLeft(4, '0').Equals(this.FromBerth, StringComparison.CurrentCultureIgnoreCase);
+                FromEquals(otherFrom.From);
+        }
+
+        private bool FromEquals(string from)
+        {
+            return from.PadLeft(4, '0').Equals(this.FromBerth, StringComparison.CurrentCultureIgnoreCase);
         }
 
         private bool ToEquals(ITo otherTo)
         {
             return otherTo != null &&
                 otherTo.To != null &&
-                otherTo.To.PadLeft(4, '0').Equals(this.ToBerth, StringComparison.CurrentCultureIgnoreCase);
+                ToEquals(otherTo.To);
+        }
+
+        private bool ToEquals(string to)
+        {
+            return to.PadLeft(4, '0').Equals(this.ToBerth, StringComparison.CurrentCultureIgnoreCase);
         }
 
         public bool Equals(TrainDescriber other)
@@ -236,11 +246,35 @@ namespace TrainNotifier.Common.Model.SmartExtract
             if (!other.AreaId.Equals(this.TD, StringComparison.CurrentCultureIgnoreCase))
                 return false;
 
-            if (other is IFrom && !FromEquals((IFrom)other))
-                return false;
+            if (other is IFrom)
+            {
+                if (!FromEquals((IFrom)other))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!FromEquals(string.Empty))
+                {
+                    return false;
+                }
+            }
 
-            if (other is ITo && !ToEquals((ITo)other))
-                return false;
+            if (other is ITo)
+            {
+                if (!ToEquals((ITo)other))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!ToEquals(string.Empty))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
