@@ -1002,12 +1002,12 @@ namespace TrainNotifier.Service
         }
 
         [Obsolete("Will be removed in future version")]
-        public ViewModelTrainMovement GetTrainMovementById(string trainId)
+        public TrainMovementLink GetTrainMovementById(string trainId)
         {
             const string sql = @"
                 SELECT TOP 1
-                    [LiveTrain].[OriginDepartTimestamp] AS [SchedOriginDeparture]
-                    ,[ScheduleTrain].[TrainUid] AS [TrainUid]
+                    [LiveTrain].[OriginDepartTimestamp]
+                    ,[ScheduleTrain].[TrainUid]
                 FROM [LiveTrain]
                 INNER JOIN [ScheduleTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 INNER JOIN  [Tiploc] ON [ScheduleTrain].[OriginStopTiplocId] = [Tiploc].[TiplocId]
@@ -1016,7 +1016,7 @@ namespace TrainNotifier.Service
 
             using (DbConnection dbConnection = CreateAndOpenConnection())
             {
-                ViewModelTrainMovement tm = dbConnection.Query<ViewModelTrainMovement>(sql, new
+                TrainMovementLink tm = dbConnection.Query<TrainMovementLink>(sql, new
                 {
                     trainId
                 }).FirstOrDefault();
