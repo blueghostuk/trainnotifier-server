@@ -154,7 +154,7 @@ namespace TrainNotifier.Common.Model
 
         private static DateTime UnixTsToDateTime(double timeStamp)
         {
-            return _epoch.AddMilliseconds(timeStamp);
+            return DateTime.SpecifyKind(_epoch.AddMilliseconds(timeStamp), DateTimeKind.Utc).ToLocalTime();
         }
     }
 }
