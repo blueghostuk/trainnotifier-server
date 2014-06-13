@@ -37,7 +37,7 @@ namespace TrainNotifier.Console.WebApi.Controllers
                 if (result != null)
                     return Ok(result);
                 else
-                    return Ok();
+                    return Ok((object)null);
             }
             catch (Exception e)
             {
