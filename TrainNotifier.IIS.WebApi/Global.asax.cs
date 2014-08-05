@@ -1,7 +1,6 @@
 ﻿using System.Configuration;
 using System.Web.Http;
 using System.Web.Http.Cors;
-using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace TrainNotifier.IIS.WebApi
@@ -12,12 +11,15 @@ namespace TrainNotifier.IIS.WebApi
     {
         protected void Application_Start()
         {
-            AreaRegistration.RegisterAllAreas();
-
-            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
 
+            var formatters = GlobalConfiguration.Configuration.Formatters;
+            formatters.Remove(formatters.XmlFormatter);
+
             GlobalConfiguration.Configuration.EnableCors(new EnableCorsAttribute(ConfigurationManager.AppSettings["cors-origins"], "*", "*"));
+
+            GlobalConfiguration.Configuration.MapHttpAttributeRoutes();
+            GlobalConfiguration.Configuration.EnsureInitialized();
         }
     }
 }
