@@ -95,7 +95,7 @@ namespace TrainNotifier.Service
             }
         }
 
-        private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(30).TotalSeconds;
+        private static readonly int DefaultLongQueryTimeout = (int)TimeSpan.FromMinutes(120).TotalSeconds;
 
         private static readonly IDictionary<string, IEnumerable<string>> _indexTables = new Dictionary<string, IEnumerable<string>>
             {
@@ -116,7 +116,7 @@ namespace TrainNotifier.Service
 
         public void UpdateIndexes()
         {
-            const string updateIndexSqlFormat = "ALTER INDEX [{0}] ON [{1}] REBUILD";
+            const string updateIndexSqlFormat = "ALTER INDEX [{0}] ON [{1}] REBUILD with (ONLINE=ON)";
 
             foreach (var table in _indexTables)
             {
