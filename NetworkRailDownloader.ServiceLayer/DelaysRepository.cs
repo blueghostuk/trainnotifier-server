@@ -49,14 +49,20 @@ namespace TrainNotifier.Service
 				FROM [LiveTrain]
 				INNER JOIN [ScheduleTrain]				ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
 				INNER JOIN [LiveTrainStop] [FromStop]	ON [FromStop].[TrainId] = [LiveTrain].[Id]
+                INNER JOIN [ScheduleTrainStop] [FromS]  ON [FromS].[ScheduleId] = [ScheduleTrain].[ScheduleId] AND [FromS].[StopNumber] = [FromStop].[ScheduleStopNumber]
 				INNER JOIN [LiveTrainStop] [ToStop]		ON [ToStop].[TrainId] = [LiveTrain].[Id]
+                INNER JOIN [ScheduleTrainStop] [ToS]    ON [ToS].[ScheduleId] = [ScheduleTrain].[ScheduleId] AND [ToS].[StopNumber] = [ToStop].[ScheduleStopNumber]
 				INNER JOIN [Tiploc] [OriginTiploc]		ON [OriginTiploc].[TiplocId] = [ScheduleTrain].[OriginStopTiplocId]
 				INNER JOIN [Tiploc] [DestTiploc]		ON [DestTiploc].[TiplocId] = [ScheduleTrain].[DestinationStopTiplocId]
 				LEFT JOIN [AtocCode]					ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
 				WHERE
                     ([FromStop].[ReportingTiplocId] IN @tiplocsFrom AND [FromStop].[EventTypeId] = 1)
+                    AND 
+                    [FromS].[PublicDeparture] IS NOT NULL
 					AND	
 					([ToStop].[ReportingTiplocId] IN @tiplocsTo AND [ToStop].[EventTypeId] = 2)
+                    AND 
+                    [ToS].[PublicArrival] IS NOT NULL
                     AND
 					([ToStop].[PlannedTimestamp] > [FromStop].[PlannedTimestamp])
 					AND
