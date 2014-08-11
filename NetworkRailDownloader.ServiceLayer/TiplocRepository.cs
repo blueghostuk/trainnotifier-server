@@ -98,23 +98,7 @@ namespace TrainNotifier.Service
         [Obsolete("Update code to use GetAllByStanox")]
         public StationTiploc GetByStanox(string stanox)
         {
-            const string sql = @"
-                SELECT 
-                    [Tiploc].[TiplocId],
-                    [Tiploc].[Tiploc],
-                    [Tiploc].[Nalco],
-                    [Tiploc].[Description],
-                    [Tiploc].[CRS],
-                    [Tiploc].[Stanox],
-                    [Station].[StationName],
-                    [Station].[Location].[Lat] AS [Lat],
-                    [Station].[Location].[Long] AS [Lon]
-                FROM [Tiploc]
-                LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
-                WHERE [Tiploc].[Stanox] = @stanox";
-
-            // TODO: what if more than 1?
-            return Query<StationTiploc>(sql, new { stanox }).FirstOrDefault();
+            return GetAllByStanox(stanox).FirstOrDefault();
         }
 
         /// <summary>
@@ -157,30 +141,13 @@ namespace TrainNotifier.Service
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
                 WHERE [Station].[StationName] = @stationName";
 
-            // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { stationName }).FirstOrDefault();
         }
 
         [Obsolete("Update code to use GetAllByCRSCode")]
         public StationTiploc GetByCRSCode(string crsCode)
         {
-            const string sql = @"
-                SELECT 
-                    [Tiploc].[TiplocId],
-                    [Tiploc].[Tiploc],
-                    [Tiploc].[Nalco],
-                    [Tiploc].[Description],
-                    [Tiploc].[CRS],
-                    [Tiploc].[Stanox],
-                    [Station].[StationName],
-                    [Station].[Location].[Lat] AS [Lat],
-                    [Station].[Location].[Long] AS [Lon]
-                FROM [Tiploc]
-                LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
-                WHERE [Tiploc].[CRS] = @crsCode";
-
-            // TODO: what if more than 1?
-            return Query<StationTiploc>(sql, new { crsCode }).FirstOrDefault();
+            return GetAllByCRSCode(crsCode).FirstOrDefault();
         }
         
         public IEnumerable<StationTiploc> GetAllByCRSCode(string crsCode)
@@ -200,7 +167,6 @@ namespace TrainNotifier.Service
                 LEFT JOIN [Station] ON [Tiploc].[TiplocId] = [Station].[TiplocId]
                 WHERE [Tiploc].[CRS] = @crsCode OR [Station].[SubsiduaryAlphaCode] = @crsCode";
 
-            // TODO: what if more than 1?
             return Query<StationTiploc>(sql, new { crsCode });
         }
 
