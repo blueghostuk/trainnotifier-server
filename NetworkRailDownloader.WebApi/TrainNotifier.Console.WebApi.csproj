@@ -110,6 +110,7 @@
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
     <Compile Include="Config\WebApiConfig.cs" />
     <Compile Include="Controllers\AssociationController.cs" />
+    <Compile Include="Controllers\CancellationController.cs" />
     <Compile Include="Controllers\DelaysController.cs" />
     <Compile Include="Controllers\PPMController.cs" />
     <Compile Include="Controllers\StanoxController.cs" />

@@ -102,6 +102,9 @@
     <Compile Include="..\NetworkRailDownloader.WebApi\Controllers\AssociationController.cs">
       <Link>Controllers\AssociationController.cs</Link>
     </Compile>
+    <Compile Include="..\NetworkRailDownloader.WebApi\Controllers\CancellationController.cs">
+      <Link>Controllers\CancellationController.cs</Link>
+    </Compile>
     <Compile Include="..\NetworkRailDownloader.WebApi\Controllers\DelaysController.cs">
       <Link>Controllers\DelaysController.cs</Link>
     </Compile>
