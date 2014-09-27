@@ -11,6 +11,8 @@ namespace TrainNotifier.Service
 {
     public class CancellationRepository : DbRepository
     {
+        private static readonly TimeSpan EndOfDay = new TimeSpan(23, 59, 59);
+
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
 
         public async Task<IEnumerable<Cancellation>> GetCancellations(string fromCrs, string toCrs, DateTime startDate, DateTime endDate)
@@ -33,6 +35,9 @@ namespace TrainNotifier.Service
         {
             TimeSpan startTime = startDate.TimeOfDay;
             TimeSpan endTime = endDate.TimeOfDay;
+
+            startDate = startDate.Date;
+            endDate = endDate.Date.AddDays(1);
 
             const string sql = @"
                 SELECT
@@ -72,7 +77,7 @@ namespace TrainNotifier.Service
                     AND
                     [FromS].[PublicDeparture] >= @startTime
                     AND
-                    [ToS].[PublicArrival] <= @endTime
+                    [FromS].[PublicDeparture] <= @endTime
                     AND
                     [ScheduleTrain].[CategoryTypeId] IN (1,2,3,10,11,12)
                     AND 

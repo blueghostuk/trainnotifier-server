@@ -66,9 +66,9 @@ namespace TrainNotifier.Service
                     AND
 					([ToStop].[PlannedTimestamp] > [FromStop].[PlannedTimestamp])
 					AND
-					([ToStop].[ActualTimestamp] >= @startDate)
+					([FromStop].[ActualTimestamp] >= @startDate)
 					AND
-					([ToStop].[ActualTimestamp] < @endDate)
+					([FromStop].[ActualTimestamp] < @endDate)
 					AND
 					[ScheduleTrain].[CategoryTypeId] IN (1,2,3,10,11,12)
 				ORDER BY [FromStop].[PlannedTimestamp]";
