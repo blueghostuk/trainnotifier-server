@@ -21,5 +21,7 @@ namespace TrainNotifier.Common.Model.Api
         public TimeSpan FromExpected { get; set; }
         [DataMember]
         public TimeSpan ToExpected { get; set; }
+        [DataMember]
+        public DateTime OriginDepartTimestamp { get; set; }
     }
 }

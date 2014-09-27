@@ -38,6 +38,7 @@ namespace TrainNotifier.Service
                 SELECT
                     [ScheduleTrain].[TrainUid] AS [Uid],
                     [LiveTrain].[Headcode],
+                    [LiveTrain].[OriginDepartTimestamp],
                     [OriginTiploc].[Stanox] AS [OriginStanox],
                     [DestinationTiploc].[Stanox] AS [DestStanox],
                     [FromS].[PublicDeparture] AS [FromExpected],
