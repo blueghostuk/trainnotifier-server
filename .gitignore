@@ -107,3 +107,4 @@ packages
 #web deploy files
 *.pubxml
 PublishProfiles/*
+*.zip
