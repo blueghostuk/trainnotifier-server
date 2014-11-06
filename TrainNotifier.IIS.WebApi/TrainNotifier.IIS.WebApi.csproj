@@ -53,6 +53,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.0\lib\net45\System.Net.Http.Formatting.dll</HintPath>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Web.Cors, Version=5.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -123,14 +124,26 @@
     <Compile Include="..\NetworkRailDownloader.WebApi\Controllers\TrainMovementController.cs">
       <Link>Controllers\TrainMovementController.cs</Link>
     </Compile>
+    <Compile Include="Controllers\DarwinController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service References\OpenLDBWS\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Content Include="Global.asax" />
+    <None Include="Service References\OpenLDBWS\configuration91.svcinfo" />
+    <None Include="Service References\OpenLDBWS\configuration.svcinfo" />
+    <None Include="Service References\OpenLDBWS\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -165,9 +178,48 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\PublishProfiles\azure-vm.pubxml" />
+    <None Include="Service References\OpenLDBWS\darwin_token_types_2013-11-28.wsdl" />
+    <None Include="Service References\OpenLDBWS\darwin_token_types_2013-11-28.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\OpenLDBWS\RTTI_2007-10-10_ldb_common_types.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\OpenLDBWS\RTTI_2012-01-13_ldb_types.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\OpenLDBWS\rtti_2014-02-20_ldb.wsdl" />
+    <None Include="Service References\OpenLDBWS\RTTI_2014-02-20_ldb_types.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.GetArrivalBoardResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.GetArrivalDepartureBoardResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.GetDepartureBoardResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.GetServiceDetailsResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.ServiceDetails.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\OpenLDBWS\TrainNotifier.IIS.WebApi.OpenLDBWS.StationBoard.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <None Include="Service References\OpenLDBWS\wsdl.wsdl" />
     <None Include="Web.Azure.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadataStorage Include="Service References\OpenLDBWS\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
