@@ -15,7 +15,7 @@ namespace TrainNotifier.IIS.WebApi.Controllers
 
         [HttpGet]
         [Route("station/{crsCode}/{toCrsCode}")]
-        public async Task<IHttpActionResult> GetServices(string crsCode, string toCrsCode)
+        public async Task<IHttpActionResult> StationServices(string crsCode, string toCrsCode)
         {
             using (var darwin = new LDBServiceSoapClient())
             {
@@ -32,8 +32,8 @@ namespace TrainNotifier.IIS.WebApi.Controllers
         }
 
         [HttpGet]
-        [Route("services/")]
-        public async Task<IHttpActionResult> GetService(string serviceId)
+        [Route("service/{serviceId}")]
+        public async Task<IHttpActionResult> Service(string serviceId)
         {
             using (var darwin = new LDBServiceSoapClient())
             {
