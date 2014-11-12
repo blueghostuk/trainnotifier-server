@@ -14,6 +14,7 @@ namespace TrainNotifier.Console.WebSocketServer
 {
     partial class Service : ServiceBase
     {
+        private readonly CancellationTokenSource _cancellationTokenSource;
         private WebSocketServerWrapper _wsServerWrapper;
         private UserManager _userManager;
         private NMSWrapper _nmsWrapper;
@@ -59,6 +60,8 @@ namespace TrainNotifier.Console.WebSocketServer
         {
             InitializeComponent();
 
+            _cancellationTokenSource = new CancellationTokenSource();
+
             TraceHelper.SetupTrace();
 
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
@@ -77,13 +80,19 @@ namespace TrainNotifier.Console.WebSocketServer
             _wsServerWrapper.Start();
             Trace.TraceInformation("Started server on {0}:{1}", IPAddress.Any, port);
 
-            _nmsWrapper = new NMSWrapper(_userManager);
+            _nmsWrapper = new NMSWrapper(_userManager, _cancellationTokenSource);
             _cacheController = new CacheController(_nmsWrapper, _wsServerWrapper, _userManager);
             _nmsTask = _nmsWrapper.Start();
 
             _nmsTimer = new Timer((s) =>
             {
-                if (_nmsTask.IsFaulted)
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    Trace.TraceError("Cancellation Requested");
+                    ExitCode = -1;
+                    throw new OperationCanceledException(_cancellationTokenSource.Token);
+                }
+                else if (_nmsTask.IsFaulted)
                 {
                     Trace.TraceError("NMS Task Faulted: {0}", _nmsTask.Exception);
                     ExitCode = -1;
@@ -101,6 +110,14 @@ namespace TrainNotifier.Console.WebSocketServer
         protected override void OnStop()
         {
             Trace.TraceInformation("Stopping Service");
+            if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+            {
+                try
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+                catch { }
+            }
             if (_nmsTimer != null)
             {
                 _nmsTimer.Change(-1, -1);
@@ -118,6 +135,11 @@ namespace TrainNotifier.Console.WebSocketServer
             {
                 _cacheController.Dispose();
             }
+            try
+            {
+                Trace.Flush();
+            }
+            catch { }
         }
     }
 

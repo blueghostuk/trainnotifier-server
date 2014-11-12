@@ -4,21 +4,20 @@ using Apache.NMS.Stomp.Commands;
 using System;
 using System.Configuration;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TrainNotifier.Common;
 
 namespace TrainNotifier.Common.NMS
 {
     public sealed class NMSConnector : INMSConnector
     {
+        private readonly CancellationTokenSource _cancellationTokenSource;
+
         public event EventHandler<FeedEvent> TrainDataRecieved;
 
-        public NMSConnector()
+        public NMSConnector(CancellationTokenSource cancellationTokenSource)
         {
+            _cancellationTokenSource = cancellationTokenSource;
             Apache.NMS.Tracer.Trace = new NMSTrace();
         }
 
@@ -70,11 +69,8 @@ namespace TrainNotifier.Common.NMS
             SubscribeToFeeds();
         }
 
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-
         private void Subscribe()
         {
-            _cancellationTokenSource = new CancellationTokenSource();
             using (IConnection connection = this.GetConnection())
             {
                 connection.AcknowledgementMode = AcknowledgementMode.AutoAcknowledge;

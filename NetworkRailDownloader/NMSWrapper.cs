@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using TrainNotifier.Common;
 using TrainNotifier.Common.Model;
@@ -12,15 +13,17 @@ namespace TrainNotifier.Console.WebSocketServer
 {
     internal sealed class NMSWrapper
     {
+        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly UserManager _userManager;
         private readonly INMSConnector _nmsDownloader;
 
         public event EventHandler<FeedEventArgs> FeedDataRecieved;
 
-        public NMSWrapper(UserManager userManager)
+        public NMSWrapper(UserManager userManager, CancellationTokenSource cancellationTokenSource)
         {
             _userManager = userManager;
-            _nmsDownloader = new NMSConnector();
+            _cancellationTokenSource = cancellationTokenSource;
+            _nmsDownloader = new NMSConnector(_cancellationTokenSource);
         }
 
         public Task Start()
@@ -72,15 +75,16 @@ namespace TrainNotifier.Console.WebSocketServer
                     var eh = FeedDataRecieved;
                     if (null != eh)
                         eh(this, new FeedEventArgs(feedData.FeedSource, evtData));
-                });
+                }, _cancellationTokenSource.Token);
             };
 
-            return Task.Run(() => _nmsDownloader.SubscribeToFeeds());
+            return Task.Run(() => _nmsDownloader.SubscribeToFeeds(), _cancellationTokenSource.Token);
         }
 
         public void Stop()
         {
             _nmsDownloader.Quit();
+            _cancellationTokenSource.Cancel();
         }
 
         private bool DataContainsStanox(dynamic evtData, string stanox)
