@@ -28,7 +28,7 @@ namespace TrainNotifier.Common.NMS
                 {
                     if (!connection.IsStarted ||
                         !_lastMsgRecd.HasValue ||
-                        _lastMsgRecd.Value >= (DateTime.UtcNow.Add(timeout.Value)))
+                        _lastMsgRecd.Value <= (DateTime.UtcNow.Subtract(timeout.Value)))
                     {
                         Trace.TraceInformation("Connection Monitor: Connection Stopped or No data recd for {0}, closing connection", timeout);
                         QuitOk = false;
