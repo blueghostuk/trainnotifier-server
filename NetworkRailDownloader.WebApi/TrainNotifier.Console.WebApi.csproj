@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionFilters\CachingActionFilterAttribute.cs" />
+    <Compile Include="Attributes\CacheControlAttribute.cs" />
     <Compile Include="Config\WebApiConfig.cs" />
     <Compile Include="Controllers\AssociationController.cs" />
     <Compile Include="Controllers\CancellationController.cs" />
