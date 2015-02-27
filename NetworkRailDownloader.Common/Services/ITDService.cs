@@ -4,6 +4,7 @@ using System.ServiceModel;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.SmartExtract;
+using TrainNotifier.Common.Model.TDCache;
 
 namespace TrainNotifier.Common.Services
 {
@@ -13,6 +14,7 @@ namespace TrainNotifier.Common.Services
     [ServiceKnownType(typeof(EventType))]
     [ServiceKnownType(typeof(StepType))]
     [ServiceKnownType(typeof(TrainDescriber))]
+    [ServiceKnownType(typeof(CachedTrainDetails))]
     [ServiceKnownType(typeof(CaTD))]
     [ServiceKnownType(typeof(CbTD))]
     [ServiceKnownType(typeof(CcTD))]
@@ -23,6 +25,6 @@ namespace TrainNotifier.Common.Services
         void CacheTrainDescriberData(IEnumerable<TrainDescriber> trainData);
 
         [OperationContract]
-        Tuple<DateTime, string> GetBerthContents(string berth);
+        Tuple<DateTime, string, CachedTrainDetails> GetBerthContents(string berth);
     }
 }

@@ -9,12 +9,11 @@ using System.Linq;
 using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Timers;
-using TrainNotifier.Common;
 using TrainNotifier.Common.Model;
-using TrainNotifier.Common.Model.Api;
 using TrainNotifier.Common.Model.CorpusExtract;
 using TrainNotifier.Common.Model.Schedule;
 using TrainNotifier.Common.Model.SmartExtract;
+using TrainNotifier.Common.Model.TDCache;
 using TrainNotifier.Common.Services;
 using TrainNotifier.Service;
 
@@ -107,7 +106,7 @@ namespace TrainNotifier.WcfLibrary
                 {
                     foreach (var area in tdElements)
                     {
-                         //find the matching location
+                        //find the matching location
                         TiplocCode tiploc = _tiplocByStanox[area.STANOX].FirstOrDefault();
                         if (tiploc != null)
                         {
@@ -127,15 +126,16 @@ namespace TrainNotifier.WcfLibrary
         {
             try
             {
-                Guid? tmr = GetTrainSchedule(td.Item1.Description, td.Item3);
-                if (tmr.HasValue && tmr.Value != Guid.Empty)
+                CachedTrainDetails tmr = GetTrainSchedule(td.Item1.Description, td.Item3);
+                if (tmr != null)
                 {
+                    TDCacheService.SetCacheContents(IndexValue(td.Item1, td.Item1.GetIndex()), Tuple.Create(td.Item1.Time, td.Item1.Description, tmr));
                     switch (td.Item2.EventType)
                     {
                         case EventType.ArriveDown:
                         case EventType.ArriveUp:
                             if (!_liveTrainRepo.UpdateMovement(
-                                tmr.Value,
+                                tmr.Id,
                                 td.Item2,
                                 _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
                                 TrainMovementEventType.Arrival,
@@ -147,7 +147,7 @@ namespace TrainNotifier.WcfLibrary
                         case EventType.DepartDown:
                         case EventType.DepartUp:
                             if (!_liveTrainRepo.UpdateMovement(
-                                tmr.Value,
+                                tmr.Id,
                                 td.Item2,
                                 _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
                                 TrainMovementEventType.Departure,
@@ -174,8 +174,7 @@ namespace TrainNotifier.WcfLibrary
             }
         }
 
-
-        private static Guid? GetTrainSchedule(string describer, TiplocCode tiploc)
+        private static CachedTrainDetails GetTrainSchedule(string describer, TiplocCode tiploc)
         {
             if (string.IsNullOrEmpty(describer) || tiploc == null)
                 return null;
@@ -192,8 +191,8 @@ namespace TrainNotifier.WcfLibrary
         {
             foreach (var ca in trainData)
             {
-                this[IndexValue(ca, ca.To)] = new Tuple<DateTime, string>(ca.Time, ca.Description);
-                this[IndexValue(ca, ca.From)] = null;
+                TDCacheService.SetCacheContents(IndexValue(ca, ca.To), Tuple.Create(ca.Time, ca.Description, default(CachedTrainDetails)));
+                TDCacheService.SetCacheContents(IndexValue(ca, ca.From), null);
             }
         }
 
@@ -201,7 +200,7 @@ namespace TrainNotifier.WcfLibrary
         {
             foreach (var cb in trainData)
             {
-                this[IndexValue(cb, cb.From)] = null;
+                TDCacheService.SetCacheContents(IndexValue(cb, cb.From), null);
             }
         }
 
@@ -209,29 +208,24 @@ namespace TrainNotifier.WcfLibrary
         {
             foreach (var cc in trainData)
             {
-                this[cc.Description] = new Tuple<DateTime, string>(cc.Time, IndexValue(cc, cc.To));
-                this[IndexValue(cc, cc.To)] = new Tuple<DateTime, string>(cc.Time, cc.Description);
+                TDCacheService.SetCacheContents(IndexValue(cc, cc.To), Tuple.Create(cc.Time, cc.Description, default(CachedTrainDetails)));
             }
         }
 
-
-        public Tuple<DateTime, string> GetBerthContents(string berth)
+        public Tuple<DateTime, string, CachedTrainDetails> GetBerthContents(string index)
         {
-            return _tdCache[berth] as Tuple<DateTime, string>;
+            return _tdCache[index] as Tuple<DateTime, string, CachedTrainDetails>;
         }
 
-        public Tuple<DateTime, string> this[string index]
+        public static void SetCacheContents(string index, Tuple<DateTime, string, CachedTrainDetails> item)
         {
-            set
+            if (item == null)
             {
-                if (value == null)
-                {
-                    _tdCache.Remove(index);
-                }
-                else
-                {
-                    _tdCache.Set(index, value, _tdCachePolicy);
-                }
+                _tdCache.Remove(index);
+            }
+            else
+            {
+                _tdCache.Set(index, item, _tdCachePolicy);
             }
         }
     }

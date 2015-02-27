@@ -24,6 +24,8 @@ namespace TrainNotifier.Common.Model
         public string Description { get; set; }
         [DataMember]
         public string Type { get; set; }
+
+        public abstract string GetIndex();
     }
 
     public interface IFrom
@@ -43,6 +45,11 @@ namespace TrainNotifier.Common.Model
         public string From { get; set; }
         [DataMember]
         public string To { get; set; }
+
+        public override string GetIndex()
+        {
+            return To;
+        }
     }
 
     [DataContract]
@@ -50,6 +57,11 @@ namespace TrainNotifier.Common.Model
     {
         [DataMember]
         public string From { get; set; }
+
+        public override string GetIndex()
+        {
+            return From;
+        }
     }
 
     [DataContract]
@@ -57,6 +69,11 @@ namespace TrainNotifier.Common.Model
     {
         [DataMember]
         public string To { get; set; }
+
+        public override string GetIndex()
+        {
+            return To;
+        }
     }
 
     [DataContract]
@@ -64,6 +81,11 @@ namespace TrainNotifier.Common.Model
     {
         [DataMember]
         public string ReportTime { get; set; }
+
+        public override string GetIndex()
+        {
+            return string.Empty;
+        }
     }
 
     public static class TrainDescriberMapper

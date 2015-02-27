@@ -6,6 +6,7 @@ using System.Linq;
 using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Api;
 using TrainNotifier.Common.Model.Schedule;
+using TrainNotifier.Common.Model.TDCache;
 
 namespace TrainNotifier.Service
 {
@@ -1335,7 +1336,7 @@ namespace TrainNotifier.Service
         /// <param name="date">date train started on</param>
         /// <param name="stanox">location called at</param>
         /// <returns>the id if found or null</returns>
-        public Guid? GetActivatedTrainMovementByHeadcodeAndStop(string headcode, DateTime date, string stanox)
+        public CachedTrainDetails GetActivatedTrainMovementByHeadcodeAndStop(string headcode, DateTime date, string stanox)
         {
             // get tiploc id to improve query
             var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
@@ -1346,7 +1347,9 @@ namespace TrainNotifier.Service
 
             const string getSchedulesSql = @"
                 SELECT 
-                    [LiveTrain].[Id]
+                    [LiveTrain].[Id],
+                    [ScheduleTrain].[TrainUid],
+                    [LiveTrain].[OriginDepartTimestamp]
                 FROM [ScheduleTrain]
                 INNER JOIN [ScheduleTrainStop] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
                 INNER JOIN [LiveTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
@@ -1357,13 +1360,12 @@ namespace TrainNotifier.Service
 	                AND @date <= [ScheduleTrain].[EndDate]
 				ORDER BY [OriginDepartTimeStamp] DESC";
 
-            return Query<Guid?>(string.Format(getSchedulesSql, date.DayOfWeek), new
+            return Query<CachedTrainDetails>(string.Format(getSchedulesSql, date.DayOfWeek), new
             {
                 headcode,
                 date = date.Date,
                 tiplocs
             })
-            .Where(g => g.HasValue && g.Value != Guid.Empty)
             .FirstOrDefault();
         }
 

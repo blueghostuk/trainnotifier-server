@@ -68,6 +68,7 @@
     <Compile Include="Schedule\ScheduleTrainMapper.cs" />
     <Compile Include="Schedule\Tiploc.cs" />
     <Compile Include="SmartExtract\TDElement.cs" />
+    <Compile Include="TDCache\CachedTrainDetails.cs" />
     <Compile Include="Toc.cs" />
     <Compile Include="TrainChangeOfOrigin.cs" />
     <Compile Include="TrainDescriber.cs" />
