@@ -41,6 +41,7 @@
     <Compile Include="Api\RunningScheduleTrain.cs" />
     <Compile Include="Api\RunningTrainActual.cs" />
     <Compile Include="Api\RunningTrainActualStop.cs" />
+    <Compile Include="Api\TrainMovement.cs" />
     <Compile Include="Api\TrainMovementLink.cs" />
     <Compile Include="Api\TrainMovementResult.cs" />
     <Compile Include="Archive\TrainStopArchive.cs" />

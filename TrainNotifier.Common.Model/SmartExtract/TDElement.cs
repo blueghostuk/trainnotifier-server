@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using System.Linq;
 
 namespace TrainNotifier.Common.Model.SmartExtract
 {
@@ -117,6 +118,30 @@ namespace TrainNotifier.Common.Model.SmartExtract
         public string STEPTYPE { get; set; }
         [DataMember]
         public string COMMENT { get; set; }
+
+        [JsonIgnore]
+        [IgnoreDataMember]
+        public Platform Platform
+        {
+            get
+            {
+                try
+                {
+                    uint number = uint.Parse(new string(this.PLATFORM.ToCharArray().TakeWhile(c => char.IsDigit(c)).ToArray()));
+                    string section = new string(this.PLATFORM.ToCharArray().SkipWhile(c => char.IsDigit(c)).ToArray());
+
+                    return new Platform
+                    {
+                        Number = number,
+                        Section = section
+                    };
+                }
+                catch
+                {
+                    return Platform.Empty;
+                }
+            }
+        }
 
         [DataMember]
         [JsonIgnore]
@@ -332,5 +357,24 @@ namespace TrainNotifier.Common.Model.SmartExtract
         Interpose,
         [EnumMember]
         Intermediate
+    }
+
+    public class Platform
+    {
+        public static readonly Platform Empty = new Platform();
+
+        public uint Number { get; set; }
+
+        public string Section { get; set; }
+    }
+
+    public class PlatformComparer : IComparer<Platform>
+    {
+        public int Compare(Platform x, Platform y)
+        {
+            if (x.Number == y.Number)
+                return x.Section.CompareTo(y.Section);
+            return x.Number.CompareTo(y.Number);
+        }
     }
 }
