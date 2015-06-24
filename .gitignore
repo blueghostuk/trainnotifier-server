@@ -108,3 +108,6 @@ packages
 *.pubxml
 PublishProfiles/*
 *.zip
+TrainNotifier.Console.TDService/SMARTExtract-WVH.json
+TrainNotifier.Console.TDService/SMARTExtract-EUS.json
+TrainNotifier.Console.TDService/SMARTExtract-BHM.json
