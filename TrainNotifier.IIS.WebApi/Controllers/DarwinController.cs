@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using System.Web;
 using System.Web.Configuration;
 using System.Web.Http;
 using TrainNotifier.IIS.WebApi.OpenLDBWS;
@@ -31,19 +32,24 @@ namespace TrainNotifier.IIS.WebApi.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("service/{serviceId}")]
-        public async Task<IHttpActionResult> Service(string serviceId)
+        [HttpPost]
+        [Route("service/{request}")]
+        public async Task<IHttpActionResult> ServiceDetails(ServiceDetailsHolder service)
         {
             using (var darwin = new LDBServiceSoapClient())
             {
-                var result = await darwin.GetServiceDetailsAsync(DarwinToken, serviceId);
+                var result = await darwin.GetServiceDetailsAsync(DarwinToken, service.ServiceId);
 
                 if (result == null)
                     return NotFound();
 
                 return Ok(result.GetServiceDetailsResult);
             }
+        }
+
+        public class ServiceDetailsHolder
+        {
+            public string ServiceId { get; set; }
         }
     }
 }
