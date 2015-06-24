@@ -5,13 +5,25 @@ using System.Threading;
 
 namespace TrainNotifier.Common.NMS
 {
+    /// <summary>
+    /// Connection monitor on an NSM connection
+    /// </summary>
     public sealed class NMSConnectionMonitor : IDisposable
     {
         private DateTime? _lastMsgRecd;
         private readonly Timer _timer;
 
+        /// <summary>
+        /// Have we quit OK (i.e. without error)
+        /// </summary>
         public bool QuitOk { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connection">the connection to monitor for messages</param>
+        /// <param name="cts">cancellation token to cancel on error or no data received</param>
+        /// <param name="timeout">timeout to wait for messages</param>
         public NMSConnectionMonitor(IConnection connection, CancellationTokenSource cts, TimeSpan? timeout = null)
         {
             QuitOk = true;
@@ -38,6 +50,9 @@ namespace TrainNotifier.Common.NMS
             }
         }
 
+        /// <summary>
+        /// Add a message consumer to monitor for messages received
+        /// </summary>
         public void AddMessageConsumer(IMessageConsumer consumer)
         {
             consumer.Listener += (m) =>
@@ -46,6 +61,9 @@ namespace TrainNotifier.Common.NMS
             };
         }
 
+        /// <summary>
+        /// dispose of the monitor
+        /// </summary>
         public void Dispose()
         {
             if (_timer != null)

@@ -6,6 +6,9 @@ using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Common.Services
 {
+    /// <summary>
+    /// A Cache service interface
+    /// </summary>
     [ServiceContract]
     [ServiceKnownType(typeof(ScheduleTrain))]
     [ServiceKnownType(typeof(ScheduleStop))]
@@ -22,12 +25,24 @@ namespace TrainNotifier.Common.Services
     [ServiceKnownType(typeof(CtTD))]
     public interface ICacheService
     {
+        /// <summary>
+        /// Cache train data
+        /// </summary>
+        /// <param name="trainData">train data to cache</param>
         [OperationContract]
         void CacheTrainData(IEnumerable<ITrainData> trainData);
 
+        /// <summary>
+        /// Cache a VSTP Schedule
+        /// </summary>
+        /// <param name="train">the VSTP schedule</param>
         [OperationContract]
         void CacheVSTPSchedule(ScheduleTrain train);
 
+        /// <summary>
+        /// Cache PPM Data
+        /// </summary>
+        /// <param name="data">PPM data</param>
         [OperationContract]
         void CachePPMData(RtppmData data);
     }

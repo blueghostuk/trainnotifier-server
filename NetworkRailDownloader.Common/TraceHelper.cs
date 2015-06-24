@@ -13,6 +13,9 @@ namespace TrainNotifier.Common
             Template = "{DateTime:HH':'mm':'ssZ}: {Message}{Data}"
         };
 
+        /// <summary>
+        /// flush the trace log
+        /// </summary>
         public static void FlushLog()
         {
             if (_rollingFileTraceListener != null)
@@ -21,6 +24,9 @@ namespace TrainNotifier.Common
             }
         } 
 
+        /// <summary>
+        /// set up the trace listener to write to the "Logs" sub-directory
+        /// </summary>
         public static void SetupTrace()
         {
             string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
