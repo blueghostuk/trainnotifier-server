@@ -12,7 +12,7 @@ namespace TrainNotifier.Common.Services
     [ServiceContract]
     [ServiceKnownType(typeof(ScheduleTrain))]
     [ServiceKnownType(typeof(ScheduleStop))]
-    [ServiceKnownType(typeof(TrainMovement))]
+    [ServiceKnownType(typeof(TrainActivation))]
     [ServiceKnownType(typeof(TrainMovementStep))]
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainChangeOfOrigin))]

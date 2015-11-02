@@ -73,7 +73,7 @@
     <Compile Include="Toc.cs" />
     <Compile Include="TrainChangeOfOrigin.cs" />
     <Compile Include="TrainDescriber.cs" />
-    <Compile Include="TrainMovement.cs" />
+    <Compile Include="TrainActivation.cs" />
     <Compile Include="TrainMovementStep.cs" />
     <Compile Include="TrainMovementStepViewModel.cs" />
     <Compile Include="TrainReinstatement.cs" />

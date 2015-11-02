@@ -4,7 +4,7 @@ using TrainNotifier.Common.Model.Schedule;
 namespace TrainNotifier.Common.Model
 {
     [ServiceContract]
-    [ServiceKnownType(typeof(TrainMovement))]
+    [ServiceKnownType(typeof(TrainActivation))]
     [ServiceKnownType(typeof(ViewModelTrainMovement))]
     [ServiceKnownType(typeof(CancelledTrainMovementStep))]
     [ServiceKnownType(typeof(TrainMovementStep))]
