@@ -9,5 +9,7 @@ namespace TrainNotifier.Common.Model.Schedule
         public string Code { get; set; }
         [DataMember]
         public string Name { get; set; }
+        [DataMember]
+        public byte? NumericCode { get; set; }
     }
 }
