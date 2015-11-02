@@ -32,8 +32,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Apache.NMS">
+    <Reference Include="Apache.NMS, Version=1.5.1.2739, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Apache.NMS.1.5.1\lib\net40\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.Stomp, Version=1.5.4.3215, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Apache.NMS.Stomp.1.5.4\lib\net40\Apache.NMS.Stomp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -51,17 +56,13 @@
     <Compile Include="NMSTrace.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\External\Apache.NMS.Stomp\1.5.3\vs2008-stomp.csproj">
-      <Project>{aa51947c-1370-44dc-8692-1c8efc5945f7}</Project>
-      <Name>vs2008-stomp</Name>
-    </ProjectReference>
     <ProjectReference Include="..\NetworkRailDownloader.Common\TrainNotifier.Common.csproj">
       <Project>{55f15444-39a6-4b55-aa31-ced7a996de47}</Project>
       <Name>TrainNotifier.Common</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
