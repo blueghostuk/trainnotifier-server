@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using TrainNotifier.Common.Model.Schedule;
@@ -7,6 +8,24 @@ namespace TrainNotifier.Service
 {
     public class TiplocRepository : DbRepository
     {
+        private static readonly ConcurrentDictionary<string, IEnumerable<TiplocCode>> _stanoxCache
+             = new ConcurrentDictionary<string, IEnumerable<TiplocCode>>();
+
+        public void PreloadCache()
+        {
+            var all = GetTiplocs();
+
+            foreach (var tiploc in all.Where(t=> !string.IsNullOrWhiteSpace(t.Stanox)).ToLookup(t => t.Stanox))
+            {
+                AddToCache(tiploc.Key, tiploc);
+            }
+        }
+
+        private void AddToCache(string stanox, IEnumerable<TiplocCode> tiplocs)
+        {
+            _stanoxCache.AddOrUpdate(stanox, tiplocs, (key, existing) => tiplocs);
+        }
+
         public IEnumerable<StationTiploc> Get()
         {
             const string sql = @"
@@ -81,6 +100,10 @@ namespace TrainNotifier.Service
 
         public TiplocCode GetTiplocByStanox(string stanox)
         {
+            if (_stanoxCache.ContainsKey(stanox))
+            {
+                return _stanoxCache[stanox].FirstOrDefault();
+            }
             const string sql = @"
                 SELECT 
                     [Tiploc].[TiplocId],
@@ -92,7 +115,37 @@ namespace TrainNotifier.Service
                 FROM [Tiploc]
                 WHERE [Tiploc].[Stanox] = @stanox";
 
-            return Query<TiplocCode>(sql, new { stanox }).FirstOrDefault();
+            var results = Query<TiplocCode>(sql, new { stanox }); 
+            if (results.Any())
+            {
+                AddToCache(stanox, results);
+            }
+            return results.FirstOrDefault();
+        }
+
+        public IEnumerable<TiplocCode> GetTiplocsByStanox(string stanox)
+        {
+            if (_stanoxCache.ContainsKey(stanox))
+            {
+                return _stanoxCache[stanox];
+            }
+            const string sql = @"
+                SELECT 
+                    [Tiploc].[TiplocId],
+                    [Tiploc].[Tiploc],
+                    [Tiploc].[Nalco],
+                    [Tiploc].[Description],
+                    [Tiploc].[CRS],
+                    [Tiploc].[Stanox]
+                FROM [Tiploc]
+                WHERE [Tiploc].[Stanox] = @stanox";
+
+            var results = Query<TiplocCode>(sql, new { stanox });
+            if (results.Any())
+            {
+                AddToCache(stanox, results);
+            }
+            return results;
         }
 
         [Obsolete("Update code to use GetAllByStanox")]
