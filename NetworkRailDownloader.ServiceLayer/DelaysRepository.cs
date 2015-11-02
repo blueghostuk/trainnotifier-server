@@ -33,7 +33,7 @@ namespace TrainNotifier.Service
         {
             const string sql = @"
                 SELECT
-					[ScheduleTrain].[TrainUid] AS [Uid]
+					 [LiveTrain].[ScheduleTrainUid] AS [Uid]
                     ,[LiveTrain].[Headcode]
 					,[OriginTiploc].[Stanox] AS [OriginStanox]
 					,[DestTiploc].[Stanox] AS [DestStanox]
@@ -47,22 +47,24 @@ namespace TrainNotifier.Service
 					,[AtocCode].[AtocCode] AS [Code]
 					,[AtocCode].[Name]
 				FROM [LiveTrain]
-				INNER JOIN [ScheduleTrain]				ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
+			    INNER JOIN [ScheduleTrain]				ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
 				INNER JOIN [LiveTrainStop] [FromStop]	ON [FromStop].[TrainId] = [LiveTrain].[Id]
-                INNER JOIN [ScheduleTrainStop] [FromS]  ON [FromS].[ScheduleId] = [ScheduleTrain].[ScheduleId] AND [FromS].[StopNumber] = [FromStop].[ScheduleStopNumber]
 				INNER JOIN [LiveTrainStop] [ToStop]		ON [ToStop].[TrainId] = [LiveTrain].[Id]
-                INNER JOIN [ScheduleTrainStop] [ToS]    ON [ToS].[ScheduleId] = [ScheduleTrain].[ScheduleId] AND [ToS].[StopNumber] = [ToStop].[ScheduleStopNumber]
 				INNER JOIN [Tiploc] [OriginTiploc]		ON [OriginTiploc].[TiplocId] = [ScheduleTrain].[OriginStopTiplocId]
 				INNER JOIN [Tiploc] [DestTiploc]		ON [DestTiploc].[TiplocId] = [ScheduleTrain].[DestinationStopTiplocId]
-				LEFT JOIN [AtocCode]					ON [ScheduleTrain].[AtocCode] = [AtocCode].[AtocCode]
+				LEFT JOIN [AtocCode]					ON [LiveTrain].[ScheduleTrainAtocCode] = [AtocCode].[AtocCode]
 				WHERE
-                    ([FromStop].[ReportingTiplocId] IN @tiplocsFrom AND [FromStop].[EventTypeId] = 1)
+                    [FromStop].[ReportingTiplocId] IN @tiplocsFrom 
                     AND 
-                    [FromS].[PublicDeparture] IS NOT NULL
+                    [FromStop].[EventTypeId] = 1
+                    AND 
+                    [FromStop].[Public] = 1
 					AND	
-					([ToStop].[ReportingTiplocId] IN @tiplocsTo AND [ToStop].[EventTypeId] = 2)
+					[ToStop].[ReportingTiplocId] IN @tiplocsTo 
                     AND 
-                    [ToS].[PublicArrival] IS NOT NULL
+                    [ToStop].[EventTypeId] = 2
+                    AND 
+                    [ToStop].[Public] = 1
                     AND
 					([ToStop].[PlannedTimestamp] > [FromStop].[PlannedTimestamp])
 					AND
@@ -70,7 +72,7 @@ namespace TrainNotifier.Service
 					AND
 					([FromStop].[ActualTimestamp] < @endDate)
 					AND
-					[ScheduleTrain].[CategoryTypeId] IN (1,2,3,10,11,12)
+					[LiveTrain].[ScheduleTrainCategoryTypeId] IN (1,2,3,10,11,12)
 				ORDER BY [FromStop].[PlannedTimestamp]";
 
             using (DbConnection connection = CreateAndOpenConnection())
