@@ -21,7 +21,7 @@ namespace TrainNotifier.Schedule.Server
         [Option("i", "ignoredate", DefaultValue = false)]
         public bool IgnoreWrongDate { get; set; }
 
-        [Option("n", "delete", DefaultValue = false)]
+        [Option("n", "delete", DefaultValue = true)]
         public bool Delete { get; set; }
     }
 }
