@@ -18,8 +18,6 @@ namespace TrainNotifier.Console.WebSocketServer
     {
         private readonly UserManager _userManager;
         private readonly TiplocRepository _tiplocRepository = new TiplocRepository();
-        private readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
-        private readonly LiveTrainRepository _liveTrainRepository = new LiveTrainRepository();
         private readonly ICollection<TiplocCode> _tiplocs;
 
         private static readonly object _cacheLock = new object();
@@ -240,12 +238,6 @@ namespace TrainNotifier.Console.WebSocketServer
                     string args = new string(command.Skip(idx + 1).ToArray());
                     switch (cmdText)
                     {
-                        case "subtrain":
-                            HandleSubTrainCommand(context, args, true);
-                            break;
-                        case "unsubtrain":
-                            HandleSubTrainCommand(context, args, false);
-                            break;
                         case "substanox":
                             HandleSubStanoxCommand(context, args, true);
                             break;
@@ -274,31 +266,12 @@ namespace TrainNotifier.Console.WebSocketServer
             }
         }
 
-        private void HandleSubTrainCommand(UserContextEventArgs context, string trainId, bool subscribe)
+        private static TrainActivation CacheActivation(dynamic body)
         {
-            UserContextData uc = _userManager.ActiveUsers[context.UserContext];
-            if (uc != null)
-            {
-                if (subscribe)
-                {
-                    uc.StateArgs = trainId;
-                    uc.HeadCode = _liveTrainRepository.GetHeadCode(trainId);
-                    uc.State = UserContextState.SubscribeToTrain;
-                    Trace.TraceInformation("User {0} subscribed to train {1} - {2}", context.UserContext.ClientAddress, uc.HeadCode, trainId);
-                }
-                else
-                {
-                    uc.State = UserContextState.None;
-                }
-            }
+            return TrainActivationMapper.MapFromJson(body);
         }
 
-        private TrainMovement CacheActivation(dynamic body)
-        {
-            return TrainMovementMapper.MapFromBody(body);
-        }
-
-        private TrainMovementStep CacheTrainMovement(string trainId, dynamic body)
+        private static TrainMovementStep CacheTrainMovement(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
                 return null;
@@ -308,7 +281,7 @@ namespace TrainNotifier.Console.WebSocketServer
             return step;
         }
 
-        private TrainReinstatement CacheTrainReinstatement(string trainId, dynamic body)
+        private static TrainReinstatement CacheTrainReinstatement(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
                 return null;
@@ -318,7 +291,7 @@ namespace TrainNotifier.Console.WebSocketServer
             return step;
         }
 
-        private TrainChangeOfOrigin CacheChangeOfOrigin(string trainId, dynamic body)
+        private static TrainChangeOfOrigin CacheChangeOfOrigin(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
                 return null;
@@ -328,7 +301,7 @@ namespace TrainNotifier.Console.WebSocketServer
             return step;
         }
 
-        private CancelledTrainMovementStep CacheTrainCancellation(string trainId, dynamic body)
+        private static CancelledTrainMovementStep CacheTrainCancellation(string trainId, dynamic body)
         {
             if (string.IsNullOrWhiteSpace(trainId))
                 return null;
