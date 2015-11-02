@@ -22,9 +22,30 @@ namespace TrainNotifier.Service
             SlidingExpiration = TimeSpan.FromHours(12)
         };
 
+        private static readonly AtocCodeRepository _atocCodeRepository = new AtocCodeRepository();
         private static readonly TiplocRepository _tiplocRepository = new TiplocRepository();
         private static readonly ScheduleRepository _scheduleRepository = new ScheduleRepository();
-        private static readonly TrainMovementRepository _tmRepo = new TrainMovementRepository();
+
+        public class Activation
+        {
+            public Guid DbId { get; private set; }
+            public string TrainId { get; private set; }
+
+            public Guid? ScheduleDbId { get; set; }
+
+            public byte CurrentStopNumber { get; set; }
+
+            public IEnumerable<ScheduleStop> Stops { get; set; }
+
+            public Activation(Guid dbId, string trainId)
+            {
+                DbId = dbId;
+                TrainId = trainId;
+
+                Stops = Enumerable.Empty<ScheduleStop>();
+                CurrentStopNumber = 0;
+            }
+        }
 
         /// <summary>
         /// Pre-loads trains activated or in progress set to depart from 12 hours ago into the future
@@ -38,7 +59,8 @@ namespace TrainNotifier.Service
                     ,[ScheduleTrain]
                 FROM [LiveTrain] 
                 WHERE [TrainStateId] = @activated
-                    AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)";
+                    AND [OriginDepartTimestamp] >= (GETDATE() - 0.5)
+                    AND [ScheduleTrain] IS NOT NULL";
 
             var activeTrains = Query<dynamic>(sql, new { TrainState.Activated });
 
@@ -48,21 +70,25 @@ namespace TrainNotifier.Service
 
             foreach (var activeTrain in activeTrains)
             {
-                _trainActivationCache.Add(activeTrain.TrainId, new TrainMovementSchedule
+                _trainActivationCache.Add(activeTrain.TrainId, new Activation(activeTrain.Id, activeTrain.TrainId)
                 {
-                    Id = activeTrain.Id,
-                    Schedule = activeTrain.ScheduleTrain,
-                    StopNumber = 0
+                    ScheduleDbId = activeTrain.ScheduleTrain,
                 }, _trainActivationCachePolicy);
             }
+
+            Trace.TraceInformation("Pre loading tiploc cache");
+
+            Trace.Flush();
+
+            _tiplocRepository.PreloadCache();
         }
 
-        public void AddActivation(TrainMovement tm, DbConnection existingConnection = null)
+        public void AddActivation(TrainActivation activation)
         {
-            var tiplocs = _tiplocRepository.GetAllByStanox(tm.SchedOriginStanox);
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(activation.ScheduleOriginStanox);
             if (tiplocs.Any())
             {
-                Trace.TraceInformation("Saving Activation: {0}", tm.TrainId);
+                Trace.TraceInformation("Saving Activation: {0}", activation.TrainId);
                 const string insertActivation = @"
                 INSERT INTO [natrail].[dbo].[LiveTrain]
                     ([TrainId]
@@ -84,129 +110,162 @@ namespace TrainNotifier.Service
 
                 Guid id = ExecuteInsert(insertActivation, new
                 {
-                    trainId = tm.Id,
-                    headcode = tm.WorkingTTId.Substring(0, 4),
-                    activationDate = tm.Activated,
-                    originTime = tm.SchedOriginDeparture,
-                    serviceCode = tm.ServiceCode,
+                    trainId = activation.TrainId,
+                    headcode = activation.WorkingTTId.Substring(0, 4),
+                    activationDate = activation.Activated,
+                    originTime = activation.ScheduleOriginDeparture,
+                    serviceCode = activation.ServiceCode,
                     originTiplocId = tiplocs.First().TiplocId,
                     trainStateId = TrainState.Activated
-                }, existingConnection);
+                });
 
-                _trainActivationCache.Add(tm.Id, new TrainMovementSchedule
+                _trainActivationCache.Add(activation.TrainId, new Activation(id, activation.TrainId)
                 {
-                    Id = id,
-                    Schedule = null,
-                    StopNumber = 0
+                    ScheduleDbId = null,
+                    CurrentStopNumber = 0
                 }, _trainActivationCachePolicy);
 
-                tm.UniqueId = id;
+                activation.UniqueId = id;
 
-                SetLiveTrainSchedule(tm, tiplocs);
+                SetLiveTrainSchedule(activation, tiplocs);
             }
         }
 
-        private Task SetLiveTrainSchedule(TrainMovement tm, IEnumerable<TiplocCode> tiplocs)
+        public class MatchSchedule
         {
-            return Task.Run(() =>
-            {
-                if (!tm.SchedOriginDeparture.HasValue)
-                {
-                    Trace.TraceInformation("Activation '{0}' has no departure date, cannot assign schedume", tm.TrainId);
-                    return;
-                }
+            public Guid ScheduleId { get; set; }
 
-                Trace.TraceInformation("Associating Schedule for activation {0},{1} with departure date {2:dd/MM/yy}", tm.TrainId, tm.TrainUid, tm.SchedOriginDeparture.Value);
-                // until deleted schedules are understood better include them but order them out
-//                const string sql = @"
-//                    SELECT TOP 1 [ScheduleId]
-//                    FROM [ScheduleTrain]
-//                    WHERE 
-//                            [TrainUid] = @trainUid
-//                        AND @date >= [StartDate]
-//                        AND @date <= [EndDate]
-//                        AND [Deleted] = 0
-//                        {0}
-//                    ORDER BY [STPIndicatorId]";
+            public byte? CategoryTypeId { get; set; }
 
-                // order by deleted first to get non-deleted, then by stp indicator as normal, then by powertype to get the
-                // one (If any) that has a power type
-                const string sql = @"
-                    SELECT TOP 1 [ScheduleId]
+            public string AtocCode { get; set; }
+
+            public short? DestinationStopTiplocId { get; set; }
+        }
+
+        public MatchSchedule GetMatchingSchedule(TrainActivation activation)
+        {
+            const string sql = @"
+                    SELECT TOP 1 
+                        [ScheduleId]
+                        ,[CategoryTypeId]
+                        ,[AtocCode]
+                        ,[DestinationStopTiplocId]
                     FROM [ScheduleTrain]
                     WHERE 
                             [TrainUid] = @trainUid
-                        AND @date >= [StartDate]
-                        AND @date <= [EndDate]
-                        {0}
+                        AND [StartDate] = @startDate
+                        AND [EndDate] = @endDate
                     ORDER BY [Deleted], [STPIndicatorId], [PowerTypeId] DESC";
 
-                var date = tm.SchedOriginDeparture.Value.Date;
 
-                Guid? scheduleId = ExecuteScalar<Guid>(string.Format(sql, GetDatePartSql(date)), new
-                {
-                    // need to trim as schedule inserted trimmed at present
-                    trainUid = tm.TrainUid.Trim(),
-                    date
-                });
+            var result = ExecuteScalar<MatchSchedule>(sql, new
+            {
+                // need to trim as schedule inserted trimmed at present
+                trainUid = activation.TrainUid.Trim(),
+                startDate = activation.ScheduleStartDate.Date,
+                endDate = activation.ScheduleEndDate.Date
+            });
 
-                if (scheduleId.HasValue && scheduleId != Guid.Empty)
+            if (result != null && string.IsNullOrWhiteSpace(result.AtocCode) && !string.IsNullOrWhiteSpace(activation.TocId))
+            {
+                try
                 {
-                    Trace.TraceInformation("Associating Schedule '{0}' for activation '{1}'", scheduleId, tm.TrainId);
-                    const string updateSql = @"
+                    var code = _atocCodeRepository.GetByNumericCode(Convert.ToByte(activation.TocId));
+                    if (code != null)
+                    {
+                        result.AtocCode = code.Code;
+                    }
+                }
+                catch { }
+            }
+
+            return result;
+        }
+
+        private void SetLiveTrainSchedule(TrainActivation activation, IEnumerable<TiplocCode> tiplocs)
+        {
+            Trace.TraceInformation("Finding Schedule for activation {0},{1} with departure date {2:dd/MM/yy}",
+                activation.TrainId, activation.TrainUid, activation.ScheduleOriginDeparture);
+
+            MatchSchedule scheduleData = GetMatchingSchedule(activation);
+            if (scheduleData != null)
+            {
+                Trace.TraceInformation("Associating Schedule '{0}' for activation '{1}'",
+                    scheduleData.ScheduleId,
+                    activation.TrainId);
+
+                const string updateSql = @"
                         UPDATE [LiveTrain]
-                        SET [ScheduleTrain] = @scheduleId
+                        SET 
+                            [ScheduleTrain] = @scheduleId,
+                            [ScheduleTrainUid] = @scheduleUid,
+                            [ScheduleTrainAtocCode] = @scheduleAtocId,
+                            [ScheduleTrainCategoryTypeId] = @categoryTypeId,    
+                            [ScheduleTrainDestinationTiplocId] = @destinationStopTiplocId    
                         WHERE [Id] = @UniqueId";
 
-                    ExecuteNonQuery(updateSql, new
+                ExecuteNonQuery(updateSql, new
+                {
+                    scheduleId = scheduleData.ScheduleId,
+                    scheduleUid = activation.TrainUid,
+                    scheduleAtocId = scheduleData.AtocCode,
+                    categoryTypeId = scheduleData.CategoryTypeId,
+                    destinationStopTiplocId = scheduleData.DestinationStopTiplocId,
+                    UniqueId = activation.UniqueId
+                });
+
+                ((Activation)_trainActivationCache[activation.TrainId]).ScheduleDbId = scheduleData.ScheduleId;
+                if (!((Activation)_trainActivationCache[activation.TrainId]).Stops.Any())
+                {
+                    ((Activation)_trainActivationCache[activation.TrainId]).Stops = _scheduleRepository.GetStopsById(scheduleData.ScheduleId);
+                }
+                if (((Activation)_trainActivationCache[activation.TrainId]).Stops.Any())
+                {
+                    AddFirstArrivalMovement(activation.UniqueId, activation.ScheduleOriginDeparture, 
+                        ((Activation)_trainActivationCache[activation.TrainId]).Stops.ElementAt(0));
+                }
+
+                // if there was more than 1 tiploc see if we can find the correct one
+                if (tiplocs.Count() > 1)
+                {
+                    foreach (var stop in ((Activation)_trainActivationCache[activation.TrainId]).Stops)
                     {
-                        scheduleId,
-                        tm.UniqueId
-                    });
-
-                    ((TrainMovementSchedule)_trainActivationCache[tm.Id]).Schedule = scheduleId.Value;
-
-                    IEnumerable<ScheduleStop> stops = _scheduleRepository.GetStopsById(scheduleId.Value);
-                    AddFirstArrivalMovement(tm.UniqueId, tm.SchedOriginDeparture.GetValueOrDefault(DateTime.UtcNow), stops.ElementAt(0));
-
-                    // if there was more than 1 tiploc see if we can find the correct one
-                    if (tiplocs.Count() > 1)
-                    {
-                        foreach (var stop in stops)
+                        TiplocCode matchedTiploc = tiplocs.FirstOrDefault(t => t.TiplocId == stop.Tiploc.TiplocId);
+                        if (matchedTiploc != null)
                         {
-                            TiplocCode matchedTiploc = tiplocs.FirstOrDefault(t => t.TiplocId == stop.Tiploc.TiplocId);
-                            if (matchedTiploc != null)
+                            if (matchedTiploc.TiplocId != tiplocs.First().TiplocId)
                             {
-                                if (matchedTiploc.TiplocId != tiplocs.First().TiplocId)
-                                {
-                                    UpdateLiveTrainOrigin(tm.UniqueId, matchedTiploc.TiplocId);
-                                }
-
-                                break;
+                                UpdateLiveTrainOrigin(activation.UniqueId, matchedTiploc.TiplocId);
                             }
+
+                            break;
                         }
                     }
-                    if (!string.IsNullOrEmpty(tm.TocId))
+                }
+                if (!string.IsNullOrWhiteSpace(scheduleData.AtocCode))
+                {
+                    try
                     {
                         // if VSTP update toc
                         const string vstpTocSql = @"
-                        UPDATE [ScheduleTrain]
-                        SET [AtocCode] = @atocCode
-                        WHERE [ScheduleId] = @scheduleId
-                        AND [Source] = 1";
+                                UPDATE [ScheduleTrain]
+                                SET [AtocCode] = @atocCode
+                                WHERE [ScheduleId] = @scheduleId
+                                AND [Source] = 1";
 
                         ExecuteNonQuery(vstpTocSql, new
                         {
-                            scheduleId,
-                            atocCode = tm.TocId
+                            scheduleData.ScheduleId,
+                            atocCode = scheduleData.AtocCode
                         });
                     }
+                    catch { }
                 }
-                else
-                {
-                    Trace.TraceWarning("Could not find matching schedule for activation: {0}, {1}", tm.TrainId, tm.TrainUid);
-                }
-            });
+            }
+            else
+            {
+                Trace.TraceWarning("Could not find matching schedule for activation: {0}, {1}", activation.TrainId, activation.TrainUid);
+            }
         }
 
         private void AddFirstArrivalMovement(Guid trainId, DateTime departureTime, ScheduleStop scheduleStop)
@@ -222,7 +281,8 @@ namespace TrainNotifier.Service
                             ,[ReportingTiplocId]
                             ,[Platform]
                             ,[Line]
-                            ,[ScheduleStopNumber])
+                            ,[ScheduleStopNumber]
+                            ,[Public])
                         VALUES
                             (@trainId
                             ,@eventTypeId
@@ -231,7 +291,8 @@ namespace TrainNotifier.Service
                             ,@reportingTiplocId
                             ,@platform
                             ,@line
-                            ,@stopNumber)";
+                            ,@stopNumber,
+                            ,@public)";
 
                 ExecuteNonQuery(insertStop, new
                 {
@@ -242,7 +303,8 @@ namespace TrainNotifier.Service
                     reportingTiplocId = scheduleStop.Tiploc.TiplocId,
                     platform = scheduleStop.Platform,
                     line = scheduleStop.Line,
-                    stopNumber = 0
+                    stopNumber = 0,
+                    @public = scheduleStop.PublicArrival.HasValue || scheduleStop.PublicDeparture.HasValue
                 });
             }
             catch { }
@@ -264,20 +326,10 @@ namespace TrainNotifier.Service
             return string.Format(sql, date.DayOfWeek.ToString());
         }
 
-        private bool TrainExists(string trainId, out TrainMovementSchedule tm, DbConnection existingConnection = null)
+        private bool TrainExists(string trainId, out Activation tm)
         {
-            tm = _trainActivationCache.Get(trainId) as TrainMovementSchedule;
-            //if (tm == null)
-            //{
-            //    TrainIdTranslator details = TrainIdTranslator.ParseDataString(trainId);
-            //    var trains = _tmRepo.GetTrainMovementByHeadcode(details.Headcode, DateTime.UtcNow.);
-                
-            //    if (tm != null)
-            //    {
-            //        _trainActivationCache.Add(trainId, tm, _trainActivationCachePolicy);
-            //    }
-            //}
-            return tm != null && tm.Id != Guid.Empty;
+            tm = _trainActivationCache.Get(trainId) as Activation;
+            return tm != null;
         }
 
         /// <summary>
@@ -316,12 +368,12 @@ namespace TrainNotifier.Service
             }) > 0;
         }
 
-        public bool AddMovement(TrainMovementStep tms, DbConnection existingConnection = null)
+        public bool AddMovement(TrainMovementStep tms)
         {
-            TrainMovementSchedule trainId = null;
-            if (TrainExists(tms.TrainId, out trainId, existingConnection) && trainId.Schedule.HasValue && trainId.Schedule != Guid.Empty)
+            Activation activation = null;
+            if (TrainExists(tms.TrainId, out activation))
             {
-                tms.DatabaseId = trainId.Id;
+                tms.DatabaseId = activation.DbId;
                 Trace.TraceInformation("Saving Movement to: {0}", tms.TrainId);
                 const string insertStop = @"
                     INSERT INTO [dbo].[LiveTrainStop]
@@ -332,7 +384,8 @@ namespace TrainNotifier.Service
                                ,[ReportingTiplocId]
                                ,[Platform]
                                ,[Line]
-                               ,[ScheduleStopNumber])
+                               ,[ScheduleStopNumber]
+                               ,[Public])
                          VALUES
                                (@trainId
                                ,@eventTypeId
@@ -341,36 +394,30 @@ namespace TrainNotifier.Service
                                ,@reportingTiplocId
                                ,@platform
                                ,@line
-                               ,@stopNumber)";
+                               ,@stopNumber
+                               ,@public)";
 
-                byte? stopNumber = null;
+                ScheduleStop nextStop = null;
                 short? tiplocId = null;
 
-                if (!string.IsNullOrEmpty(tms.Stanox))
+                if (!string.IsNullOrEmpty(tms.Stanox) && activation.ScheduleDbId.HasValue)
                 {
-                    dynamic values = GetNextStop(trainId.Schedule.Value, TrainMovementEventTypeField.ParseDataString(tms.EventType), tms.Stanox, trainId.StopNumber);
+                    nextStop = GetNextStop(tms.TrainId, TrainMovementEventTypeField.ParseDataString(tms.EventType), tms.Stanox, activation.CurrentStopNumber);
 
-                    try
+                    if (nextStop != null)
                     {
-                        stopNumber = values.StopNumber;
-                        tiplocId = values.TiplocId;
-
-                        if (stopNumber.HasValue)
-                        {
-                            ((TrainMovementSchedule)_trainActivationCache[tms.TrainId]).StopNumber = stopNumber.Value;
-                        }
+                        tiplocId = nextStop.Tiploc.TiplocId;
+                        ((Activation)_trainActivationCache[tms.TrainId]).CurrentStopNumber = nextStop.StopNumber;
                     }
-                    catch { }
                 }
-                if (!tiplocId.HasValue)
+                if (nextStop == null && activation.ScheduleDbId.HasValue)
                 {
-                    var tiplocs = _tiplocRepository.GetAllByStanox(tms.Stanox);
+                    var tiplocs = _tiplocRepository.GetTiplocsByStanox(tms.Stanox);
                     if (tiplocs.Any())
                     {
                         if (tiplocs.Count() > 1)
                         {
-                            var stops = _scheduleRepository.GetStopsById(trainId.Schedule.Value);
-                            foreach (var stop in stops)
+                            foreach (var stop in ((Activation)_trainActivationCache[tms.TrainId]).Stops)
                             {
                                 var matchedTiploc = tiplocs.FirstOrDefault(t => t.TiplocId == stop.Tiploc.TiplocId);
                                 if (matchedTiploc != null)
@@ -394,48 +441,56 @@ namespace TrainNotifier.Service
                 {
                     ExecuteNonQuery(insertStop, new
                     {
-                        trainId = trainId.Id,
+                        trainId = activation.DbId,
                         eventTypeId = TrainMovementEventTypeField.ParseDataString(tms.EventType),
                         plannedTs = tms.PlannedTime,
                         actualTs = tms.ActualTimeStamp,
                         reportingTiplocId = tiplocId,
                         platform = (string.IsNullOrEmpty(tms.Platform) ? default(string) : tms.Platform),
                         line = (string.IsNullOrEmpty(tms.Line) ? default(string) : tms.Line),
-                        stopNumber = stopNumber
-                    }, existingConnection);
-                    
+                        stopNumber = nextStop != null ? nextStop.StopNumber : default(byte?),
+                        @public = nextStop != null && (nextStop.PublicArrival.HasValue || nextStop.PublicDeparture.HasValue)
+                    });
+
                     return true;
                 }
             }
             return false;
         }
 
-        private dynamic GetNextStop(Guid scheduleId,TrainMovementEventType eventType, string stanox, byte latestStopNumber)
+        private class GetNextStopResult
         {
-            const string sql = @"
-                SELECT TOP 1
-                      [ScheduleTrainStop].[StopNumber],
-                      [Tiploc].[TiplocId]
-                FROM [ScheduleTrainStop]
-                INNER JOIN [Tiploc] ON [ScheduleTrainStop].[TiplocId] = [Tiploc].[TiplocId]
-                WHERE [ScheduleId] = @scheduleId
-                AND [Tiploc].[Stanox] = @stanox
-                AND [ScheduleTrainStop].[StopNumber] >= @latestStopNumber";
-
-            const string extraWhere = " AND [ScheduleTrainStop].[StopNumber] > 0";
-
-            return ExecuteScalar<dynamic>(string.Concat(sql, eventType == TrainMovementEventType.Arrival ? extraWhere : null), new
-            {
-                scheduleId,
-                stanox,
-                latestStopNumber
-            });
+            public byte StopNumber { get; set; }
+            public short TiplocId { get; set; }
+            public TimeSpan? PublicDeparture { get; set; }
+            public TimeSpan? PublicArrival { get; set; }
         }
 
-        public bool AddCancellation(CancelledTrainMovementStep cm, DbConnection existingConnection = null)
+        private ScheduleStop GetNextStop(string trainId, TrainMovementEventType eventType, string stanox, byte latestStopNumber)
         {
-            TrainMovementSchedule trainId = null;
-            if (TrainExists(cm.TrainId, out trainId, existingConnection))
+            // get tiplocs first to optimise next query
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(stanox)
+                .Select(t => t.TiplocId)
+                .ToList();
+
+            var stops = ((Activation)_trainActivationCache[trainId]).Stops
+                .Where(s => tiplocs.Contains(s.Tiploc.TiplocId))
+                .Where(s => s.StopNumber >= latestStopNumber);
+
+            if (eventType == TrainMovementEventType.Arrival)
+            {
+                stops = stops.Where(s => s.StopNumber > 0);
+            }
+
+            stops = stops.OrderBy(s => s.StopNumber);
+
+            return stops.FirstOrDefault();
+        }
+
+        public bool AddCancellation(CancelledTrainMovementStep cm)
+        {
+            Activation activation = null;
+            if (TrainExists(cm.TrainId, out activation))
             {
                 Trace.TraceInformation("Saving Cancellation to: {0}", cm.TrainId);
                 const string insertStop = @"
@@ -454,26 +509,26 @@ namespace TrainNotifier.Service
 
                 ExecuteNonQuery(insertStop, new
                 {
-                    trainId = trainId.Id,
+                    trainId = activation.DbId,
                     canxTs = cm.CancelledTime,
                     canxType = cm.CancelledType,
                     canxReason = cm.CancelledReasonCode,
                     stanox = cm.Stanox
-                }, existingConnection);
+                });
 
-                UpdateTrainState(trainId.Id, TrainState.Cancelled);
+                UpdateTrainState(activation.DbId, TrainState.Cancelled);
 
                 return true;
             }
             return false;
         }
 
-        private bool AddChangeOfOrigin(TrainChangeOfOrigin tOrigin, DbConnection existingConnection = null)
+        private bool AddChangeOfOrigin(TrainChangeOfOrigin tOrigin)
         {
-            TrainMovementSchedule trainId = null;
-            if (TrainExists(tOrigin.TrainId, out trainId, existingConnection))
+            Activation activation = null;
+            if (TrainExists(tOrigin.TrainId, out activation))
             {
-                TiplocCode tiploc = _tiplocRepository.GetByStanox(tOrigin.Stanox);
+                TiplocCode tiploc = _tiplocRepository.GetTiplocByStanox(tOrigin.Stanox);
                 if (tiploc != null)
                 {
                     Trace.TraceInformation("Saving Change of Origin to: {0} @ {1}", tOrigin.TrainId, tOrigin.Stanox);
@@ -494,23 +549,23 @@ namespace TrainNotifier.Service
 
                     ExecuteNonQuery(insertStop, new
                     {
-                        trainId = trainId.Id,
+                        trainId = activation.DbId,
                         reasonCode = tOrigin.ReasonCode,
                         newTiplocId = tiploc.TiplocId,
                         newDepartureTime = tOrigin.NewDepartureTime,
                         changedTime = tOrigin.ChangedTime
-                    }, existingConnection);
+                    });
                 }
             }
             return false;
         }
 
-        private bool AddReinstatement(TrainReinstatement tr, DbConnection existingConnection = null)
+        private bool AddReinstatement(TrainReinstatement tr)
         {
-            TrainMovementSchedule trainId = null;
-            if (TrainExists(tr.TrainId, out trainId, existingConnection))
+            Activation trainId = null;
+            if (TrainExists(tr.TrainId, out trainId))
             {
-                TiplocCode tiploc = _tiplocRepository.GetByStanox(tr.Stanox);
+                TiplocCode tiploc = _tiplocRepository.GetTiplocByStanox(tr.Stanox);
                 if (tiploc != null)
                 {
                     Trace.TraceInformation("Saving Reinstatement of: {0} @ {1}", tr.TrainId, tr.Stanox);
@@ -529,17 +584,17 @@ namespace TrainNotifier.Service
 
                     ExecuteNonQuery(insertStop, new
                     {
-                        trainId = trainId.Id,
+                        trainId = trainId.DbId,
                         plannedDepartureTime = tr.NewDepartureTime,
                         reinstatedTiplocId = tiploc.TiplocId,
                         reinstatementTime = tr.ReinstatementTime
-                    }, existingConnection);
+                    });
                 }
             }
             return false;
         }
 
-        public void UpdateTrainState(Guid trainId, TrainState state, DbConnection existingConnection = null)
+        public void UpdateTrainState(Guid trainId, TrainState state)
         {
             switch (state)
             {
@@ -550,21 +605,9 @@ namespace TrainNotifier.Service
                        SET [TrainStateId] = [TrainStateId] + @state
                      WHERE [Id] = @trainId";
 
-                    ExecuteNonQuery(cancelSql, new { trainId, state }, existingConnection);
+                    ExecuteNonQuery(cancelSql, new { trainId, state });
                     break;
             }
-        }
-
-        public string GetHeadCode(string trainId)
-        {
-            const string sql = @"
-                SELECT TOP 1
-                    [Headcode]
-                FROM [natrail].[dbo].[LiveTrain]
-                WHERE [TrainId] = @trainId
-                ORDER BY [OriginDepartTimestamp] DESC";
-
-            return ExecuteScalar<string>(sql, new { trainId });
         }
 
         private ConcurrentQueue<ITrainData> _failedDataCache = new ConcurrentQueue<ITrainData>();
@@ -607,84 +650,81 @@ namespace TrainNotifier.Service
 
         public void BatchInsertTrainData(IEnumerable<ITrainData> trainData, bool onFailAddToQueue = true)
         {
-            using (DbConnection dbConnection = CreateAndOpenConnection())
-            {
-                ICollection<TrainMovementStep> trainMovements = new List<TrainMovementStep>();
+            ICollection<TrainMovementStep> trainMovements = new List<TrainMovementStep>();
 
-                foreach (var train in trainData)
+            foreach (var train in trainData)
+            {
+                try
                 {
-                    try
+                    TrainActivation activation = train as TrainActivation;
+                    if (activation != null)
                     {
-                        TrainMovement tm = train as TrainMovement;
-                        if (tm != null)
+                        AddActivation(activation);
+                    }
+                    else
+                    {
+                        CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
+                        if (ctms != null)
                         {
-                            AddActivation(tm, dbConnection);
+                            AddCancellation(ctms);
                         }
                         else
                         {
-                            CancelledTrainMovementStep ctms = train as CancelledTrainMovementStep;
-                            if (ctms != null)
+                            TrainMovementStep tms = train as TrainMovementStep;
+                            if (tms != null)
                             {
-                                AddCancellation(ctms, dbConnection);
+                                AddMovement(tms);
+                                trainMovements.Add(tms);
                             }
                             else
                             {
-                                TrainMovementStep tms = train as TrainMovementStep;
-                                if (tms != null)
+                                TrainChangeOfOrigin tOrigin = train as TrainChangeOfOrigin;
+                                if (tOrigin != null)
                                 {
-                                    AddMovement(tms, dbConnection);
-                                    trainMovements.Add(tms);
+                                    AddChangeOfOrigin(tOrigin);
                                 }
                                 else
                                 {
-                                    TrainChangeOfOrigin tOrigin = train as TrainChangeOfOrigin;
-                                    if (tOrigin != null)
+                                    TrainReinstatement tr = train as TrainReinstatement;
+                                    if (tr != null)
                                     {
-                                        AddChangeOfOrigin(tOrigin);
-                                    }
-                                    else
-                                    {
-                                        TrainReinstatement tr = train as TrainReinstatement;
-                                        if (tr != null)
-                                        {
-                                            AddReinstatement(tr);
-                                        }
+                                        AddReinstatement(tr);
                                     }
                                 }
                             }
                         }
                     }
-                    catch (SqlException e)
+                }
+                catch (SqlException e)
+                {
+                    // check for timeout only
+                    if (e.Number == -2)
                     {
-                        // check for timeout only
-                        if (e.Number == -2)
+                        Trace.TraceError(e.ToString());
+                        if (onFailAddToQueue)
                         {
-                            Trace.TraceError(e.ToString());
-                            if (onFailAddToQueue)
-                            {
-                                _failedDataCache.Enqueue(train);
-                            }
-                            else
-                            {
-                                throw;
-                            }
+                            _failedDataCache.Enqueue(train);
                         }
                         else
                         {
                             throw;
                         }
                     }
-                }
-
-                // only update once per train
-                foreach (var groupByTrain in trainMovements
-                    .Where(tm => tm.DatabaseId.HasValue)
-                    .GroupBy(tm => tm.DatabaseId.Value))
-                {
-                    if (groupByTrain.Any(tm => tm.State == State.Terminated))
+                    else
                     {
-                        UpdateTrainState(groupByTrain.Key, TrainState.Terminated, dbConnection);
+                        throw;
                     }
+                }
+            }
+
+            // only update once per train
+            foreach (var groupByTrain in trainMovements
+                .Where(tm => tm.DatabaseId.HasValue)
+                .GroupBy(tm => tm.DatabaseId.Value))
+            {
+                if (groupByTrain.Any(tm => tm.State == State.Terminated))
+                {
+                    UpdateTrainState(groupByTrain.Key, TrainState.Terminated);
                 }
             }
         }
