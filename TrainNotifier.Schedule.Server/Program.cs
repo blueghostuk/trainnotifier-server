@@ -39,6 +39,8 @@ namespace TrainNotifier.Schedule.Server
             Trace.TraceInformation("Temporary Directory is {0}", tempDir);
             string gzFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.gz", DateTime.UtcNow));
             string jsonFile = Path.Combine(tempDir, string.Format("{0:yyyyMMdd}.json", DateTime.UtcNow));
+            Trace.TraceInformation("GZIP File is {0}", gzFile);
+            Trace.TraceInformation("JSON File is {0}", jsonFile);
             bool fail = false;
             try
             {
@@ -195,7 +197,7 @@ namespace TrainNotifier.Schedule.Server
                 else
                 {
                     Trace.TraceError("Retry count exceeded");
-                    throw;
+                    //throw;
                 }
             }
         }
