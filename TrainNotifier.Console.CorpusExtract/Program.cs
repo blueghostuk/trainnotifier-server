@@ -23,10 +23,11 @@ namespace TrainNotifier.Console.CorpusExtract
             foreach (var tiploc in container.TIPLOCDATA)
             {
                 System.Console.WriteLine("Processing number {0}", counter);
-                if (!string.IsNullOrWhiteSpace(tiploc.STANOX) && 
-                    !string.IsNullOrWhiteSpace(tiploc.TIPLOC) && 
+                if (!string.IsNullOrWhiteSpace(tiploc.STANOX) &&
+                    !string.IsNullOrWhiteSpace(tiploc.TIPLOC) &&
                     tiplocRepo.GetTiplocByStanox(tiploc.STANOX) == null)
                 {
+                    System.Console.WriteLine("Inserting {0}", tiploc.NLCDESC);
                     tiplocRepo.InsertTiploc(tiploc.ToTiplocCode());
                 }
                 counter++;
