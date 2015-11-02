@@ -137,6 +137,7 @@
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Content Include="Global.asax" />
+    <None Include="Properties\PublishProfiles\azure.pubxml" />
     <None Include="Service References\OpenLDBWS\configuration91.svcinfo" />
     <None Include="Service References\OpenLDBWS\configuration.svcinfo" />
     <None Include="Service References\OpenLDBWS\Reference.svcmap">
@@ -176,7 +177,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\PublishProfiles\azure-vm.pubxml" />
     <None Include="Service References\OpenLDBWS\darwin_token_types_2013-11-28.wsdl" />
     <None Include="Service References\OpenLDBWS\darwin_token_types_2013-11-28.xsd">
       <SubType>Designer</SubType>
