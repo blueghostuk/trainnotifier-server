@@ -203,13 +203,6 @@ namespace TrainNotifier.Common.NMS
             using (IMessageConsumer consumer = CreateConsumer(session, topic, appendedText))
             {
                 Trace.TraceInformation("Created consumer to {0}", topic);
-                // dont check expiry
-                MessageConsumer messageConsumer = consumer as MessageConsumer;
-                if (messageConsumer != null)
-                {
-                    messageConsumer.CheckExpiry = false;
-                }
-
                 consumer.Listener += listener;
                 connectionMonitor.AddMessageConsumer(consumer);
                 ct.WaitHandle.WaitOne();
