@@ -518,7 +518,7 @@ namespace TrainNotifier.Service
             }
 
             // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(stanox)
                 .Select(t => t.TiplocId);
 
             if (!tiplocs.Any())
@@ -615,7 +615,7 @@ namespace TrainNotifier.Service
             }
 
             // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(stanox)
                 .Select(t => t.TiplocId);
 
             if (!tiplocs.Any())
@@ -732,7 +732,7 @@ namespace TrainNotifier.Service
             }
 
             // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(stanox)
                 .Select(t => t.TiplocId);
 
             if (!tiplocs.Any())
@@ -879,9 +879,9 @@ namespace TrainNotifier.Service
             }
 
             // get tiploc id to improve query
-            var tiplocsFrom = _tiplocRepository.GetAllByStanox(fromStanox)
+            var tiplocsFrom = _tiplocRepository.GetTiplocsByStanox(fromStanox)
                 .Select(t => t.TiplocId);
-            var tiplocsTo = _tiplocRepository.GetAllByStanox(toStanox)
+            var tiplocsTo = _tiplocRepository.GetTiplocsByStanox(toStanox)
                 .Select(t => t.TiplocId);
 
             if (!tiplocsFrom.Any() || !tiplocsTo.Any())
@@ -1339,8 +1339,9 @@ namespace TrainNotifier.Service
         public CachedTrainDetails GetActivatedTrainMovementByHeadcodeAndStop(string headcode, DateTime date, string stanox)
         {
             // get tiploc id to improve query
-            var tiplocs = _tiplocRepository.GetAllByStanox(stanox)
-                .Select(t => t.TiplocId);
+            var tiplocs = _tiplocRepository.GetTiplocsByStanox(stanox)
+                .Select(t => t.TiplocId)
+                .ToArray();
 
             if (!tiplocs.Any())
                 return null;
@@ -1348,11 +1349,11 @@ namespace TrainNotifier.Service
             const string getSchedulesSql = @"
                 SELECT 
                     [LiveTrain].[Id],
-                    [ScheduleTrain].[TrainUid],
+                    [LiveTrain].[ScheduleTrainUid] AS [TrainUid],
                     [LiveTrain].[OriginDepartTimestamp]
-                FROM [ScheduleTrain]
+                FROM [LiveTrain]
+                INNER JOIN [ScheduleTrain] ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
                 INNER JOIN [ScheduleTrainStop] ON [ScheduleTrainStop].[ScheduleId] = [ScheduleTrain].[ScheduleId]
-                INNER JOIN [LiveTrain] ON [LiveTrain].[ScheduleTrain] = [ScheduleTrain].[ScheduleId]
                 WHERE   [ScheduleTrainStop].[TiplocId] IN @tiplocs
                     AND [ScheduleTrain].[Headcode] = @headcode
 	                AND [ScheduleTrain].[Runs{0}] = 1
