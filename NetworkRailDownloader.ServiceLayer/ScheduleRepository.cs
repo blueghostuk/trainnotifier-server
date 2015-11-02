@@ -4,27 +4,12 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
-using TrainNotifier.Common.Model;
 using TrainNotifier.Common.Model.Schedule;
 
 namespace TrainNotifier.Service
 {
     public class ScheduleRepository : DbRepository
     {
-        public AtocCode GetAtocCode(string code)
-        {
-            const string sql = "SELECT [AtocCode] AS [Code], [Name] FROM [AtocCode] WHERE [AtocCode] = @code";
-
-            return ExecuteScalar<AtocCode>(sql, new { code });
-        }
-
-        public void InsertAtocCode(string code, string name = null)
-        {
-            const string sql = "INSERT INTO [AtocCode]([AtocCode],[Name]) VALUES (@code, @name)";
-
-            ExecuteNonQuery(sql, new { code, name });
-        }
-
         public IEnumerable<ScheduleDetails> GetScheduleDetails(string trainUid)
         {
             const string sql = @"
@@ -282,8 +267,6 @@ namespace TrainNotifier.Service
                     new { scheduleId },
                     splitOn: "TiplocId");
             }
-        }
-
-        
+        }        
     }
 }
