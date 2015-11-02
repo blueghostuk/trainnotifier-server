@@ -11,8 +11,8 @@ namespace TrainNotifier.Common.Model.Api
         public string Id { get; set; }
         [DataMember]
         public string Headcode { get; set; }
-        [DataMember]
-        public string Uid { get; set; }
+        //[DataMember]
+        //public string Uid { get; set; }
         [DataMember]
         public int DelayTime { get; set; }
         [DataMember]
