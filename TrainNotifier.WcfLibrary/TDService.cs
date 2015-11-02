@@ -137,7 +137,7 @@ namespace TrainNotifier.WcfLibrary
                             if (!_liveTrainRepo.UpdateMovement(
                                 tmr.Id,
                                 td.Item2,
-                                _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
+                                _tiplocRepo.GetTiplocsByStanox(td.Item3.Stanox).Select(st => st.TiplocId).ToArray(),
                                 TrainMovementEventType.Arrival,
                                 td.Item1.Time.AddSeconds(int.Parse(td.Item2.BERTHOFFSET))) && doRetry)
                             {
@@ -149,7 +149,7 @@ namespace TrainNotifier.WcfLibrary
                             if (!_liveTrainRepo.UpdateMovement(
                                 tmr.Id,
                                 td.Item2,
-                                _tiplocRepo.GetAllByStanox(td.Item3.Stanox).Select(st => st.TiplocId),
+                                _tiplocRepo.GetTiplocsByStanox(td.Item3.Stanox).Select(st => st.TiplocId).ToArray(),
                                 TrainMovementEventType.Departure,
                                 td.Item1.Time.AddSeconds(int.Parse(td.Item2.BERTHOFFSET))) && doRetry)
                             {
