@@ -47,22 +47,21 @@ namespace TrainNotifier.Service
 					,[AtocCode].[AtocCode] AS [Code]
 					,[AtocCode].[Name]
 				FROM [LiveTrain]
-			    INNER JOIN [ScheduleTrain]				ON [ScheduleTrain].[ScheduleId] = [LiveTrain].[ScheduleTrain]
-				INNER JOIN [LiveTrainStop] [FromStop]	ON [FromStop].[TrainId] = [LiveTrain].[Id]
-				INNER JOIN [LiveTrainStop] [ToStop]		ON [ToStop].[TrainId] = [LiveTrain].[Id]
-				INNER JOIN [Tiploc] [OriginTiploc]		ON [OriginTiploc].[TiplocId] = [ScheduleTrain].[OriginStopTiplocId]
-				INNER JOIN [Tiploc] [DestTiploc]		ON [DestTiploc].[TiplocId] = [ScheduleTrain].[DestinationStopTiplocId]
-				LEFT JOIN [AtocCode]					ON [LiveTrain].[ScheduleTrainAtocCode] = [AtocCode].[AtocCode]
+			    INNER JOIN [LiveTrainStop] [FromStop]	ON [FromStop].[TrainId] = [LiveTrain].[Id]
+				INNER JOIN [LiveTrainStop] [ToStop]	ON [ToStop].[TrainId] = [LiveTrain].[Id]
+				INNER JOIN [Tiploc] [OriginTiploc]	ON [OriginTiploc].[TiplocId] = [LiveTrain].[OriginTiplocId]
+				INNER JOIN [Tiploc] [DestTiploc]	ON [DestTiploc].[TiplocId] = [LiveTrain].[ScheduleTrainDestinationTiplocId]
+				LEFT JOIN [AtocCode]			ON [LiveTrain].[ScheduleTrainAtocCode] = [AtocCode].[AtocCode]
 				WHERE
-                    [FromStop].[ReportingTiplocId] IN @tiplocsFrom 
-                    AND 
-                    [FromStop].[EventTypeId] = 1
-                    AND 
-                    [FromStop].[Public] = 1
+					[FromStop].[ReportingTiplocId] IN @tiplocsFrom 
+					AND 
+					[FromStop].[EventTypeId] = 1
+					AND 
+					[FromStop].[Public] = 1
 					AND	
 					[ToStop].[ReportingTiplocId] IN @tiplocsTo 
-                    AND 
-                    [ToStop].[EventTypeId] = 2
+					AND 
+                	[ToStop].[EventTypeId] = 2
                     AND 
                     [ToStop].[Public] = 1
                     AND
